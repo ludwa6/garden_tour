@@ -24,6 +24,7 @@
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             color: white;
+            line-height: 1.6;
         }
         
         .container {
@@ -35,11 +36,18 @@
         .header {
             text-align: center;
             margin-bottom: 2rem;
+            animation: fadeInDown 0.8s ease-out;
         }
         
         .header h1 {
-            font-size: 2.5rem;
+            font-size: clamp(2rem, 5vw, 2.5rem);
             margin-bottom: 0.5rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
         }
         
         .poi-card {
@@ -49,15 +57,72 @@
             padding: 20px;
             margin-bottom: 20px;
             border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease;
+            animation: fadeInUp 0.6s ease-out;
+            cursor: pointer;
+        }
+        
+        .poi-card:hover {
+            transform: translateY(-2px);
+            background: rgba(255, 255, 255, 0.15);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        
+        .poi-card.expanded {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
+        .poi-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
         }
         
         .poi-card h2 {
             color: #4CAF50;
-            margin-bottom: 10px;
+            font-size: 1.3rem;
+            margin: 0;
+        }
+        
+        .expand-icon {
+            font-size: 1.2rem;
+            transition: transform 0.3s ease;
+        }
+        
+        .poi-card.expanded .expand-icon {
+            transform: rotate(180deg);
+        }
+        
+        .poi-description {
+            margin: 15px 0;
+            font-size: 0.95rem;
+            opacity: 0.9;
+        }
+        
+        .poi-details {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+        
+        .poi-card.expanded .poi-details {
+            max-height: 500px;
+        }
+        
+        .poi-meta {
+            background: rgba(0,0,0,0.1);
+            border-radius: 8px;
+            padding: 10px;
+            margin: 10px 0;
+            font-size: 0.9rem;
         }
         
         .poi-actions {
             margin-top: 15px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
         }
         
         .btn {
@@ -67,14 +132,18 @@
             padding: 10px 20px;
             border-radius: 25px;
             text-decoration: none;
-            display: inline-block;
-            margin-right: 10px;
-            margin-bottom: 10px;
-            transition: background 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+            cursor: pointer;
+            white-space: nowrap;
         }
         
         .btn:hover {
             background: #45a049;
+            transform: translateY(-1px);
         }
         
         .btn.secondary {
@@ -85,25 +154,102 @@
             background: #1976D2;
         }
         
+        .btn.tertiary {
+            background: #FF9800;
+        }
+        
+        .btn.tertiary:hover {
+            background: #F57C00;
+        }
+        
         .status {
             text-align: center;
             margin: 20px 0;
-            padding: 10px;
+            padding: 15px;
             background: rgba(76, 175, 80, 0.2);
             border-radius: 10px;
+            border: 1px solid rgba(76, 175, 80, 0.3);
+            animation: slideIn 0.5s ease-out;
+        }
+        
+        .status.poi-active {
+            background: rgba(255, 193, 7, 0.2);
+            border-color: rgba(255, 193, 7, 0.3);
         }
         
         .hidden {
             display: none;
         }
         
+        .install-prompt {
+            background: rgba(33, 150, 243, 0.2);
+            border: 1px solid rgba(33, 150, 243, 0.3);
+        }
+        
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+        
+        .modal.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .modal-content {
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(15px);
+            border-radius: 15px;
+            padding: 30px;
+            max-width: 500px;
+            margin: 20px;
+            border: 1px solid rgba(255,255,255,0.2);
+            transform: scale(0.8);
+            transition: transform 0.3s ease;
+        }
+        
+        .modal.active .modal-content {
+            transform: scale(1);
+        }
+        
+        @keyframes fadeInDown {
+            from { opacity: 0; transform: translateY(-30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        
         @media (max-width: 600px) {
-            .header h1 {
-                font-size: 2rem;
-            }
-            
             .container {
                 padding: 10px;
+            }
+            
+            .poi-actions {
+                flex-direction: column;
+            }
+            
+            .btn {
+                text-align: center;
+                justify-content: center;
             }
         }
     </style>
@@ -120,32 +266,81 @@
         </div>
 
         <div id="poi-list">
-            <div class="poi-card">
-                <h2>🍁 Red Maple</h2>
-                <p>A beautiful deciduous tree known for its stunning fall colors. Native to eastern North America.</p>
-                <div class="poi-actions">
-                    <a href="https://www.inaturalist.org/observations/new?taxon_id=47727" class="btn" target="_blank">📱 Log Observation</a>
-                    <button class="btn secondary" onclick="showPlantDetails('maple')">ℹ️ Learn More</button>
+            <div class="poi-card" data-poi="maple" onclick="togglePOI(this)">
+                <div class="poi-header">
+                    <h2>🍁 Red Maple</h2>
+                    <span class="expand-icon">▼</span>
+                </div>
+                <p class="poi-description">A beautiful deciduous tree known for its stunning fall colors. Native to eastern North America.</p>
+                <div class="poi-details">
+                    <div class="poi-meta">
+                        <strong>Scientific Name:</strong> Acer rubrum<br>
+                        <strong>Family:</strong> Sapindaceae<br>
+                        <strong>Height:</strong> 40-60 feet<br>
+                        <strong>Bloom Time:</strong> Early spring
+                    </div>
+                    <p>Red Maples are one of the most widespread trees in eastern North America. They're incredibly adaptable, growing in both wet swamps and dry uplands. In autumn, their leaves turn brilliant shades of yellow, orange, and red - often all three colors on the same tree!</p>
+                    <div class="poi-actions">
+                        <a href="https://www.inaturalist.org/observations/new?taxon_id=47727" class="btn" target="_blank">📱 Log Observation</a>
+                        <button class="btn secondary" onclick="event.stopPropagation(); showPlantDetails('maple')">ℹ️ Learn More</button>
+                        <button class="btn tertiary" onclick="event.stopPropagation(); playAudio('maple')">🔊 Audio Guide</button>
+                    </div>
                 </div>
             </div>
 
-            <div class="poi-card">
-                <h2>🌿 Medicinal Herb Garden</h2>
-                <p>A collection of healing plants used in traditional medicine for centuries.</p>
-                <div class="poi-actions">
-                    <a href="https://www.inaturalist.org/observations/new" class="btn" target="_blank">📱 Log Observation</a>
-                    <button class="btn secondary" onclick="showPlantDetails('herbs')">ℹ️ Learn More</button>
+            <div class="poi-card" data-poi="herbs" onclick="togglePOI(this)">
+                <div class="poi-header">
+                    <h2>🌿 Medicinal Herb Garden</h2>
+                    <span class="expand-icon">▼</span>
+                </div>
+                <p class="poi-description">A collection of healing plants used in traditional medicine for centuries.</p>
+                <div class="poi-details">
+                    <div class="poi-meta">
+                        <strong>Featured Plants:</strong> Echinacea, Lavender, Chamomile<br>
+                        <strong>Garden Type:</strong> Curated collection<br>
+                        <strong>Best Season:</strong> Summer<br>
+                        <strong>Uses:</strong> Traditional medicine, aromatherapy
+                    </div>
+                    <p>This garden showcases plants that have been used medicinally for thousands of years. From soothing chamomile to immune-boosting echinacea, these plants demonstrate the incredible pharmacy that nature provides. Please look but don't touch - many medicinal plants can be harmful if used incorrectly.</p>
+                    <div class="poi-actions">
+                        <a href="https://www.inaturalist.org/observations/new" class="btn" target="_blank">📱 Log Observation</a>
+                        <button class="btn secondary" onclick="event.stopPropagation(); showPlantDetails('herbs')">ℹ️ Learn More</button>
+                        <button class="btn tertiary" onclick="event.stopPropagation(); playAudio('herbs')">🔊 Audio Guide</button>
+                    </div>
                 </div>
             </div>
 
-            <div class="poi-card">
-                <h2>🌳 Oak Tree Grove</h2>
-                <p>Ancient oak trees providing habitat for countless species of birds and insects.</p>
-                <div class="poi-actions">
-                    <a href="https://www.inaturalist.org/observations/new?taxon_id=47851" class="btn" target="_blank">📱 Log Observation</a>
-                    <button class="btn secondary" onclick="showPlantDetails('oak')">ℹ️ Learn More</button>
+            <div class="poi-card" data-poi="oak" onclick="togglePOI(this)">
+                <div class="poi-header">
+                    <h2>🌳 Oak Tree Grove</h2>
+                    <span class="expand-icon">▼</span>
+                </div>
+                <p class="poi-description">Ancient oak trees providing habitat for countless species of birds and insects.</p>
+                <div class="poi-details">
+                    <div class="poi-meta">
+                        <strong>Scientific Name:</strong> Quercus species<br>
+                        <strong>Age:</strong> 80-150 years<br>
+                        <strong>Wildlife Supported:</strong> 500+ insect species<br>
+                        <strong>Ecosystem Role:</strong> Keystone species
+                    </div>
+                    <p>These majestic oak trees are true ecosystem engineers. A single oak can support over 500 species of butterflies and moths alone! Their acorns feed squirrels, deer, and birds, while their bark and leaves host countless insects that in turn feed the birds. Notice the different shapes of leaves - we have several oak species here.</p>
+                    <div class="poi-actions">
+                        <a href="https://www.inaturalist.org/observations/new?taxon_id=47851" class="btn" target="_blank">📱 Log Observation</a>
+                        <button class="btn secondary" onclick="event.stopPropagation(); showPlantDetails('oak')">ℹ️ Learn More</button>
+                        <button class="btn tertiary" onclick="event.stopPropagation(); playAudio('oak')">🔊 Audio Guide</button>
+                    </div>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <!-- Modal for detailed information -->
+    <div id="modal" class="modal" onclick="closeModal()">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <div id="modal-content">
+                <!-- Content will be inserted here -->
+            </div>
+            <button class="btn" onclick="closeModal()" style="margin-top: 20px;">Close</button>
         </div>
     </div>
 
@@ -157,17 +352,109 @@
         
         if (poiId) {
             document.getElementById('status').classList.remove('hidden');
-            document.getElementById('status').innerHTML = `<p>🎯 Showing: ${poiId}</p>`;
+            document.getElementById('status').classList.add('poi-active');
+            document.getElementById('status').innerHTML = `<p>🎯 Viewing: ${poiId.toUpperCase()}</p>`;
+            
+            // Auto-expand the relevant POI
+            setTimeout(() => {
+                const targetPOI = document.querySelector(`[data-poi="${poiId}"]`);
+                if (targetPOI) {
+                    targetPOI.scrollIntoView({ behavior: 'smooth' });
+                    togglePOI(targetPOI);
+                }
+            }, 500);
+        }
+
+        function togglePOI(element) {
+            const isExpanded = element.classList.contains('expanded');
+            
+            // Close all other POIs
+            document.querySelectorAll('.poi-card.expanded').forEach(card => {
+                if (card !== element) {
+                    card.classList.remove('expanded');
+                }
+            });
+            
+            // Toggle current POI
+            element.classList.toggle('expanded');
         }
 
         function showPlantDetails(plant) {
             const details = {
-                'maple': 'Red Maples (Acer rubrum) can live 80-100 years and are excellent for urban environments. Their sap can be used to make syrup, though not as efficiently as sugar maples.',
-                'herbs': 'This garden features plants like echinacea, lavender, and chamomile. Many have been scientifically studied for their therapeutic properties.',
-                'oak': 'Oak trees can live over 200 years and support over 500 species of insects. Their acorns are food for many wildlife species.'
+                'maple': {
+                    title: '🍁 Red Maple Deep Dive',
+                    content: `
+                        <h3>Identification Tips:</h3>
+                        <ul>
+                            <li>Leaves have 3-5 lobes with serrated edges</li>
+                            <li>Bark is gray and smooth when young, becoming furrowed with age</li>
+                            <li>Red flowers appear in early spring before leaves</li>
+                            <li>Winged seeds (samaras) are bright red in summer</li>
+                        </ul>
+                        <h3>Ecological Importance:</h3>
+                        <p>Red maples are pioneer species, often the first to colonize disturbed areas. They're crucial for forest succession and provide early nectar for pollinators when few other plants are blooming.</p>
+                    `
+                },
+                'herbs': {
+                    title: '🌿 Medicinal Garden Highlights',
+                    content: `
+                        <h3>Featured Plants:</h3>
+                        <ul>
+                            <li><strong>Echinacea (Purple Coneflower):</strong> Traditionally used to support immune system</li>
+                            <li><strong>Lavender:</strong> Known for calming properties and aromatherapy</li>
+                            <li><strong>Chamomile:</strong> Popular for tea and soothing preparations</li>
+                            <li><strong>Yarrow:</strong> Historically used for wound healing</li>
+                        </ul>
+                        <h3>Important Note:</h3>
+                        <p>These plants are for educational purposes only. Always consult healthcare professionals before using any plant medicinally.</p>
+                    `
+                },
+                'oak': {
+                    title: '🌳 Oak Grove Ecosystem',
+                    content: `
+                        <h3>Why Oaks Matter:</h3>
+                        <ul>
+                            <li>Support more wildlife than any other tree genus in North America</li>
+                            <li>Produce acorns that feed over 100 vertebrate species</li>
+                            <li>Host 500+ species of moths and butterflies</li>
+                            <li>Can live 200-300 years or more</li>
+                        </ul>
+                        <h3>Species in This Grove:</h3>
+                        <p>Look for differences in leaf shapes - some have rounded lobes (white oak group) while others have pointed, bristle-tipped lobes (red oak group).</p>
+                    `
+                }
             };
             
-            alert(details[plant] || 'More information coming soon!');
+            const plant_data = details[plant];
+            if (plant_data) {
+                document.getElementById('modal-content').innerHTML = `
+                    <h2>${plant_data.title}</h2>
+                    ${plant_data.content}
+                `;
+                document.getElementById('modal').classList.add('active');
+            }
+        }
+
+        function playAudio(plant) {
+            // Simulate audio playback
+            const audioMessages = {
+                'maple': 'Now playing: "The Story of Red Maples" - Listen as we explore this remarkable tree...',
+                'herbs': 'Now playing: "Traditional Medicine Garden" - Discover the healing power of plants...',
+                'oak': 'Now playing: "Mighty Oaks and Their Ecosystem" - Learn about these forest giants...'
+            };
+            
+            const statusDiv = document.getElementById('status');
+            statusDiv.classList.remove('hidden');
+            statusDiv.innerHTML = `<p>🔊 ${audioMessages[plant]}</p>`;
+            
+            // Hide after 3 seconds
+            setTimeout(() => {
+                statusDiv.classList.add('hidden');
+            }, 3000);
+        }
+
+        function closeModal() {
+            document.getElementById('modal').classList.remove('active');
         }
 
         // PWA installation prompt
@@ -179,11 +466,14 @@
             
             // Show install button
             const installDiv = document.createElement('div');
+            installDiv.className = 'poi-card install-prompt';
             installDiv.innerHTML = `
-                <div class="poi-card">
-                    <h2>📱 Install App</h2>
-                    <p>Add this garden tour to your home screen for offline access!</p>
-                    <button class="btn" onclick="installApp()">Install Garden Tour</button>
+                <div class="poi-header">
+                    <h2>📱 Install Garden Tour App</h2>
+                </div>
+                <p class="poi-description">Add this garden tour to your home screen for offline access and a native app experience!</p>
+                <div class="poi-actions">
+                    <button class="btn" onclick="installApp()">📲 Install App</button>
                 </div>
             `;
             document.getElementById('poi-list').prepend(installDiv);
@@ -195,13 +485,22 @@
                 deferredPrompt.userChoice.then((choiceResult) => {
                     if (choiceResult.outcome === 'accepted') {
                         console.log('User accepted the install prompt');
+                        document.querySelector('.install-prompt').style.display = 'none';
                     }
                     deferredPrompt = null;
                 });
             }
         }
 
-        console.log('Garden Tour App loaded successfully! 🌱');
+        // Add keyboard navigation
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeModal();
+            }
+        });
+
+        console.log('🌱 Garden Tour App loaded successfully!');
+        console.log('Test with: ?poi=maple, ?poi=herbs, or ?poi=oak');
     </script>
 </body>
 </html>
