@@ -2,7 +2,7 @@
 channel = "stable-25_05"
 
 [workflows]
-runButton = "Start Tour App"
+runButton = "Start Garden Tour"
 
 [[workflows.workflow]]
 name = "Start Tour App"
@@ -12,3 +12,12 @@ mode = "sequential"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "python3 -m http.server 5000"
+
+[[workflows.workflow]]
+name = "Start Garden Tour"
+author = 43332044
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npx serve . -p 5000"
