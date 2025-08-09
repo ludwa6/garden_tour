@@ -1,35 +1,6 @@
 [Skip to content](https://chatgpt.com/c/6895a89b-a3e8-8322-bcc7-336663af9429#main)  
 WL
 
-## **Chat history**
-
-[New chat](https://chatgpt.com/)  
-[⇧⌘O](https://chatgpt.com/)  
-Search chats  
-⌘K  
-[Library](https://chatgpt.com/library)  
-[Sora](https://sora.chatgpt.com/?utm_source=chatgpt)  
-[GPTs](https://chatgpt.com/gpts)
-
-[Braider Tumbleweed II](https://chatgpt.com/g/g-680c61d885e88191b73b5b4736cf857d-braider-tumbleweed-ii)
-
-## **Chats**
-
-[Tour app development tips](https://chatgpt.com/c/6895a89b-a3e8-8322-bcc7-336663af9429)  
-[FOSS TTS Summarization Tools](https://chatgpt.com/c/6878f759-f1ec-800c-9a49-97dbb1e9ae1e)  
-[PDF to Google Sheets](https://chatgpt.com/c/687757de-b8c4-800c-bd74-b6e9d4740a00)  
-[Spreadsheet AI Assistance](https://chatgpt.com/c/6874c277-1f38-800c-b7f1-0e0b5dc0f446)  
-[3D Model with VR](https://chatgpt.com/c/68727fcd-c028-800c-bd06-a1b7e2438046)  
-[Desert Adaptation Dubai vs Doha](https://chatgpt.com/c/686e99ec-94a4-800c-9dc0-63ee44df6c12)  
-[Free Transcription Tools](https://chatgpt.com/c/686a5317-2c88-800c-aeff-9a8302626614)  
-[Regenerative Earth Relationships](https://chatgpt.com/g/g-680c61d885e88191b73b5b4736cf857d-braider-tumbleweed-ii/c/6866c781-a620-800c-8433-eb67543d29d8)  
-[Regeneration Researcher YouTube Interview](https://chatgpt.com/c/68625418-3ed4-800c-8567-385d7e464d05)  
-[BioBlitz Software Suggestions](https://chatgpt.com/c/68590d6a-8260-800c-a52b-848e7cfe225c)  
-WL  
-Walter Ludwick  
-Free  
-ChatGPT  
-Share
 
 ##### **You said:**
 
