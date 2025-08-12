@@ -468,6 +468,16 @@
     <script src="sw-register.js"></script>
 
     <script>
+        // Define showExplorePage function first, before any inline onclick can call it
+        function showExplorePage() {
+            document.getElementById('explore-modal').classList.add('active');
+            loadProjectSpecies();
+        }
+
+        function closeExploreModal() {
+            document.getElementById('explore-modal').classList.remove('active');
+        }
+
         // POI data with iNaturalist IDs and coordinates
         const pois = [
             { id: 'maple', taxon_id: 47727, lat: 37.7749, lon: -122.4194 }, // Example coordinates
@@ -584,15 +594,6 @@
 
         function closeModal() {
             document.getElementById('modal').classList.remove('active');
-        }
-
-        function showExplorePage() {
-            document.getElementById('explore-modal').classList.add('active');
-            loadProjectSpecies();
-        }
-
-        function closeExploreModal() {
-            document.getElementById('explore-modal').classList.remove('active');
         }
 
         async function loadProjectSpecies() {
