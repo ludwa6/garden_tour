@@ -21,6 +21,47 @@ class iNaturalistAPI {
     }
   }
 
+  async getNearbyObservations(lat, lng, radius = 1, page = 1, perPage = 20) {
+    // Radius in kilometers - iNaturalist API expects this format
+    const url = `${this.baseURL}/observations?lat=${lat}&lng=${lng}&radius=${radius}&page=${page}&per_page=${perPage}&order=desc&order_by=observed_on&quality_grade=research,needs_id`;
+    
+    try {
+      const response = await fetch(url);
+      const data = await response.json();
+      return data.results;
+    } catch (error) {
+      console.error('Error fetching nearby observations:', error);
+      return [];
+    }
+  }
+
+  async getUserLocation() {
+    return new Promise((resolve, reject) => {
+      if (!navigator.geolocation) {
+        reject(new Error('Geolocation is not supported by this browser'));
+        return;
+      }
+
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          resolve({
+            lat: position.coords.latitude,
+            lng: position.coords.longitude,
+            accuracy: position.coords.accuracy
+          });
+        },
+        (error) => {
+          reject(new Error(`Geolocation error: ${error.message}`));
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 300000 // 5 minutes
+        }
+      );
+    });
+  }
+
   async getProjectSpecies() {
     const url = `${this.baseURL}/observations/species_counts?project_id=${this.projectId}&order=desc&order_by=count`;
     
