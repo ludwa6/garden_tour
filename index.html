@@ -609,30 +609,30 @@
         async function loadProjectSpecies() {
             const loadingDiv = document.getElementById('species-loading');
             const speciesDiv = document.getElementById('species-list');
-            
+
             try {
                 loadingDiv.textContent = 'Loading species from your garden project...';
-                
+
                 // Get species list from the project
                 const species = await window.iNatAPI.getProjectSpecies();
-                
+
                 if (species && species.length > 0) {
                     loadingDiv.style.display = 'none';
                     speciesDiv.style.display = 'block';
-                    
+
                     speciesDiv.innerHTML = '<h3>Species Observed in Our Garden:</h3>';
-                    
+
                     species.forEach((item, index) => {
                         if (index < 20) { // Limit to top 20 species
                             const speciesItem = document.createElement('div');
                             speciesItem.className = 'observation-item';
                             speciesItem.style.cursor = 'pointer';
-                            
+
                             const taxon = item.taxon;
                             const commonName = taxon.preferred_common_name || taxon.name;
                             const scientificName = taxon.name;
                             const count = item.count;
-                            
+
                             speciesItem.innerHTML = `
                                 <div class="obs-species">${commonName}</div>
                                 ${commonName !== scientificName ? `<div class="obs-scientific">${scientificName}</div>` : ''}
@@ -641,15 +641,15 @@
                                     ${taxon.default_photo ? `<img src="${taxon.default_photo.square_url}" alt="${commonName}" style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px; margin-left: 10px;">` : ''}
                                 </div>
                             `;
-                            
+
                             speciesItem.onclick = () => {
                                 window.open(`https://www.inaturalist.org/taxa/${taxon.id}`, '_blank');
                             };
-                            
+
                             speciesDiv.appendChild(speciesItem);
                         }
                     });
-                    
+
                     // Add link to full project
                     const projectLink = document.createElement('div');
                     projectLink.style.marginTop = '20px';
@@ -659,7 +659,7 @@
                         </button>
                     `;
                     speciesDiv.appendChild(projectLink);
-                    
+
                 } else {
                     loadingDiv.innerHTML = `
                         <p>No species found in the project yet.</p>
@@ -668,7 +668,7 @@
                         </button>
                     `;
                 }
-                
+
             } catch (error) {
                 console.error('Error loading project species:', error);
                 loadingDiv.innerHTML = `
@@ -753,16 +753,16 @@
           const button = document.getElementById('load-nearby-btn');
           const content = document.getElementById('nearby-content');
           const list = document.getElementById('nearby-observations-list');
-          
+
           try {
             button.textContent = '📍 Getting your location...';
             button.disabled = true;
-            
+
             // Get user's location
             const location = await window.iNatAPI.getUserLocation();
-            
+
             button.textContent = '🔍 Finding nearby observations...';
-            
+
             // Fetch nearby observations (within 1km)
             const observations = await window.iNatAPI.getNearbyObservations(
               location.lat, 
@@ -771,13 +771,13 @@
               1, 
               10 // Show 10 observations
             );
-            
+
             if (observations.length > 0) {
               list.innerHTML = '<h4>Recent observations within 1km:</h4>';
               observations.forEach(obs => {
                 const obsDiv = document.createElement('div');
                 obsDiv.className = 'observation-item';
-                
+
                 const speciesName = obs.species_guess || obs.taxon?.name || 'Unknown species';
                 const commonName = obs.taxon?.preferred_common_name || '';
                 const scientificName = obs.taxon?.name || '';
@@ -785,7 +785,7 @@
                   calculateDistance(location.lat, location.lng, 
                     parseFloat(obs.location.split(',')[0]), 
                     parseFloat(obs.location.split(',')[1])) * 1000 : 0)}m away` : '';
-                
+
                 obsDiv.innerHTML = `
                   <div class="obs-species">${commonName || scientificName}</div>
                   ${commonName && scientificName ? `<div class="obs-scientific">${scientificName}</div>` : ''}
@@ -798,27 +798,27 @@
                     `<div class="obs-photo"><img src="${obs.photos[0].url.replace('/square', '/small')}" alt="${speciesName}" style="width: 60px; height: 60px; object-fit: cover; border-radius: 4px; margin-top: 5px;"></div>` : ''
                   }
                 `;
-                
+
                 if (obs.uri) {
                   obsDiv.style.cursor = 'pointer';
                   obsDiv.onclick = () => window.open(obs.uri, '_blank');
                 }
-                
+
                 list.appendChild(obsDiv);
               });
-              
+
               // Auto-expand the section
               content.parentElement.classList.add('expanded');
             } else {
               list.innerHTML = '<p>No recent observations found within 1km of your location. Be the first to document nature here!</p>';
             }
-            
+
             button.textContent = '✅ Loaded nearby observations';
             setTimeout(() => {
               button.textContent = '🔄 Refresh nearby observations';
               button.disabled = false;
             }, 2000);
-            
+
           } catch (error) {
             console.error('Error loading nearby observations:', error);
             list.innerHTML = `<p style="color: #ff6b6b;">Error: ${error.message}</p>`;
