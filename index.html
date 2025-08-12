@@ -334,7 +334,7 @@
     <div class="container">
         <div class="header">
             <h1>🌱 Garden Tour</h1>
-            <p>Discover the plants around you</p>
+            <p><a href="#explore" onclick="showExplorePage()" style="color: #4CAF50; text-decoration: underline; cursor: pointer;">Discover the plants around you</a></p>
         </div>
 
         <div id="status" class="status hidden">
@@ -448,6 +448,19 @@
                 <!-- Content will be inserted here -->
             </div>
             <button class="btn" onclick="closeModal()" style="margin-top: 20px;">Close</button>
+        </div>
+    </div>
+
+    <!-- Exploration page modal -->
+    <div id="explore-modal" class="modal" onclick="closeExploreModal()">
+        <div class="modal-content" onclick="event.stopPropagation()" style="max-width: 700px; max-height: 80vh; overflow-y: auto;">
+            <div id="explore-content">
+                <h2>🌿 Explore Garden Species</h2>
+                <p>Discover what's been observed in our botanical garden:</p>
+                <div id="species-loading">Loading species from iNaturalist...</div>
+                <div id="species-list" style="display: none;"></div>
+            </div>
+            <button class="btn" onclick="closeExploreModal()" style="margin-top: 20px;">Close</button>
         </div>
     </div>
 
@@ -571,6 +584,89 @@
 
         function closeModal() {
             document.getElementById('modal').classList.remove('active');
+        }
+
+        function showExplorePage() {
+            document.getElementById('explore-modal').classList.add('active');
+            loadProjectSpecies();
+        }
+
+        function closeExploreModal() {
+            document.getElementById('explore-modal').classList.remove('active');
+        }
+
+        async function loadProjectSpecies() {
+            const loadingDiv = document.getElementById('species-loading');
+            const speciesDiv = document.getElementById('species-list');
+            
+            try {
+                loadingDiv.textContent = 'Loading species from your garden project...';
+                
+                // Get species list from the project
+                const species = await window.iNatAPI.getProjectSpecies();
+                
+                if (species && species.length > 0) {
+                    loadingDiv.style.display = 'none';
+                    speciesDiv.style.display = 'block';
+                    
+                    speciesDiv.innerHTML = '<h3>Species Observed in Our Garden:</h3>';
+                    
+                    species.forEach((item, index) => {
+                        if (index < 20) { // Limit to top 20 species
+                            const speciesItem = document.createElement('div');
+                            speciesItem.className = 'observation-item';
+                            speciesItem.style.cursor = 'pointer';
+                            
+                            const taxon = item.taxon;
+                            const commonName = taxon.preferred_common_name || taxon.name;
+                            const scientificName = taxon.name;
+                            const count = item.count;
+                            
+                            speciesItem.innerHTML = `
+                                <div class="obs-species">${commonName}</div>
+                                ${commonName !== scientificName ? `<div class="obs-scientific">${scientificName}</div>` : ''}
+                                <div class="obs-meta">
+                                    <span class="obs-date">${count} observation${count > 1 ? 's' : ''}</span>
+                                    ${taxon.default_photo ? `<img src="${taxon.default_photo.square_url}" alt="${commonName}" style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px; margin-left: 10px;">` : ''}
+                                </div>
+                            `;
+                            
+                            speciesItem.onclick = () => {
+                                window.open(`https://www.inaturalist.org/taxa/${taxon.id}`, '_blank');
+                            };
+                            
+                            speciesDiv.appendChild(speciesItem);
+                        }
+                    });
+                    
+                    // Add link to full project
+                    const projectLink = document.createElement('div');
+                    projectLink.style.marginTop = '20px';
+                    projectLink.innerHTML = `
+                        <button class="btn" onclick="window.open('${window.iNatAPI.getProjectURL()}', '_blank')">
+                            🔗 View Full Project on iNaturalist
+                        </button>
+                    `;
+                    speciesDiv.appendChild(projectLink);
+                    
+                } else {
+                    loadingDiv.innerHTML = `
+                        <p>No species found in the project yet.</p>
+                        <button class="btn" onclick="window.open('${window.iNatAPI.getProjectURL()}', '_blank')">
+                            🔗 Visit Project on iNaturalist
+                        </button>
+                    `;
+                }
+                
+            } catch (error) {
+                console.error('Error loading project species:', error);
+                loadingDiv.innerHTML = `
+                    <p style="color: #ff6b6b;">Unable to load species data. You can visit the project directly:</p>
+                    <button class="btn" onclick="window.open('${window.iNatAPI.getProjectURL()}', '_blank')">
+                        🔗 Visit Project on iNaturalist
+                    </button>
+                `;
+            }
         }
 
         // PWA installation prompt
