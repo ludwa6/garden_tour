@@ -855,16 +855,14 @@
           }
         }
 
-        // Set up the explore link after DOM is ready
-        document.addEventListener('DOMContentLoaded', function() {
-            const exploreLink = document.getElementById('explore-link');
-            if (exploreLink) {
-                exploreLink.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    showExplorePage();
-                });
-            }
-        });
+        // Set up the explore link immediately since DOM is already ready
+        const exploreLink = document.getElementById('explore-link');
+        if (exploreLink) {
+            exploreLink.addEventListener('click', function(e) {
+                e.preventDefault();
+                showExplorePage();
+            });
+        }
 
         console.log('🌱 Garden Tour App loaded successfully!');
         console.log('Test with: ?poi=maple, ?poi=herbs, or ?poi=oak');
