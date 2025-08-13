@@ -334,7 +334,7 @@
     <div class="container">
         <div class="header">
             <h1>🌱 Garden Tour</h1>
-            <p><a href="javascript:void(0)" onclick="showExplorePage()" style="color: #FFD700; text-decoration: underline; cursor: pointer; font-weight: bold; text-shadow: 1px 1px 2px rgba(0,0,0,0.5);">Discover the plants around you</a></p>
+            <p><a href="javascript:void(0)" id="explore-link" style="color: #FFD700; text-decoration: underline; cursor: pointer; font-weight: bold; text-shadow: 1px 1px 2px rgba(0,0,0,0.5);">Discover the plants around you</a></p>
         </div>
 
         <div id="status" class="status hidden">
@@ -854,6 +854,17 @@
             window.open(window.iNatAPI.getProjectURL(), '_blank');
           }
         }
+
+        // Set up the explore link after DOM is ready
+        document.addEventListener('DOMContentLoaded', function() {
+            const exploreLink = document.getElementById('explore-link');
+            if (exploreLink) {
+                exploreLink.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    showExplorePage();
+                });
+            }
+        });
 
         console.log('🌱 Garden Tour App loaded successfully!');
         console.log('Test with: ?poi=maple, ?poi=herbs, or ?poi=oak');
