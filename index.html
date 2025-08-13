@@ -470,8 +470,15 @@
     <script>
         // Define showExplorePage function first, before any inline onclick can call it
         function showExplorePage() {
-            document.getElementById('explore-modal').classList.add('active');
-            loadProjectSpecies();
+            console.log('showExplorePage called'); // Debug log
+            const modal = document.getElementById('explore-modal');
+            if (modal) {
+                modal.classList.add('active');
+                console.log('Modal should be visible now'); // Debug log
+                loadProjectSpecies();
+            } else {
+                console.error('explore-modal not found!');
+            }
         }
 
         function closeExploreModal() {
@@ -602,6 +609,11 @@
 
             try {
                 loadingDiv.textContent = 'Loading species from your garden project...';
+
+                // Check if iNaturalist API is available
+                if (!window.iNatAPI) {
+                    throw new Error('iNaturalist API not loaded');
+                }
 
                 // Get species list from the project
                 const species = await window.iNatAPI.getProjectSpecies();
@@ -856,12 +868,18 @@
         }
 
         // Set up the explore link immediately since DOM is already ready
+        console.log('Setting up explore link...'); // Debug log
         const exploreLink = document.getElementById('explore-link');
+        console.log('Found explore link:', exploreLink); // Debug log
         if (exploreLink) {
             exploreLink.addEventListener('click', function(e) {
+                console.log('Explore link clicked!'); // Debug log
                 e.preventDefault();
                 showExplorePage();
             });
+            console.log('Click handler attached successfully'); // Debug log
+        } else {
+            console.error('explore-link element not found!');
         }
 
         console.log('🌱 Garden Tour App loaded successfully!');
