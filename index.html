@@ -334,7 +334,7 @@
     <div class="container">
         <div class="header">
             <h1>🌱 Garden Tour</h1>
-            <p><a href="javascript:void(0)" id="explore-link" style="color: #FFD700; text-decoration: underline; cursor: pointer; font-weight: bold; text-shadow: 1px 1px 2px rgba(0,0,0,0.5);">Discover the plants around you</a></p>
+            <p><a href="javascript:void(0)" onclick="console.log('Link clicked!'); showExplorePage(); return false;" style="color: #FFD700; text-decoration: underline; cursor: pointer; font-weight: bold; text-shadow: 1px 1px 2px rgba(0,0,0,0.5);">Discover the plants around you</a></p>
         </div>
 
         <div id="status" class="status hidden">
@@ -869,39 +869,7 @@
 
         console.log('🌱 Garden Tour App loaded successfully!');
         console.log('Test with: ?poi=maple, ?poi=herbs, or ?poi=oak');
-
-        // Set up the explore link with a slight delay to ensure DOM is fully ready
-        setTimeout(() => {
-            console.log('Setting up explore link...'); // Debug log
-            const exploreLink = document.getElementById('explore-link');
-            console.log('Found explore link:', exploreLink); // Debug log
-            
-            if (exploreLink) {
-                // Remove any existing listeners first
-                exploreLink.removeEventListener('click', handleExploreClick);
-                
-                // Add the click handler
-                exploreLink.addEventListener('click', handleExploreClick);
-                console.log('Click handler attached successfully'); // Debug log
-                
-                // Test that the element is actually clickable
-                console.log('Link text:', exploreLink.textContent);
-                console.log('Link style display:', window.getComputedStyle(exploreLink).display);
-                console.log('Link style visibility:', window.getComputedStyle(exploreLink).visibility);
-            } else {
-                console.error('explore-link element not found!');
-                console.log('Available elements with IDs:', Array.from(document.querySelectorAll('[id]')).map(el => el.id));
-            }
-        }, 100);
-
-        // Define the click handler as a named function
-        function handleExploreClick(e) {
-            console.log('Explore link clicked!'); // Debug log
-            e.preventDefault();
-            e.stopPropagation();
-            showExplorePage();
-            return false;
-        }
+        console.log('showExplorePage function available:', typeof showExplorePage);
     </script>
 </body>
 </html>
