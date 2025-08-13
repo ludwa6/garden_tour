@@ -867,23 +867,41 @@
           }
         }
 
-        // Set up the explore link immediately since DOM is already ready
-        console.log('Setting up explore link...'); // Debug log
-        const exploreLink = document.getElementById('explore-link');
-        console.log('Found explore link:', exploreLink); // Debug log
-        if (exploreLink) {
-            exploreLink.addEventListener('click', function(e) {
-                console.log('Explore link clicked!'); // Debug log
-                e.preventDefault();
-                showExplorePage();
-            });
-            console.log('Click handler attached successfully'); // Debug log
-        } else {
-            console.error('explore-link element not found!');
-        }
-
         console.log('🌱 Garden Tour App loaded successfully!');
         console.log('Test with: ?poi=maple, ?poi=herbs, or ?poi=oak');
+
+        // Set up the explore link with a slight delay to ensure DOM is fully ready
+        setTimeout(() => {
+            console.log('Setting up explore link...'); // Debug log
+            const exploreLink = document.getElementById('explore-link');
+            console.log('Found explore link:', exploreLink); // Debug log
+            
+            if (exploreLink) {
+                // Remove any existing listeners first
+                exploreLink.removeEventListener('click', handleExploreClick);
+                
+                // Add the click handler
+                exploreLink.addEventListener('click', handleExploreClick);
+                console.log('Click handler attached successfully'); // Debug log
+                
+                // Test that the element is actually clickable
+                console.log('Link text:', exploreLink.textContent);
+                console.log('Link style display:', window.getComputedStyle(exploreLink).display);
+                console.log('Link style visibility:', window.getComputedStyle(exploreLink).visibility);
+            } else {
+                console.error('explore-link element not found!');
+                console.log('Available elements with IDs:', Array.from(document.querySelectorAll('[id]')).map(el => el.id));
+            }
+        }, 100);
+
+        // Define the click handler as a named function
+        function handleExploreClick(e) {
+            console.log('Explore link clicked!'); // Debug log
+            e.preventDefault();
+            e.stopPropagation();
+            showExplorePage();
+            return false;
+        }
     </script>
 </body>
 </html>
