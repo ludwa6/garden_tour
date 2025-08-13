@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>QR Admin – Garden Tour</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+</head>
+<body style="padding:1rem">
+  <h1>QR Code Generator</h1>
+  <p>Enter an iNaturalist Observation ID to generate a QR that opens its popup in the PWA.</p>
+  <label>Observation ID: <input id="obsId" type="text" placeholder="e.g. 123456" /></label>
+  <br><br>
+  <label>Base URL: <input id="baseUrl" type="text" value="" /></label>
+  <small>(Defaults to current origin)</small>
+  <br><br>
+  <button id="make">Make QR</button>
+  <div id="qrcode" style="margin-top:1rem;background:white;padding:10px;display:inline-block"></div>
+  <p><button id="download" style="margin-top:.5rem">Download PNG</button></p>
+
+  <script>
+    const baseUrlInput = document.getElementById('baseUrl');
+    baseUrlInput.value = location.origin + location.pathname.replace(/qr_admin\.html$/, '');
+
+    document.getElementById('make').addEventListener('click', () => {
+      const id = document.getElementById('obsId').value.trim();
+      const base = baseUrlInput.value.replace(/\/$/, '');
+      if(!id){ alert('Enter an observation ID'); return; }
+      const url = `${base}/?id=${encodeURIComponent(id)}`;
+      const el = document.getElementById('qrcode');
+      el.innerHTML = '';
+      const qr = new QRCode(el, { text: url, width: 256, height: 256, correctLevel: QRCode.CorrectLevel.H });
+      el.dataset.url = url;
+    });
+
+    document.getElementById('download').addEventListener('click', () => {
+      const canvas = document.querySelector('#qrcode canvas');
+      if (!canvas) { alert('Create a QR first.'); return; }
+      const link = document.createElement('a');
+      link.download = 'garden_tour_qr.png';
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    });
+  </script>
+</body>
+</html>
