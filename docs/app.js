@@ -1,10 +1,8 @@
 // app.js
 
-const map = L.map('map', {
-    scrollWheelZoom: false
-});
+// --- Map init (unchanged behavior) ---
+const map = L.map('map', { scrollWheelZoom: false });
 
-// Vale da Lama polygon from your KML
 const valeDaLamaCoords = [
   [37.13924265139369, -8.636271847257497],
   [37.14086023764482, -8.635269398509895],
@@ -31,55 +29,94 @@ const valeDaLamaCoords = [
   [37.13924265139369, -8.636271847257497]
 ];
 
-const polygon = L.polygon(valeDaLamaCoords, { color: 'green' }).addTo(map);
+const polygon = L.polygon(valeDaLamaCoords, { color: 'green', weight: 2, fillOpacity: 0.25 }).addTo(map);
 map.fitBounds(polygon.getBounds());
 
-// Base map layer
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '&copy; OpenStreetMap contributors'
+  attribution: '&copy; OpenStreetMap contributors'
 }).addTo(map);
 
-const projectSlug = "erc-vale-da-lama";
+// --- iNaturalist fetching with robust logging ---
+const projectSlug = 'erc-vale-da-lama';
+const loadingEl = document.getElementById('loading');
 
-// Load observations with optional date filter
-async function loadObservations(days) {
-    let url = `https://api.inaturalist.org/v1/observations?project_slug=${projectSlug}&order_by=observed_on&order=desc&per_page=200`;
-    
-    if (days) {
-        const sinceDate = new Date();
-        sinceDate.setDate(sinceDate.getDate() - days);
-        const formattedDate = sinceDate.toISOString().split('T')[0];
-        url += `&d1=${formattedDate}`;
-    }
+// Reusable layer to hold markers
+let obsLayer = L.layerGroup().addTo(map);
 
-    const res = await fetch(url);
-    const data = await res.json();
+function buildObservationsUrl(days) {
+  // Base URL: include all quality grades so "today" casual obs show up
+  let url = `https://api.inaturalist.org/v1/observations?project_slug=${encodeURIComponent(projectSlug)}&order_by=observed_on&order=desc&per_page=200&quality_grade=any`;
 
-    // Clear existing markers
-    if (window.obsLayer) {
-        map.removeLayer(window.obsLayer);
-    }
-
-    const markers = data.results.map(obs => {
-        const lat = obs.geojson.coordinates[1];
-        const lon = obs.geojson.coordinates[0];
-        return L.marker([lat, lon]).bindPopup(`
-            <b>${obs.species_guess || 'Unknown species'}</b><br>
-            Observed on: ${obs.observed_on}<br>
-            <a href="${obs.uri}" target="_blank">View on iNaturalist</a>
-        `);
-    });
-
-    window.obsLayer = L.layerGroup(markers).addTo(map);
+  if (days) {
+    const sinceDate = new Date();
+    sinceDate.setDate(sinceDate.getDate() - days);
+    const d1 = sinceDate.toISOString().split('T')[0];
+    url += `&d1=${d1}`;
+  }
+  // Cache-buster to avoid stale SW/HTTP caches
+  url += `&_=${Date.now()}`;
+  return url;
 }
 
-// Hook up filter buttons
-document.querySelectorAll("[data-days]").forEach(btn => {
-    btn.addEventListener("click", () => {
-        const days = parseInt(btn.getAttribute("data-days"));
-        loadObservations(days);
-    });
+async function loadObservations(days) {
+  const url = buildObservationsUrl(days);
+  loadingEl && (loadingEl.style.display = 'block');
+
+  // Debug logging
+  console.log('%c[iNat] Request URL:', 'color:#2b90d9;font-weight:bold;', url);
+
+  try {
+    const res = await fetch(url, { cache: 'no-store' });
+    console.log('%c[iNat] HTTP status:', 'color:#2b90d9;', res.status, res.statusText);
+
+    if (!res.ok) throw new Error(`HTTP ${res.status} ${res.statusText}`);
+
+    const data = await res.json();
+
+    // Debug result info
+    const count = Array.isArray(data?.results) ? data.results.length : 0;
+    const sampleIds = data?.results?.slice(0, 3).map(r => r.id);
+    console.log('%c[iNat] Results:', 'color:#2b90d9;', { count, sampleIds });
+
+    // Clear and redraw markers
+    obsLayer.clearLayers();
+
+    if (count === 0) {
+      console.warn('[iNat] No observations returned for this filter.', { days });
+    } else {
+      const markers = [];
+      for (const obs of data.results) {
+        const coords = obs?.geojson?.coordinates;
+        if (!Array.isArray(coords) || coords.length < 2) continue;
+
+        const [lon, lat] = coords;
+        const m = L.marker([lat, lon]).bindPopup(`
+          <b>${obs.species_guess || 'Unknown species'}</b><br>
+          Observed on: ${obs.observed_on || '—'}<br>
+          <a href="${obs.uri}" target="_blank" rel="noopener">View on iNaturalist</a>
+        `);
+        markers.push(m);
+      }
+      if (markers.length) {
+        L.layerGroup(markers).addTo(obsLayer);
+      } else {
+        console.warn('[iNat] Observations returned but none had valid coordinates.');
+      }
+    }
+  } catch (err) {
+    console.error('[iNat] Fetch failed:', err);
+  } finally {
+    loadingEl && (loadingEl.style.display = 'none');
+  }
+}
+
+// Hook up filter buttons (they should have data-days attrs in your HTML)
+document.querySelectorAll('[data-days]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const days = parseInt(btn.getAttribute('data-days'), 10);
+    loadObservations(Number.isFinite(days) ? days : undefined);
+  });
 });
 
-// Initial load
+// Initial load (no filter = all time)
 loadObservations();
