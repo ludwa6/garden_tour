@@ -44,7 +44,10 @@ const url = "https://api.inaturalist.org/v1/observations" +
 
 // --- Render observations based on filter ---
 function renderObservations() {
-  markers.clearLayers();
+markers.clearLayers();
+if (!map.hasLayer(markers)) {
+  map.addLayer(markers);
+}
   const listDiv = document.getElementById('observations');
   listDiv.innerHTML = ""; // clear before re-render
 
@@ -119,3 +122,4 @@ document.querySelectorAll('.controls button').forEach(btn => {
 
 // --- Start ---
 fetchObservations();
+
