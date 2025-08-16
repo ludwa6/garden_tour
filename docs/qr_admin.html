@@ -2,46 +2,112 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>QR Admin – Garden Tour</title>
-  <link rel="stylesheet" href="style.css" />
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <title>QR Admin</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    body { font-family: sans-serif; margin: 2rem; }
+    h1 { margin-bottom: 1rem; }
+    .form-group { margin-bottom: 1rem; }
+    label { display: block; margin-bottom: 0.25rem; }
+    select, input, button { padding: 0.4rem; border-radius: 0.4rem; border: 1px solid #ccc; }
+    button { background: #0369a1; color: white; border: none; cursor: pointer; }
+    button:hover { background: #025b8c; }
+    .back-link { display: inline-block; margin-top: 1.5rem; color: #0369a1; text-decoration: none; }
+    .back-link:hover { text-decoration: underline; }
+  </style>
 </head>
-<body style="padding:1rem">
-  <h1>QR Code Generator</h1>
-  <p>Enter an iNaturalist Observation ID to generate a QR that opens its popup in the PWA.</p>
-  <label>Observation ID: <input id="obsId" type="text" placeholder="e.g. 123456" /></label>
-  <br><br>
-  <label>Base URL: <input id="baseUrl" type="text" value="" /></label>
-  <small>(Defaults to current origin)</small>
-  <br><br>
-  <button id="make">Make QR</button>
-  <div id="qrcode" style="margin-top:1rem;background:white;padding:10px;display:inline-block"></div>
-  <p><button id="download" style="margin-top:.5rem">Download PNG</button></p>
+<body>
+  <h1>QR Admin</h1>
 
+  <form id="qr-form">
+    <div class="form-group">
+      <label for="observation-select">Select Observation:</label>
+      <select id="observation-select" required>
+        <option>Loading...</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label for="qr-label">Custom QR Label:</label>
+      <input type="text" id="qr-label" placeholder="Enter label text">
+    </div>
+
+    <button type="submit">Generate QR Code</button>
+  </form>
+
+  <div id="qr-result" style="margin-top:2rem;"></div>
+
+  <a href="index.html" class="back-link">← Back to Map & Observations</a>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
   <script>
-    const baseUrlInput = document.getElementById('baseUrl');
-    baseUrlInput.value = location.origin + location.pathname.replace(/qr_admin\.html$/, '');
+    // --- Get filter choice from URL (e.g. ?range=week) ---
+    function getFilterFromURL() {
+      const params = new URLSearchParams(window.location.search);
+      return params.get("range") || "all"; // default if missing
+    }
 
-    document.getElementById('make').addEventListener('click', () => {
-      const id = document.getElementById('obsId').value.trim();
-      const base = baseUrlInput.value.replace(/\/$/, '');
-      if(!id){ alert('Enter an observation ID'); return; }
-      const url = `${base}/?id=${encodeURIComponent(id)}`;
-      const el = document.getElementById('qrcode');
-      el.innerHTML = '';
-      const qr = new QRCode(el, { text: url, width: 256, height: 256, correctLevel: QRCode.CorrectLevel.H });
-      el.dataset.url = url;
+    async function loadObservations() {
+      const select = document.getElementById('observation-select');
+      select.innerHTML = '<option>Loading...</option>';
+
+      const url = "https://api.inaturalist.org/v1/observations" +
+        "?project_slug=erc-vale-da-lama" +
+        "&order=desc&order_by=observed_on" +
+        "&per_page=200" +
+        "&quality_grade=any";
+
+      const resp = await fetch(url);
+      const data = await resp.json();
+
+      select.innerHTML = "";
+
+      const range = getFilterFromURL();
+      const now = new Date();
+      let cutoff = null;
+
+      if (range === "today") {
+        cutoff = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      } else if (range === "week") {
+        cutoff = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        cutoff.setDate(cutoff.getDate() - 7);
+      } else {
+        cutoff = null;
+      }
+
+      data.results.forEach(obs => {
+        let obsDate = null;
+        if (obs.observed_on) {
+          const parts = obs.observed_on.split("-");
+          obsDate = new Date(parts[0], parts[1] - 1, parts[2]);
+        }
+
+        // Skip observations older than cutoff
+        if (cutoff && obsDate && obsDate < cutoff) return;
+
+        const option = document.createElement('option');
+        option.value = obs.id;
+        option.textContent = `${obs.species_guess || 'Unknown species'} — ${obs.observed_on}`;
+        select.appendChild(option);
+      });
+    }
+
+    document.getElementById('qr-form').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const obsId = document.getElementById('observation-select').value;
+      const label = document.getElementById('qr-label').value;
+
+      const qr = new QRious({
+        value: `https://www.inaturalist.org/observations/${obsId}`,
+        size: 250
+      });
+
+      const resultDiv = document.getElementById('qr-result');
+      resultDiv.innerHTML = `<h3>${label || 'QR Code'}</h3>`;
+      resultDiv.appendChild(qr.image);
     });
 
-    document.getElementById('download').addEventListener('click', () => {
-      const canvas = document.querySelector('#qrcode canvas');
-      if (!canvas) { alert('Create a QR first.'); return; }
-      const link = document.createElement('a');
-      link.download = 'garden_tour_qr.png';
-      link.href = canvas.toDataURL('image/png');
-      link.click();
-    });
+    loadObservations();
   </script>
 </body>
 </html>

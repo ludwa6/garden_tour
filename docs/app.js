@@ -117,6 +117,16 @@ function renderObservations() {
     map.setView([37.146, -8.642], 14);
   }
 }
+// --- Update QR Admin link with current filter ---
+function updateQRAdminLink() {
+  const link = document.getElementById('qr-admin-link');
+  if (link) {
+    link.href = `qr_admin.html?range=${currentRange}`;
+  }
+}
+
+// Call it whenever filter changes or page loads
+document.addEventListener("DOMContentLoaded", updateQRAdminLink);
 
 // --- Filter button handlers ---
 document.querySelectorAll('.controls button').forEach(btn => {
@@ -125,6 +135,7 @@ document.querySelectorAll('.controls button').forEach(btn => {
     btn.classList.add('active');
     currentRange = btn.dataset.range;
     renderObservations();
+    updateQRAdminLink();
   });
 });
 
