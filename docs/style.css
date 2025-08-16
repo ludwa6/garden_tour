@@ -11,7 +11,11 @@ h1{margin:0;font-size:1.1rem}
 #badges{display:flex;gap:.35rem}
 #badges .badge{font-size:1rem}
 #settingsBtn{background:#e2e8f0;border:1px solid #cbd5e1;border-radius:.5rem;padding:.3rem .5rem;cursor:pointer}
-#map{height:48vh;width:100%}
+#map {
+  height: 50vh;
+  min-height: 300px;
+  width: 100%;
+}
 #observations {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));

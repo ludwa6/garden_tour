@@ -42,12 +42,9 @@ const url = "https://api.inaturalist.org/v1/observations" +
   renderObservations();
 }
 
-// --- Render observations based on filter ---
+/// --- Render observations based on filter ---
 function renderObservations() {
-markers.clearLayers();
-if (!map.hasLayer(markers)) {
-  map.addLayer(markers);
-}
+  markers.clearLayers();
   const listDiv = document.getElementById('observations');
   listDiv.innerHTML = ""; // clear before re-render
 
@@ -109,7 +106,14 @@ if (!map.hasLayer(markers)) {
   const summary = document.createElement('div');
   summary.textContent = `${count} observations shown (${currentRange})`;
   listDiv.prepend(summary);
+
+  // --- NEW: ensure map stays visible and updates correctly ---
+  map.invalidateSize();
+  if (markers.getLayers().length > 0) {
+    map.fitBounds(markers.getBounds(), { padding: [50, 50] });
+  }
 }
+
 // --- Filter button handlers ---
 document.querySelectorAll('.controls button').forEach(btn => {
   btn.addEventListener('click', () => {
