@@ -53,16 +53,23 @@ function renderObservations() {
   if (currentRange === 'today') {
     cutoff = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   } else if (currentRange === 'week') {
-    cutoff = new Date();
-    cutoff.setDate(now.getDate() - 7);
+    cutoff = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    cutoff.setDate(cutoff.getDate() - 7);
+  } else {
+    cutoff = null; // 'all' shows everything
   }
 
   let count = 0;
 
   allObservations.forEach(obs => {
-    const obsDate = obs?.observed_on
-      ? new Date(obs.observed_on)
-      : (obs?.created_at ? new Date(obs.created_at) : null);
+    // --- Normalize observed date to midnight local time ---
+    let obsDate = null;
+    if (obs.observed_on) {
+      const parts = obs.observed_on.split("-"); // "YYYY-MM-DD"
+      obsDate = new Date(parts[0], parts[1] - 1, parts[2]); // local midnight
+    } else if (obs.created_at) {
+      obsDate = new Date(obs.created_at);
+    }
 
     if (cutoff && obsDate && obsDate < cutoff) return;
 
@@ -99,7 +106,6 @@ function renderObservations() {
   summary.textContent = `${count} observations shown (${currentRange})`;
   listDiv.prepend(summary);
 }
-
 // --- Filter button handlers ---
 document.querySelectorAll('.controls button').forEach(btn => {
   btn.addEventListener('click', () => {
