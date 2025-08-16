@@ -1,104 +1,99 @@
 // app.js
 
-// --- Map setup ---
-const map = L.map('map', { scrollWheelZoom: false });
+// --- Setup Map ---
+const map = L.map('map').setView([37.1, -8.6], 14);
+
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-  maxZoom: 19,
   attribution: '&copy; OpenStreetMap contributors'
 }).addTo(map);
 
-// load Vale da Lama perimeter from KML
+// --- Load Vale da Lama perimeter from KML ---
 omnivore.kml('Q.VdL-Perimeter.kml')
-  .on('ready', function(e) {
+  .on('ready', function (e) {
     map.fitBounds(e.target.getBounds());
   })
   .addTo(map);
 
-const polygon = L.polygon(valeDaLamaCoords, { color: 'green', weight: 2, fillOpacity: 0.25 }).addTo(map);
-map.fitBounds(polygon.getBounds());
+// --- Marker cluster group ---
+const markers = L.markerClusterGroup();
+map.addLayer(markers);
 
-// --- Marker cluster & state ---
-const cluster = L.markerClusterGroup();
-map.addLayer(cluster);
-
-const statusEl = document.getElementById('observations');
-const projectSlug = 'erc-vale-da-lama';
-
+// --- Global state ---
 let allObservations = [];
+let currentRange = 'today';
 
-// --- Fetch all observations once (quality_grade=any so “today” casual obs show) ---
-async function fetchAllObservations() {
-  const url = `https://api.inaturalist.org/v1/observations?project_slug=${encodeURIComponent(projectSlug)}&order=desc&order_by=observed_on&per_page=200&quality_grade=any&_=${Date.now()}`;
-  console.log('[iNat] URL:', url);
+// --- Fetch iNaturalist observations ---
+async function fetchObservations() {
+  const url = "https://api.inaturalist.org/v1/observations" +
+    "?project_slug=erc-vale-da-lama" +
+    "&order=desc&order_by=observed_on" +
+    "&per_page=200" +
+    "&quality_grade=any";
 
-  try {
-    const res = await fetch(url, { cache: 'no-store' });
-    console.log('[iNat] Status:', res.status, res.statusText);
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  console.log("[iNat] URL:", url);
+  const res = await fetch(url);
+  console.log("[iNat] Status:", res.status, res.statusText);
 
-    const data = await res.json();
-    allObservations = Array.isArray(data?.results) ? data.results : [];
-    console.log('[iNat] Loaded results:', allObservations.length);
+  const json = await res.json();
+  allObservations = json.results || [];
+  console.log("[iNat] Loaded results:", allObservations.length);
 
-    // Initial render = “all”
-    renderFiltered('all');
-  } catch (e) {
-    console.error('[iNat] Fetch failed:', e);
-    statusEl.textContent = 'Failed to load observations.';
-  }
+  renderObservations();
 }
 
-// --- Render based on range ---
-function renderFiltered(range) {
-  cluster.clearLayers();
+// --- Render observations based on filter ---
+function renderObservations() {
+  markers.clearLayers();
 
   const now = new Date();
   let cutoff = null;
 
-  if (range === 'today') {
+  if (currentRange === 'today') {
     cutoff = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  } else if (range === 'week') {
-    cutoff = new Date(now);
+  } else if (currentRange === 'week') {
+    cutoff = new Date();
     cutoff.setDate(now.getDate() - 7);
-  } // else 'all' -> no cutoff
+  }
 
-  let shown = 0;
+  let count = 0;
 
-  for (const obs of allObservations) {
-    const coords = obs?.geojson?.coordinates;
-    if (!Array.isArray(coords) || coords.length < 2) continue;
-
-    const [lon, lat] = coords;
-
-    // Favor observed_on; fall back to created_at if needed
+  allObservations.forEach(obs => {
     const obsDate = obs?.observed_on
       ? new Date(obs.observed_on)
       : (obs?.created_at ? new Date(obs.created_at) : null);
 
-    if (cutoff && obsDate && obsDate < cutoff) continue;
+    if (cutoff && obsDate && obsDate < cutoff) return;
 
-    const marker = L.marker([lat, lon]).bindPopup(`
+    const lat = obs.geojson?.coordinates?.[1];
+    const lng = obs.geojson?.coordinates?.[0];
+    if (!lat || !lng) return;
+
+    const marker = L.marker([lat, lng]);
+    marker.bindPopup(`
       <strong>${obs.species_guess || 'Unknown species'}</strong><br>
-      Observed on: ${obs.observed_on || '—'}<br>
-      <a href="${obs.uri}" target="_blank" rel="noopener">View on iNaturalist</a>
+      Observed: ${obs.observed_on || 'n/a'}<br>
+      <a href="https://www.inaturalist.org/observations/${obs.id}" target="_blank">
+        View on iNat
+      </a>
     `);
 
-    cluster.addLayer(marker);
-    shown++;
-  }
+    markers.addLayer(marker);
+    count++;
+  });
 
-  statusEl.textContent = `${shown} observations shown`;
+  document.getElementById('observations').textContent =
+    `${count} observations shown (${currentRange})`;
 }
 
-// --- Wire the existing header buttons using data-range ---
-document.querySelectorAll('[data-range]').forEach(btn => {
+// --- Filter button handlers ---
+document.querySelectorAll('.controls button').forEach(btn => {
   btn.addEventListener('click', () => {
-    document.querySelectorAll('[data-range]').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.controls button').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
-    const range = btn.getAttribute('data-range'); // 'today' | 'week' | 'all'
-    renderFiltered(range);
+    currentRange = btn.dataset.range;
+    renderObservations();
   });
 });
 
-// --- Go! ---
-fetchAllObservations();
+// --- Start ---
+fetchObservations();
