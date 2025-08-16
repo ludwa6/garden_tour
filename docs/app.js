@@ -24,12 +24,13 @@ let currentRange = 'today';
 
 // --- Fetch iNaturalist observations ---
 async function fetchObservations() {
-  const url = "https://api.inaturalist.org/v1/observations" +
-    "?project_slug=erc-vale-da-lama" +
+const PROJECT_ID = 197410;
+const url = "https://api.inaturalist.org/v1/observations" +
+    "?project_id=" + PROJECT_ID +
     "&order=desc&order_by=observed_on" +
     "&per_page=200" +
     "&quality_grade=any";
-
+    
   console.log("[iNat] URL:", url);
   const res = await fetch(url);
   console.log("[iNat] Status:", res.status, res.statusText);
