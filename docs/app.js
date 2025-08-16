@@ -44,6 +44,8 @@ async function fetchObservations() {
 // --- Render observations based on filter ---
 function renderObservations() {
   markers.clearLayers();
+  const listDiv = document.getElementById('observations');
+  listDiv.innerHTML = ""; // clear before re-render
 
   const now = new Date();
   let cutoff = null;
@@ -68,6 +70,7 @@ function renderObservations() {
     const lng = obs.geojson?.coordinates?.[0];
     if (!lat || !lng) return;
 
+    // --- Add map marker ---
     const marker = L.marker([lat, lng]);
     marker.bindPopup(`
       <strong>${obs.species_guess || 'Unknown species'}</strong><br>
@@ -76,13 +79,25 @@ function renderObservations() {
         View on iNat
       </a>
     `);
-
     markers.addLayer(marker);
+
+    // --- Add entry below map ---
+    const div = document.createElement('div');
+    div.className = "observation-item";
+    div.innerHTML = `
+      <img src="${obs.photos?.[0]?.url.replace('square', 'small') || ''}" 
+           alt="${obs.species_guess || 'Unknown'}" />
+      <span>${obs.species_guess || 'Unknown species'} — ${obs.observed_on || 'n/a'}</span>
+    `;
+    listDiv.appendChild(div);
+
     count++;
   });
 
-  document.getElementById('observations').textContent =
-    `${count} observations shown (${currentRange})`;
+  // --- Summary at top ---
+  const summary = document.createElement('div');
+  summary.textContent = `${count} observations shown (${currentRange})`;
+  listDiv.prepend(summary);
 }
 
 // --- Filter button handlers ---
