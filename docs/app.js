@@ -107,10 +107,14 @@ function renderObservations() {
   summary.textContent = `${count} observations shown (${currentRange})`;
   listDiv.prepend(summary);
 
-  // --- NEW: ensure map stays visible and updates correctly ---
+  // --- Keep map visible & update view ---
   map.invalidateSize();
+
   if (markers.getLayers().length > 0) {
     map.fitBounds(markers.getBounds(), { padding: [50, 50] });
+  } else {
+    // Default fallback location (Vale da Lama) if no markers
+    map.setView([37.146, -8.642], 14);
   }
 }
 
