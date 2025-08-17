@@ -4,110 +4,30 @@
   <meta charset="UTF-8">
   <title>QR Admin</title>
   <link rel="stylesheet" href="style.css">
-  <style>
-    body { font-family: sans-serif; margin: 2rem; }
-    h1 { margin-bottom: 1rem; }
-    .form-group { margin-bottom: 1rem; }
-    label { display: block; margin-bottom: 0.25rem; }
-    select, input, button { padding: 0.4rem; border-radius: 0.4rem; border: 1px solid #ccc; }
-    button { background: #0369a1; color: white; border: none; cursor: pointer; }
-    button:hover { background: #025b8c; }
-    .back-link { display: inline-block; margin-top: 1.5rem; color: #0369a1; text-decoration: none; }
-    .back-link:hover { text-decoration: underline; }
-  </style>
 </head>
 <body>
+  <!-- ✅ Kept: Page header -->
   <h1>QR Admin</h1>
+  
+  <!-- ✅ New: Back link so user can return to map -->
+  <a href="index.html">← Back to main</a>
 
-  <form id="qr-form">
-    <div class="form-group">
-      <label for="observation-select">Select Observation:</label>
-      <select id="observation-select" required>
-        <option>Loading...</option>
-      </select>
-    </div>
+  <!-- ✅ Simplified: Controls for selecting an observation -->
+  <div id="controls">
+    <label for="obsSelect">Select Observation:</label>
+    <select id="obsSelect">
+      <option value="">Loading...</option>
+    </select>
+  </div>
 
-    <div class="form-group">
-      <label for="qr-label">Custom QR Label:</label>
-      <input type="text" id="qr-label" placeholder="Enter label text">
-    </div>
+  <!-- ✅ Simplified: QR code preview -->
+  <div id="qr-preview">
+    <h3>Custom QR Code:</h3>
+    <canvas id="qrCanvas"></canvas>
+  </div>
 
-    <button type="submit">Generate QR Code</button>
-  </form>
-
-  <div id="qr-result" style="margin-top:2rem;"></div>
-
-  <a href="index.html" class="back-link">← Back to Map & Observations</a>
-
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
-  <script>
-    // --- Get filter choice from URL (e.g. ?range=week) ---
-    function getFilterFromURL() {
-      const params = new URLSearchParams(window.location.search);
-      return params.get("range") || "all"; // default if missing
-    }
-
-    async function loadObservations() {
-      const select = document.getElementById('observation-select');
-      select.innerHTML = '<option>Loading...</option>';
-
-      const url = "https://api.inaturalist.org/v1/observations" +
-        "?project_slug=erc-vale-da-lama" +
-        "&order=desc&order_by=observed_on" +
-        "&per_page=200" +
-        "&quality_grade=any";
-
-      const resp = await fetch(url);
-      const data = await resp.json();
-
-      select.innerHTML = "";
-
-      const range = getFilterFromURL();
-      const now = new Date();
-      let cutoff = null;
-
-      if (range === "today") {
-        cutoff = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-      } else if (range === "week") {
-        cutoff = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-        cutoff.setDate(cutoff.getDate() - 7);
-      } else {
-        cutoff = null;
-      }
-
-      data.results.forEach(obs => {
-        let obsDate = null;
-        if (obs.observed_on) {
-          const parts = obs.observed_on.split("-");
-          obsDate = new Date(parts[0], parts[1] - 1, parts[2]);
-        }
-
-        // Skip observations older than cutoff
-        if (cutoff && obsDate && obsDate < cutoff) return;
-
-        const option = document.createElement('option');
-        option.value = obs.id;
-        option.textContent = `${obs.species_guess || 'Unknown species'} — ${obs.observed_on}`;
-        select.appendChild(option);
-      });
-    }
-
-    document.getElementById('qr-form').addEventListener('submit', function(e) {
-      e.preventDefault();
-      const obsId = document.getElementById('observation-select').value;
-      const label = document.getElementById('qr-label').value;
-
-      const qr = new QRious({
-        value: `https://www.inaturalist.org/observations/${obsId}`,
-        size: 250
-      });
-
-      const resultDiv = document.getElementById('qr-result');
-      resultDiv.innerHTML = `<h3>${label || 'QR Code'}</h3>`;
-      resultDiv.appendChild(qr.image);
-    });
-
-    loadObservations();
-  </script>
+  <!-- ✅ Scripts (moved logic out of HTML into qr_admin.js) -->
+  <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+  <script src="qr_admin.js"></script>
 </body>
 </html>

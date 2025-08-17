@@ -46,6 +46,15 @@
 <script src="https://unpkg.com/leaflet.markercluster/dist/leaflet.markercluster.js"></script>
 <script src="https://unpkg.com/leaflet-omnivore@0.3.4/leaflet-omnivore.min.js"></script>
 <script src="app.js?v=2"></script>
+<script>
+  // keep this near the bottom of index.html
+  document.getElementById('qr-admin-link').addEventListener('click', (e) => {
+    e.preventDefault();
+    const url = `qr_admin.html?range=${currentRange}`;
+    window.location.href = url;
+  });
+</script>
+<script src="app.js"></script>
 
 </body>
 </html>
