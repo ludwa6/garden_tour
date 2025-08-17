@@ -1,66 +1,72 @@
-// qr_admin.js
-
-// --- Load observations from localStorage (set by index.html) ---
-const obsSelect = document.getElementById("obsSelect");
-const qrCanvas = document.getElementById("qrCanvas");
-
+// --- QR Admin Script ---
+// Load filtered observations from localStorage
+const stored = localStorage.getItem("erc_observations");
 let observations = [];
 try {
-  const stored = localStorage.getItem("erc_observations");
-  if (stored) {
-    observations = JSON.parse(stored);
-    console.log(`[QR Admin] Loaded ${observations.length} observations from localStorage`);
-  } else {
-    console.warn("[QR Admin] No observations found in localStorage");
-  }
+  observations = stored ? JSON.parse(stored) : [];
 } catch (e) {
-  console.error("[QR Admin] Failed to parse localStorage data", e);
+  console.error("Failed to parse stored observations", e);
 }
 
+const selectEl = document.getElementById("observationSelect");
+const qrCanvas = document.getElementById("qrCanvas");
+const previewDiv = document.getElementById("observationPreview");
+
 // --- Populate dropdown ---
-function populateDropdown() {
-  obsSelect.innerHTML = ""; // clear old options
-
-  if (observations.length === 0) {
-    const opt = document.createElement("option");
-    opt.value = "";
-    opt.textContent = "No observations available";
-    obsSelect.appendChild(opt);
-    return;
-  }
-
+if (observations.length > 0) {
+  selectEl.innerHTML = "";
   observations.forEach(obs => {
     const opt = document.createElement("option");
     opt.value = obs.id;
-    opt.textContent = `${obs.species_guess || "Unknown species"} — ${obs.observed_on || "n/a"}`;
-    obsSelect.appendChild(opt);
+    opt.textContent = `${obs.species_guess || "Unknown"} — ${obs.observed_on || "n/a"}`;
+    selectEl.appendChild(opt);
   });
+} else {
+  selectEl.innerHTML = `<option>⚠️ No observations available</option>`;
 }
 
-// --- Generate QR Code for selected observation ---
-function generateQR(obsId) {
-  const obs = observations.find(o => o.id == obsId);
-  if (!obs) {
-    console.warn("[QR Admin] No observation found for ID:", obsId);
-    qrCanvas.getContext("2d").clearRect(0, 0, qrCanvas.width, qrCanvas.height);
-    return;
-  }
+// --- Function to generate QR Code + preview ---
+function updateQRCode(obs) {
+  if (!obs) return;
 
-  const url = `https://www.inaturalist.org/observations/${obs.id}`;
-  console.log("[QR Admin] Generating QR for", url);
+  // Clear QR canvas
+  const ctx = qrCanvas.getContext("2d");
+  ctx.clearRect(0, 0, qrCanvas.width, qrCanvas.height);
 
-  QRCode.toCanvas(qrCanvas, url, { width: 256 }, function (error) {
-    if (error) console.error(error);
-    else console.log("[QR Admin] QR Code rendered");
-  });
+  // Generate QR
+  QRCode.toCanvas(
+    qrCanvas,
+    `https://www.inaturalist.org/observations/${obs.id}`,
+    { width: 200 },
+    function (error) {
+      if (error) console.error(error);
+    }
+  );
+
+  // ✅ Update observation preview
+  const photoUrl = obs.photos?.[0]?.url.replace("square", "small") || "";
+  const species = obs.species_guess || "Unknown species";
+  const observedOn = obs.observed_on || "n/a";
+  const link = `https://www.inaturalist.org/observations/${obs.id}`;
+
+  previewDiv.innerHTML = `
+    <div style="margin-top: 1em;">
+      ${photoUrl ? `<img src="${photoUrl}" alt="${species}" style="max-width:150px; display:block; margin-bottom:0.5em;">` : ""}
+      <strong>${species}</strong> — ${observedOn}<br>
+      <a href="${link}" target="_blank">View on iNaturalist</a>
+    </div>
+  `;
 }
 
 // --- Event listener for dropdown changes ---
-obsSelect.addEventListener("change", () => {
-  if (obsSelect.value) {
-    generateQR(obsSelect.value);
-  }
+selectEl.addEventListener("change", () => {
+  const obsId = selectEl.value;
+  const obs = observations.find(o => String(o.id) === String(obsId));
+  updateQRCode(obs);
 });
 
-// --- Initialize page ---
-populateDropdown();
+// --- Initialize default selection ---
+if (observations.length > 0) {
+  selectEl.value = observations[0].id;
+  updateQRCode(observations[0]);
+}

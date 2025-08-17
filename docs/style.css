@@ -50,3 +50,27 @@ h1{margin:0;font-size:1.1rem}
 .hidden{display:none}
 button.danger{background:#ef4444;border:1px solid #ef4444;color:white;border-radius:.5rem;padding:.4rem .6rem}
 @media (min-width: 900px){#map{height:52vh}}
+
+/* --- QR Admin Observation Preview --- */
+.preview {
+  margin-top: 1em;
+  padding: 0.5em;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  background: #fafafa;
+  max-width: 320px;
+}
+.preview img {
+  max-width: 100%;
+  border-radius: 4px;
+  margin-bottom: 0.5em;
+}
+.preview a {
+  display: inline-block;
+  margin-top: 0.3em;
+  color: #0066cc;
+  text-decoration: none;
+}
+.preview a:hover {
+  text-decoration: underline;
+}
