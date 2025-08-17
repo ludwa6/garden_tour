@@ -1,66 +1,67 @@
-// qr_admin.js
+// --- QR Admin Page Script ---
 
-// --- Load observations from localStorage (set by index.html) ---
-const obsSelect = document.getElementById("obsSelect");
-const qrCanvas = document.getElementById("qrCanvas");
+document.addEventListener("DOMContentLoaded", () => {
+  const dropdown = document.getElementById("observationDropdown");
+  const qrDiv = document.getElementById("qrcode");
+  const preview = document.getElementById("observationPreview");
 
-let observations = [];
-try {
-  const stored = localStorage.getItem("erc_observations");
-  if (stored) {
-    observations = JSON.parse(stored);
-    console.log(`[QR Admin] Loaded ${observations.length} observations from localStorage`);
-  } else {
-    console.warn("[QR Admin] No observations found in localStorage");
+  // --- Load observations saved from main page ---
+  const saved = localStorage.getItem("erc_observations");
+  let observations = [];
+  try {
+    observations = saved ? JSON.parse(saved) : [];
+  } catch (e) {
+    console.error("Failed to parse saved observations:", e);
   }
-} catch (e) {
-  console.error("[QR Admin] Failed to parse localStorage data", e);
-}
 
-// --- Populate dropdown ---
-function populateDropdown() {
-  obsSelect.innerHTML = ""; // clear old options
-
+  // --- Populate dropdown ---
   if (observations.length === 0) {
     const opt = document.createElement("option");
-    opt.value = "";
-    opt.textContent = "No observations available";
-    obsSelect.appendChild(opt);
-    return;
+    opt.textContent = "No observations available (filter on main page first)";
+    dropdown.appendChild(opt);
+    dropdown.disabled = true;
+  } else {
+    observations.forEach(obs => {
+      const opt = document.createElement("option");
+      opt.value = obs.id;
+      opt.textContent = `${obs.species_guess || "Unknown species"} — ${obs.observed_on || "n/a"}`;
+      dropdown.appendChild(opt);
+    });
   }
 
-  observations.forEach(obs => {
-    const opt = document.createElement("option");
-    opt.value = obs.id;
-    opt.textContent = `${obs.species_guess || "Unknown species"} — ${obs.observed_on || "n/a"}`;
-    obsSelect.appendChild(opt);
+  // --- Handle selection change ---
+  dropdown.addEventListener("change", () => {
+    const id = dropdown.value;
+    const obs = observations.find(o => o.id == id);
+
+    if (obs) {
+      // --- Generate QR Code ---
+      qrDiv.innerHTML = "";
+      new QRCode(qrDiv, {
+        text: `https://www.inaturalist.org/observations/${obs.id}`,
+        width: 256,
+        height: 256
+      });
+
+      // --- Show image + link preview ---
+      const imgUrl = obs.photos?.[0]?.url.replace("square", "small") || "";
+      preview.innerHTML = `
+        <a href="https://www.inaturalist.org/observations/${obs.id}" target="_blank">
+          <img src="${imgUrl}" 
+               alt="${obs.species_guess || 'Unknown species'}" 
+               style="max-width:200px; display:block; margin:0.5em 0;" />
+        </a>
+        <div>
+          <strong>${obs.species_guess || 'Unknown species'}</strong><br>
+          Observed: ${obs.observed_on || 'n/a'}
+        </div>
+      `;
+    }
   });
-}
 
-// --- Generate QR Code for selected observation ---
-function generateQR(obsId) {
-  const obs = observations.find(o => o.id == obsId);
-  if (!obs) {
-    console.warn("[QR Admin] No observation found for ID:", obsId);
-    qrCanvas.getContext("2d").clearRect(0, 0, qrCanvas.width, qrCanvas.height);
-    return;
-  }
-
-  const url = `https://www.inaturalist.org/observations/${obs.id}`;
-  console.log("[QR Admin] Generating QR for", url);
-
-  QRCode.toCanvas(qrCanvas, url, { width: 256 }, function (error) {
-    if (error) console.error(error);
-    else console.log("[QR Admin] QR Code rendered");
-  });
-}
-
-// --- Event listener for dropdown changes ---
-obsSelect.addEventListener("change", () => {
-  if (obsSelect.value) {
-    generateQR(obsSelect.value);
+  // --- Auto-trigger first observation if available ---
+  if (observations.length > 0) {
+    dropdown.value = observations[0].id;
+    dropdown.dispatchEvent(new Event("change"));
   }
 });
-
-// --- Initialize page ---
-populateDropdown();
