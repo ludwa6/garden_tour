@@ -20,6 +20,7 @@ map.addLayer(markers);
 
 // --- Global state ---
 let allObservations = [];
+let currentObservations = [];
 let currentRange = 'today';
 
 // --- Fetch iNaturalist observations ---
@@ -61,7 +62,7 @@ function renderObservations() {
   }
 
   let count = 0;
-
+  currentObservations = [];
   allObservations.forEach(obs => {
     // --- Normalize observed date to midnight local time ---
     let obsDate = null;
@@ -100,6 +101,7 @@ function renderObservations() {
     listDiv.appendChild(div);
 
     count++;
+    currentObservations.push(obs);
   });
 
   // --- Summary at top ---
@@ -116,6 +118,8 @@ function renderObservations() {
     // Default fallback location (Vale da Lama) if no markers
     map.setView([37.146, -8.642], 14);
   }
+  // --- Save the currently displayed observations for QR Admin ---
+  localStorage.setItem("erc_observations", JSON.stringify(currentObservations));
 }
 // --- Update QR Admin link with current filter ---
 function updateQRAdminLink() {
@@ -123,6 +127,8 @@ function updateQRAdminLink() {
   if (link) {
     link.href = `qr_admin.html?range=${currentRange}`;
   }
+    // --- Save the currently displayed observations for QR Admin ---
+  localStorage.setItem("erc_observations", JSON.stringify(currentObservations));
 }
 
 // Call it whenever filter changes or page loads
