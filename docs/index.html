@@ -1,60 +1,29 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Garden Tour – ERC Vale da Lama</title>
-  <link rel="icon" href="icons/icon-192.png">
-  <link rel="manifest" href="manifest.json" />
-  <meta name="theme-color" content="#0ea5e9" />
-  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.css" />
-  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.Default.css" />
-  <link rel="stylesheet" href="style.css" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Garden Tour</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <header class="appbar">
-    <h1>Garden Tour</h1>
-    <div class="controls">
-      <button data-range="today" class="active">Today</button>
-      <button data-range="week">This Week</button>
-      <button data-range="all">All</button>
-    </div>
-    <div class="gamification">
-      <span id="points">0 pts</span>
-      <span id="badges"></span>
-      <button id="settingsBtn" aria-label="Open settings">⚙️</button>
-    </div>
+  <header>
+    <h1>Garden Tour Observations</h1>
   </header>
 
-  <div id="map" role="region" aria-label="Observation map"></div>
+  <main class="container">
+    <section class="card">
+      <h2>Latest Observations</h2>
+      <div id="observation-list">
+        <!-- Filled dynamically by index.js -->
+      </div>
+    </section>
+  </main>
 
-  <section id="observations" aria-live="polite">Loading...</section>
-
-  <div id="settingsPanel" class="panel hidden" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
-    <h2 id="settingsTitle">Settings</h2>
-    <button id="resetBtn" class="danger">Reset My Tour</button>
-    <button id="closeSettings">Close</button>
-  </div>
-
-  <footer class="footer">
-    <a id="qr-admin-link" href="#">QR Admin</a>
-    <a href="https://www.inaturalist.org/projects/erc-vale-da-lama" target="_blank" rel="noopener">View Project</a>
+  <footer>
+    <a href="qr_admin.html">QR Admin</a>
   </footer>
 
-<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-<script src="https://unpkg.com/leaflet.markercluster/dist/leaflet.markercluster.js"></script>
-<script src="https://unpkg.com/leaflet-omnivore@0.3.4/leaflet-omnivore.min.js"></script>
-<script src="app.js?v=2"></script>
-<script>
-  // keep this near the bottom of index.html
-  document.getElementById('qr-admin-link').addEventListener('click', (e) => {
-    e.preventDefault();
-    const url = `qr_admin.html?range=${currentRange}`;
-    window.location.href = url;
-  });
-</script>
-<script src="app.js"></script>
-
+  <script src="index.js"></script>
 </body>
 </html>
