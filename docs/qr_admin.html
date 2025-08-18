@@ -3,32 +3,36 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>QR Code Admin</title>
+  <title>QR Admin</title>
   <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/qrcodejs/qrcode.min.js"></script>
+  <script src="qr_admin.js" defer></script>
 </head>
 <body>
-  <header>
-    <a href="index.html">← Back</a>
-    <h1>QR Code Generator</h1>
+  <!-- Top App Bar -->
+  <header class="appbar">
+    <a href="index.html" class="back-link">&larr; Back</a>
+    <h1>QR Admin</h1>
   </header>
 
-  <main class="container">
-    <!-- Observation Selector -->
+  <!-- Main Content -->
+  <main class="qr-admin">
     <section class="card">
       <h2>Select Observation</h2>
-      <select id="observationSelect">
-        <option>Loading...</option>
-      </select>
+      <div id="controls">
+        <label for="obsSelect" class="visually-hidden">Select Observation:</label>
+        <select id="obsSelect">
+          <option value="">Loading...</option>
+        </select>
+      </div>
     </section>
 
-    <!-- QR Code Display -->
     <section class="card">
       <h2>Custom QR Code</h2>
       <div id="qrcode"></div>
-      <input id="customURL" type="text" placeholder="Paste or edit URL here" />
     </section>
-  </main>
 
-  <script src="qr_admin.js"></script>
+    <section id="preview" class="card"></section>
+  </main>
 </body>
 </html>
