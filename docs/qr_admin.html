@@ -2,36 +2,37 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>QR Admin</title>
   <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/qrcodejs/qrcode.min.js"></script>
+  <script src="qr_admin.js" defer></script>
 </head>
 <body>
-  <!-- ✅ Kept: Page header -->
-  <h1>QR Admin</h1>
-  
-  <!-- ✅ New: Back link so user can return to map -->
-  <a href="index.html">← Back to main</a>
+  <!-- Top App Bar -->
+  <header class="appbar">
+    <a href="index.html" class="back-link">&larr; Back</a>
+    <h1>QR Admin</h1>
+  </header>
 
-  <!-- ✅ Simplified: Controls for selecting an observation -->
-  <div id="controls">
-    <label for="observationSelect">Select Observation:</label>
-    <select id="observationSelect">
-      <option value="">Loading...</option>
-  </select>
-  </div>
+  <!-- Main Content -->
+  <main class="qr-admin">
+    <section class="card">
+      <h2>Select Observation</h2>
+      <div id="controls">
+        <label for="obsSelect" class="visually-hidden">Select Observation:</label>
+        <select id="obsSelect">
+          <option value="">Loading...</option>
+        </select>
+      </div>
+    </section>
 
-  <!-- ✅ Simplified: QR code preview -->
-  <div id="qr-preview">
-    <h3>Custom QR Code:</h3>
-    <canvas id="qrCanvas"></canvas>
-  </div>
-  
-  <!-- ✅ Observation preview (image + link) -->
-  <div id="observationPreview" class="preview"></div>
+    <section class="card">
+      <h2>Custom QR Code</h2>
+      <div id="qrcode"></div>
+    </section>
 
-  <!-- ✅ Scripts (moved logic out of HTML into qr_admin.js) -->
-  <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
-  <script src="qr_admin.js"></script>
+    <section id="preview" class="card"></section>
+  </main>
 </body>
 </html>
-
