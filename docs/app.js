@@ -25,13 +25,13 @@ let currentRange = 'today';
 
 // --- Fetch iNaturalist observations ---
 async function fetchObservations() {
-const PROJECT_ID = 197410;
-const url = "https://api.inaturalist.org/v1/observations" +
-    "?project_id=" + PROJECT_ID +
-    "&order=desc&order_by=observed_on" +
-    "&per_page=200" +
-    "&quality_grade=any";
-    
+  const PROJECT_ID = 197410;
+  const url = "https://api.inaturalist.org/v1/observations" +
+      "?project_id=" + PROJECT_ID +
+      "&order=desc&order_by=observed_on" +
+      "&per_page=200" +
+      "&quality_grade=any";
+      
   console.log("[iNat] URL:", url);
   const res = await fetch(url);
   console.log("[iNat] Status:", res.status, res.statusText);
@@ -109,25 +109,28 @@ function renderObservations() {
   summary.textContent = `${count} observations shown (${currentRange})`;
   listDiv.prepend(summary);
 
-  // --- Keep map visible & update view ---
-  map.invalidateSize();
-
-  if (markers.getLayers().length > 0) {
-    map.fitBounds(markers.getBounds(), { padding: [50, 50] });
-  } else {
-    // Default fallback location (Vale da Lama) if no markers
-    map.setView([37.146, -8.642], 14);
-  }
   // --- Save the currently displayed observations for QR Admin ---
   localStorage.setItem("erc_observations", JSON.stringify(currentObservations));
+
+  // --- Keep map visible & update view ---
+  setTimeout(() => {
+    map.invalidateSize();
+    if (markers.getLayers().length > 0) {
+      map.fitBounds(markers.getBounds(), { padding: [50, 50] });
+    } else {
+      // Default fallback location (Vale da Lama) if no markers
+      map.setView([37.146, -8.642], 14);
+    }
+  }, 100);
 }
+
 // --- Update QR Admin link with current filter ---
 function updateQRAdminLink() {
   const link = document.getElementById('qr-admin-link');
   if (link) {
     link.href = `qr_admin.html?range=${currentRange}`;
   }
-    // --- Save the currently displayed observations for QR Admin ---
+  // --- Save the currently displayed observations for QR Admin ---
   localStorage.setItem("erc_observations", JSON.stringify(currentObservations));
 }
 
@@ -147,4 +150,3 @@ document.querySelectorAll('.controls button').forEach(btn => {
 
 // --- Start ---
 fetchObservations();
-
