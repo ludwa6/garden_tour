@@ -45,6 +45,11 @@ footer a:hover {
   margin: 0 auto;
 }
 
+#map {
+  flex: 1;
+  height: 80vh; /* adjust if header/footer take space */
+  width: 100%;
+}
 .main-page #observations {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
