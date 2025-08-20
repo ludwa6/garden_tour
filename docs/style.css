@@ -1,4 +1,4 @@
-/* General Reset */
+/* === Global Reset === */
 * {
   box-sizing: border-box;
   margin: 0;
@@ -8,14 +8,14 @@
 body {
   font-family: system-ui, sans-serif;
   line-height: 1.5;
-  background: #f7f7f7;
+  background: #f9f9fb;
   color: #222;
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
 }
 
-/* Header + Footer */
+/* === Shared Header & Footer === */
 header, footer {
   background: #2c3e50;
   color: white;
@@ -35,31 +35,23 @@ footer a:hover {
   text-decoration: underline;
 }
 
-/* Container */
-main.container {
+/* ===============================
+   MAIN PAGE
+   =============================== */
+.main-page main.container {
   flex: 1;
   padding: 1rem;
   max-width: 1200px;
   margin: 0 auto;
 }
 
-/* Card Layout */
-.card {
-  background: white;
-  border-radius: 0.75rem;
-  padding: 1rem;
-  margin-bottom: 1.5rem;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
-}
-
-/* Observations Grid */
-#observations {
+.main-page #observations {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
   gap: 1rem;
 }
 
-.observation-item {
+.main-page .observation-item {
   background: #fff;
   border-radius: 0.5rem;
   overflow: hidden;
@@ -67,103 +59,69 @@ main.container {
   transition: transform 0.2s ease;
 }
 
-.observation-item:hover {
+.main-page .observation-item:hover {
   transform: translateY(-4px);
 }
 
-.observation-item img {
+.main-page .observation-item img {
   width: 100%;
   height: 180px;
   object-fit: cover;
   display: block;
 }
 
-.observation-item .obs {
+.main-page .observation-item .obs {
   padding: 0.75rem;
   text-align: center;
 }
 
-.observation-item a {
+.main-page .observation-item a {
   color: #2980b9;
   text-decoration: none;
   font-weight: 600;
 }
 
-.observation-item a:hover {
+.main-page .observation-item a:hover {
   text-decoration: underline;
 }
 
-/* Mobile tweaks */
+/* Mobile tweaks for main page */
 @media (max-width: 600px) {
   header h1 {
     font-size: 1.4rem;
   }
-  .observation-item img {
+  .main-page .observation-item img {
     height: 150px;
   }
 }
-/* --- QR Admin improvements --- */
-main.container {
-  display: flex;
-  flex-direction: column;
-  gap: 2rem;
-  max-width: 800px;
-  margin: 2rem auto; /* center content */
-}
 
-section.card {
-  padding: 1.5rem;
-  background: #fff;
-  border-radius: 0.75rem;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
-}
-
-#observationSelect,
-#customURL {
-  width: 100%;
-  padding: 0.5rem 0.75rem;
-  margin-top: 0.5rem;
-  font-size: 1rem;
-  border: 1px solid #ccc;
-  border-radius: 0.5rem;
-}
-
-#qrcode {
-  display: flex;
-  justify-content: center;
+/* ===============================
+   QR ADMIN PAGE
+   =============================== */
+.qr-admin-page {
   align-items: center;
-  margin-top: 1rem;
-}
-/* ===== QR Admin Page Styling ===== */
-body {
-  font-family: system-ui, sans-serif;
-  margin: 0;
   padding: 1rem;
-  background: #f9f9fb;
-  color: #333;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  min-height: 100vh;
 }
 
-h1 {
+.qr-admin-page h1 {
   margin: 1rem 0;
   font-size: 2rem;
   color: #2a5d9f;
 }
 
-a[href="index.html"] {
+.qr-admin-page a[href="index.html"] {
   margin-bottom: 1.5rem;
   color: #2a5d9f;
   text-decoration: none;
   font-size: 0.9rem;
 }
-a[href="index.html"]:hover {
+.qr-admin-page a[href="index.html"]:hover {
   text-decoration: underline;
 }
 
-#controls {
+.qr-admin-page #controls,
+.qr-admin-page #qr-preview,
+.qr-admin-page #observationPreview.preview {
   background: #fff;
   padding: 1rem;
   margin-bottom: 1rem;
@@ -173,13 +131,14 @@ a[href="index.html"]:hover {
   max-width: 500px;
 }
 
-#controls label {
+.qr-admin-page #controls label {
   display: block;
   margin-bottom: 0.5rem;
   font-weight: bold;
 }
 
-#observationSelect {
+.qr-admin-page #observationSelect,
+.qr-admin-page #customURL {
   width: 100%;
   padding: 0.6rem;
   border-radius: 8px;
@@ -187,28 +146,11 @@ a[href="index.html"]:hover {
   font-size: 1rem;
 }
 
-#qr-preview {
-  background: #fff;
-  padding: 1rem;
-  margin-bottom: 1rem;
-  border-radius: 12px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+.qr-admin-page #qr-preview {
   text-align: center;
-  width: 100%;
-  max-width: 500px;
 }
 
-#qr-preview canvas {
+.qr-admin-page #qr-preview canvas {
   margin-top: 0.5rem;
   max-width: 100%;
-}
-
-#observationPreview.preview {
-  background: #fff;
-  padding: 1rem;
-  border-radius: 12px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-  width: 100%;
-  max-width: 500px;
-  margin-bottom: 2rem;
 }
