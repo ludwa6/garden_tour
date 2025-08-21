@@ -6,32 +6,42 @@
   <link rel="stylesheet" href="style.css?v=2">
 </head>
 <body class="qr-admin-page">
-  <!-- ✅ Kept: Page header -->
-  <h1>QR Admin</h1>
-  
-  <!-- ✅ New: Back link so user can return to map -->
-  <a href="index.html">← Back to main</a>
-
-  <!-- ✅ Simplified: Controls for selecting an observation -->
-  <div id="controls">
-    <label for="observationSelect">Select Observation:</label>
-    <select id="observationSelect">
-      <option value="">Loading...</option>
-  </select>
+  <!-- ✅ App bar (consistent with index.html) -->
+  <div class="appbar">
+    <h1>QR Admin</h1>
+    <div class="controls">
+      <a href="index.html" class="back-btn">← Back to main</a>
+    </div>
   </div>
 
-  <!-- ✅ Simplified: QR code preview -->
-  <div id="qr-preview">
-    <h3>Custom QR Code:</h3>
-    <canvas id="qrCanvas"></canvas>
-  </div>
-  
-  <!-- ✅ Observation preview (image + link) -->
-  <div id="observationPreview" class="preview"></div>
+  <!-- ✅ Main content -->
+  <main id="qr-admin-content">
+    <!-- Observation selector -->
+    <section class="panel">
+      <label for="observationSelect">Select Observation:</label>
+      <select id="observationSelect">
+        <option value="">Loading...</option>
+      </select>
+    </section>
 
-  <!-- ✅ Scripts (moved logic out of HTML into qr_admin.js) -->
+    <!-- QR + Preview area in responsive grid -->
+    <section id="qr-grid">
+      <div id="qr-preview">
+        <h3>Custom QR Code:</h3>
+        <canvas id="qrCanvas"></canvas>
+      </div>
+
+      <div id="observationPreview" class="preview"></div>
+    </section>
+  </main>
+
+  <!-- ✅ Footer -->
+  <div class="footer">
+    <small>Garden Tour – QR Admin Panel</small>
+  </div>
+
+  <!-- Scripts -->
   <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
   <script src="qr_admin.js"></script>
 </body>
 </html>
-
