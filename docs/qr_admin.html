@@ -6,42 +6,30 @@
   <link rel="stylesheet" href="style.css?v=2">
 </head>
 <body class="qr-admin-page">
-  <!-- ✅ App bar -->
   <div class="appbar">
     <h1>QR Admin</h1>
-    <div class="controls">
-      <a href="index.html" class="back-btn">← Back to main</a>
-    </div>
+    <a href="index.html" class="back-btn">← Back to main</a>
   </div>
 
-  <!-- ✅ Main content -->
   <main id="qr-admin-content">
-    <section id="qr-grid">
-      <!-- Observation selector -->
-      <div id="controls">
-        <label for="observationSelect">Select Observation:</label>
-        <select id="observationSelect">
-          <option value="">Loading...</option>
-        </select>
-      </div>
+    <!-- Controls -->
+    <div class="controls">
+      <label for="observationSelect">Select Observation:</label>
+      <select id="observationSelect">
+        <option value="">Loading...</option>
+      </select>
+    </div>
 
-      <!-- QR preview -->
-      <div id="qr-preview">
-        <h3>Custom QR Code:</h3>
-        <canvas id="qrCanvas"></canvas>
-      </div>
-
-      <!-- Observation preview -->
-      <div id="observationPreview" class="preview"></div>
-    </section>
+    <!-- QR code preview -->
+    <div id="qr-preview">
+      <h3>Custom QR Code:</h3>
+      <canvas id="qrCanvas"></canvas>
+    </div>
+    
+    <!-- Observation preview -->
+    <div id="observationPreview" class="preview"></div>
   </main>
 
-  <!-- ✅ Footer -->
-  <div class="footer">
-    <small>Garden Tour – QR Admin Panel</small>
-  </div>
-
-  <!-- Scripts -->
   <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
   <script src="qr_admin.js"></script>
 </body>
