@@ -1,4 +1,5 @@
 // app.js
+/* global L, omnivore */
 
 // --- Setup Map ---
 const map = L.map('map').setView([37.1, -8.6], 14);
@@ -11,6 +12,7 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
 omnivore.kml('Q.VdL-Perimeter.kml')
   .on('ready', function (e) {
     map.fitBounds(e.target.getBounds());
+    scheduleRefreshMapView();
   })
   .addTo(map);
 
@@ -23,15 +25,41 @@ let allObservations = [];
 let currentObservations = [];
 let currentRange = 'today';
 
+// --- Helpers to keep map visible & correct ---
+function refreshMapView() {
+  const mapEl = document.getElementById('map');
+  if (!mapEl) return;
+
+  map.invalidateSize();
+
+  const b = markers.getBounds && markers.getBounds();
+  if (b && b.isValid && b.isValid()) {
+    map.fitBounds(b, { padding: [50, 50] });
+  } else {
+    // Fallback (Vale da Lama)
+    map.setView([37.146, -8.642], 14);
+  }
+}
+
+function scheduleRefreshMapView() {
+  // Wait for DOM/layout to settle before recalculating map size.
+  requestAnimationFrame(() => {
+    requestAnimationFrame(refreshMapView);
+  });
+}
+
+// Keep map healthy on window resizes too.
+window.addEventListener('resize', scheduleRefreshMapView);
+
 // --- Fetch iNaturalist observations ---
 async function fetchObservations() {
   const PROJECT_ID = 197410;
   const url = "https://api.inaturalist.org/v1/observations" +
-      "?project_id=" + PROJECT_ID +
-      "&order=desc&order_by=observed_on" +
-      "&per_page=200" +
-      "&quality_grade=any";
-      
+    "?project_id=" + PROJECT_ID +
+    "&order=desc&order_by=observed_on" +
+    "&per_page=200" +
+    "&quality_grade=any";
+
   console.log("[iNat] URL:", url);
   const res = await fetch(url);
   console.log("[iNat] Status:", res.status, res.statusText);
@@ -47,6 +75,7 @@ async function fetchObservations() {
 function renderObservations() {
   markers.clearLayers();
   const listDiv = document.getElementById('observations');
+  if (!listDiv) return;
   listDiv.innerHTML = ""; // clear before re-render
 
   const now = new Date();
@@ -77,7 +106,7 @@ function renderObservations() {
 
     const lat = obs.geojson?.coordinates?.[1];
     const lng = obs.geojson?.coordinates?.[0];
-    if (!lat || !lng) return;
+    if (lat == null || lng == null) return; // allow 0 values, just not null/undefined
 
     // --- Add map marker ---
     const marker = L.marker([lat, lng]);
@@ -94,7 +123,7 @@ function renderObservations() {
     const div = document.createElement('div');
     div.className = "observation-item";
     div.innerHTML = `
-      <img src="${obs.photos?.[0]?.url.replace('square', 'small') || ''}" 
+      <img src="${obs.photos?.[0]?.url?.replace('square', 'small') || ''}" 
            alt="${obs.species_guess || 'Unknown'}" />
       <span>${obs.species_guess || 'Unknown species'} — ${obs.observed_on || 'n/a'}</span>
     `;
@@ -112,16 +141,8 @@ function renderObservations() {
   // --- Save the currently displayed observations for QR Admin ---
   localStorage.setItem("erc_observations", JSON.stringify(currentObservations));
 
-  // --- Keep map visible & update view ---
-  setTimeout(() => {
-    map.invalidateSize();
-    if (markers.getLayers().length > 0) {
-      map.fitBounds(markers.getBounds(), { padding: [50, 50] });
-    } else {
-      // Default fallback location (Vale da Lama) if no markers
-      map.setView([37.146, -8.642], 14);
-    }
-  }, 100);
+  // --- Reflow-safe map update (works for Today / Week / All) ---
+  scheduleRefreshMapView();
 }
 
 // --- Update QR Admin link with current filter ---
@@ -130,7 +151,6 @@ function updateQRAdminLink() {
   if (link) {
     link.href = `qr_admin.html?range=${currentRange}`;
   }
-  // --- Save the currently displayed observations for QR Admin ---
   localStorage.setItem("erc_observations", JSON.stringify(currentObservations));
 }
 
@@ -145,6 +165,7 @@ document.querySelectorAll('.controls button').forEach(btn => {
     currentRange = btn.dataset.range;
     renderObservations();
     updateQRAdminLink();
+    scheduleRefreshMapView();
   });
 });
 
