@@ -178,9 +178,6 @@ button.danger {
 .qr-admin-page main {
   flex: 1;
   padding: 1rem;
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
 }
 
 #qr-grid {
@@ -188,23 +185,27 @@ button.danger {
   gap: 1.5rem;
 }
 
+#controls label {
+  font-weight: 600;
+  margin-right: 0.5rem;
+}
+
+#controls select {
+  padding: 0.35rem 0.5rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 0.5rem;
+  font-size: 0.95rem;
+}
+
+#qr-preview h3 {
+  margin-top: 0;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
 @media (min-width: 700px) {
   #qr-grid {
     grid-template-columns: 1fr 1fr;
     align-items: start;
   }
-}
-
-.back-btn {
-  background: #e2e8f0;
-  border: 1px solid #cbd5e1;
-  border-radius: .5rem;
-  padding: .35rem .6rem;
-  text-decoration: none;
-  color: var(--ink);
-  font-size: .9rem;
-}
-
-.back-btn:hover {
-  background: #cbd5e1;
 }

@@ -6,7 +6,7 @@
   <link rel="stylesheet" href="style.css?v=2">
 </head>
 <body class="qr-admin-page">
-  <!-- ✅ App bar (consistent with index.html) -->
+  <!-- ✅ App bar -->
   <div class="appbar">
     <h1>QR Admin</h1>
     <div class="controls">
@@ -16,21 +16,22 @@
 
   <!-- ✅ Main content -->
   <main id="qr-admin-content">
-    <!-- Observation selector -->
-    <section class="panel">
-      <label for="observationSelect">Select Observation:</label>
-      <select id="observationSelect">
-        <option value="">Loading...</option>
-      </select>
-    </section>
-
-    <!-- QR + Preview area in responsive grid -->
     <section id="qr-grid">
+      <!-- Observation selector -->
+      <div id="controls">
+        <label for="observationSelect">Select Observation:</label>
+        <select id="observationSelect">
+          <option value="">Loading...</option>
+        </select>
+      </div>
+
+      <!-- QR preview -->
       <div id="qr-preview">
         <h3>Custom QR Code:</h3>
         <canvas id="qrCanvas"></canvas>
       </div>
 
+      <!-- Observation preview -->
       <div id="observationPreview" class="preview"></div>
     </section>
   </main>
