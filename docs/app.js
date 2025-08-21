@@ -42,14 +42,28 @@ function refreshMapView() {
 }
 
 function scheduleRefreshMapView() {
-  // Wait for DOM/layout to settle before recalculating map size.
+  // Debounce into the next layout frame(s)
   requestAnimationFrame(() => {
     requestAnimationFrame(refreshMapView);
   });
 }
 
-// Keep map healthy on window resizes too.
-window.addEventListener('resize', scheduleRefreshMapView);
+// Observe map element size changes (modern browsers)
+(function setupObservers() {
+  const mapEl = document.getElementById('map');
+  if (mapEl && 'ResizeObserver' in window) {
+    const ro = new ResizeObserver(() => scheduleRefreshMapView());
+    ro.observe(mapEl);
+  }
+  window.addEventListener('resize', scheduleRefreshMapView);
+
+  // If the observation list changes (e.g., filter), refresh map after DOM updates
+  const listDiv = document.getElementById('observations');
+  if (listDiv) {
+    const mo = new MutationObserver(() => scheduleRefreshMapView());
+    mo.observe(listDiv, { childList: true });
+  }
+})();
 
 // --- Fetch iNaturalist observations ---
 async function fetchObservations() {
@@ -106,7 +120,7 @@ function renderObservations() {
 
     const lat = obs.geojson?.coordinates?.[1];
     const lng = obs.geojson?.coordinates?.[0];
-    if (lat == null || lng == null) return; // allow 0 values, just not null/undefined
+    if (lat == null || lng == null) return; // allow 0, just not null/undefined
 
     // --- Add map marker ---
     const marker = L.marker([lat, lng]);
@@ -138,7 +152,7 @@ function renderObservations() {
   summary.textContent = `${count} observations shown (${currentRange})`;
   listDiv.prepend(summary);
 
-  // --- Save the currently displayed observations for QR Admin ---
+  // --- Persist for QR Admin ---
   localStorage.setItem("erc_observations", JSON.stringify(currentObservations));
 
   // --- Reflow-safe map update (works for Today / Week / All) ---

@@ -45,9 +45,10 @@ footer a:hover {
   margin: 0 auto;
 }
 
+/* Replace your current #map rule with this */
 #map {
-  flex: 1;
-  height: 80vh; /* adjust if header/footer take space */
+  height: 75vh;         /* stable, independent of siblings */
+  min-height: 320px;    /* don’t let it collapse on small screens */
   width: 100%;
 }
 .main-page #observations {
