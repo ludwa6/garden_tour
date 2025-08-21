@@ -1,162 +1,155 @@
-/* === Global Reset === */
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
+/* --- Variables --- */
+:root {
+  --brand: #0ea5e9;
+  --ink: #0f172a;
+  --muted: #64748b;
+  --bg: #f8fafc;
+  --card: #ffffff;
 }
 
+/* --- Reset --- */
+* {
+  box-sizing: border-box;
+}
+html, body {
+  height: 100%;
+}
 body {
-  font-family: system-ui, sans-serif;
-  line-height: 1.5;
-  background: #f9f9fb;
-  color: #222;
-  min-height: 100vh;
+  margin: 0;
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, 'Helvetica Neue', Arial, sans-serif;
+  background: var(--bg);
+  color: var(--ink);
   display: flex;
   flex-direction: column;
 }
 
-/* === Shared Header & Footer === */
-header, footer {
-  background: #2c3e50;
+/* --- Header / App Bar --- */
+.appbar {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: .5rem;
+  align-items: center;
+  padding: .5rem 1rem;
+  background: #e6f1f7;
+  border-bottom: 1px solid #cfe3ef;
+}
+h1 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+/* --- Controls / Filter Buttons --- */
+.controls button {
+  margin: .1rem .25rem;
+  padding: .35rem .6rem;
+  border-radius: .5rem;
+  border: 1px solid var(--brand);
+  background: var(--brand);
   color: white;
-  padding: 1rem;
-  text-align: center;
+  cursor: pointer;
+}
+.controls button.active {
+  background: #0284c7;
+  border-color: #0284c7;
 }
 
-header h1 {
-  font-size: 1.8rem;
-}
-
-footer a {
-  color: #ecf0f1;
-  text-decoration: none;
-}
-footer a:hover {
-  text-decoration: underline;
-}
-
-/* ===============================
-   MAIN PAGE
-   =============================== */
-.main-page main.container {
-  flex: 1;
-  padding: 1rem;
-  max-width: 1200px;
-  margin: 0 auto;
-}
-
-/* Replace your current #map rule with this */
+/* --- Map Area --- */
 #map {
-  height: 75vh;         /* stable, independent of siblings */
-  min-height: 320px;    /* don’t let it collapse on small screens */
+  flex: 1;
+  height: 50vh;
+  min-height: 300px;
   width: 100%;
 }
-.main-page #observations {
+@media (min-width: 900px) {
+  #map {
+    height: 52vh;
+  }
+}
+
+/* --- Observations Grid --- */
+#observations {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
   gap: 1rem;
+  padding: 1rem;
 }
-
-.main-page .observation-item {
-  background: #fff;
-  border-radius: 0.5rem;
-  overflow: hidden;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.1);
-  transition: transform 0.2s ease;
-}
-
-.main-page .observation-item:hover {
-  transform: translateY(-4px);
-}
-
-.main-page .observation-item img {
-  width: 100%;
-  height: 180px;
-  object-fit: cover;
-  display: block;
-}
-
-.main-page .observation-item .obs {
-  padding: 0.75rem;
-  text-align: center;
-}
-
-.main-page .observation-item a {
-  color: #2980b9;
-  text-decoration: none;
-  font-weight: 600;
-}
-
-.main-page .observation-item a:hover {
-  text-decoration: underline;
-}
-
-/* Mobile tweaks for main page */
-@media (max-width: 600px) {
-  header h1 {
-    font-size: 1.4rem;
-  }
-  .main-page .observation-item img {
-    height: 150px;
-  }
-}
-
-/* ===============================
-   QR ADMIN PAGE
-   =============================== */
-.qr-admin-page {
+.observation-item {
+  background: var(--card);
+  border: 1px solid #e2e8f0;
+  border-radius: .75rem;
+  padding: .5rem;
+  box-shadow: 0 1px 2px rgba(0,0,0,.04);
+  display: flex;
+  flex-direction: column;
   align-items: center;
-  padding: 1rem;
+  text-align: center;
 }
-
-.qr-admin-page h1 {
-  margin: 1rem 0;
-  font-size: 2rem;
-  color: #2a5d9f;
+.observation-item img {
+  width: 100%;
+  height: 150px;
+  object-fit: cover;
+  border-radius: .5rem;
+  border: 1px solid #e2e8f0;
+  margin-bottom: .5rem;
 }
-
-.qr-admin-page a[href="index.html"] {
-  margin-bottom: 1.5rem;
-  color: #2a5d9f;
+.obs a {
+  color: #0369a1;
+  font-weight: 600;
   text-decoration: none;
-  font-size: 0.9rem;
 }
-.qr-admin-page a[href="index.html"]:hover {
+.obs a:hover {
   text-decoration: underline;
 }
 
-.qr-admin-page #controls,
-.qr-admin-page #qr-preview,
-.qr-admin-page #observationPreview.preview {
-  background: #fff;
+/* --- Footer --- */
+.footer {
+  padding: .5rem 1rem;
+  border-top: 1px solid #cfe3ef;
+  background: #e6f1f7;
+}
+
+/* --- Panels --- */
+.panel {
+  position: fixed;
+  right: 1rem;
+  bottom: 1rem;
+  background: var(--card);
+  border: 1px solid #e2e8f0;
+  border-radius: .75rem;
   padding: 1rem;
-  margin-bottom: 1rem;
-  border-radius: 12px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-  width: 100%;
-  max-width: 500px;
+  box-shadow: 0 10px 20px rgba(2,8,23,.15);
+}
+.hidden {
+  display: none;
+}
+button.danger {
+  background: #ef4444;
+  border: 1px solid #ef4444;
+  color: white;
+  border-radius: .5rem;
+  padding: .4rem .6rem;
 }
 
-.qr-admin-page #controls label {
-  display: block;
-  margin-bottom: 0.5rem;
-  font-weight: bold;
+/* --- QR Admin Observation Preview --- */
+.preview {
+  margin-top: 1em;
+  padding: 0.5em;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  background: #fafafa;
+  max-width: 320px;
 }
-
-.qr-admin-page #observationSelect,
-.qr-admin-page #customURL {
-  width: 100%;
-  padding: 0.6rem;
-  border-radius: 8px;
-  border: 1px solid #ccc;
-  font-size: 1rem;
-}
-
-.qr-admin-page #qr-preview {
-  text-align: center;
-}
-
-.qr-admin-page #qr-preview canvas {
-  margin-top: 0.5rem;
+.preview img {
   max-width: 100%;
+  border-radius: 4px;
+  margin-bottom: 0.5em;
+}
+.preview a {
+  display: inline-block;
+  margin-top: 0.3em;
+  color: #0066cc;
+  text-decoration: none;
+}
+.preview a:hover {
+  text-decoration: underline;
 }
