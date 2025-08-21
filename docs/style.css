@@ -209,3 +209,39 @@ button.danger {
     align-items: start;
   }
 }
+/* --- QR Admin visual harmony --- */
+
+/* constrain the whole page content */
+#qr-admin-content {
+  max-width: 960px;  /* keeps layout tighter on wide screens */
+  margin: 0 auto;
+}
+
+/* align QR canvas left */
+#qrCanvas {
+  display: block;
+  margin: 0;   /* remove auto-centering */
+}
+
+/* appbar tweaks for Admin page */
+.qr-admin-page .appbar {
+  grid-template-columns: auto auto; /* just title + back link */
+  justify-content: space-between;   /* keeps them tidy */
+}
+
+.qr-admin-page .appbar h1 {
+  font-size: 1.2rem;
+}
+
+.qr-admin-page .back-btn {
+  padding: 0.35rem 0.6rem;
+  border-radius: .5rem;
+  border: 1px solid var(--brand);
+  background: var(--brand);
+  color: white;
+  text-decoration: none;
+}
+.qr-admin-page .back-btn:hover {
+  background: #0284c7;
+  border-color: #0284c7;
+}
