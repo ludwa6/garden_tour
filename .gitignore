@@ -1,1 +1,18 @@
 .DS_Store
+```gitignore
+# Node / build tools
+node_modules/
+dist/
+build/
+
+# OS cruft
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Local editor settings
+.vscode/
+.idea/
+```
