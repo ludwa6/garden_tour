@@ -4,14 +4,16 @@
   <meta charset="UTF-8">
   <title>Admin Dashboard</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" href="style.css?v=4">
+  <link rel="stylesheet" href="style.css?v=5">
   <style>
     body { font-family: sans-serif; padding: 1rem; }
     table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
-    th, td { padding: 0.5rem; border: 1px solid #ddd; text-align: left; }
+    th, td { padding: 0.5rem; border: 1px solid #ddd; text-align: left; vertical-align: top; }
     th { background: #f0f0f0; }
-    img.qr-thumb { width: 64px; height: 64px; object-fit: contain; }
+    canvas.qr-inline { width: 64px; height: 64px; }
     .search-box { margin: 1rem 0; }
+    button.delete-btn { background: #d33; color: #fff; border: none; padding: 0.25em 0.5em; cursor: pointer; border-radius: 4px; }
+    button.export-btn { margin: 1rem 0; padding: 0.5em 1em; border: none; background: #2c7; color: white; cursor: pointer; border-radius: 6px; }
   </style>
 </head>
 <body>
@@ -21,6 +23,7 @@
   <div class="search-box">
     <label for="search">🔍 Search: </label>
     <input type="text" id="search" placeholder="Filter by species or ID...">
+    <button class="export-btn" id="exportBtn">📄 Export Registry JSON</button>
   </div>
 
   <table id="poiTable">
@@ -31,38 +34,71 @@
         <th>QR</th>
         <th>Detail Page</th>
         <th>iNat Link</th>
+        <th>Delete</th>
       </tr>
     </thead>
     <tbody></tbody>
   </table>
 
+  <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
   <script>
+    let registry = [];
+
     async function loadRegistry() {
       try {
         const res = await fetch("/assets/qrcodes/index.json");
-        const data = await res.json();
-        populateTable(data);
+        registry = await res.json();
+        populateTable();
       } catch (err) {
         console.error("Failed to load registry", err);
         document.querySelector("#poiTable tbody").innerHTML =
-          "<tr><td colspan='5'>⚠️ Could not load index.json</td></tr>";
+          "<tr><td colspan='6'>⚠️ Could not load index.json</td></tr>";
       }
     }
 
-    function populateTable(registry) {
+    function populateTable() {
       const tbody = document.querySelector("#poiTable tbody");
       tbody.innerHTML = "";
 
-      registry.forEach(entry => {
+      registry.forEach((entry, idx) => {
         const tr = document.createElement("tr");
+
         tr.innerHTML = `
           <td>${entry.poi_id}</td>
           <td>${entry.species_name}</td>
-          <td><img src="${entry.qr_code_url}" class="qr-thumb" alt="QR for ${entry.poi_id}"></td>
+          <td class="qr-cell"></td>
           <td><a href="${entry.detail_url}">View</a></td>
-          <td><a href="${entry.inat_url}">iNat</a></td>
+          <td><a href="${entry.inat_url}" target="_blank">iNat</a></td>
+          <td><button class="delete-btn" data-index="${idx}">❌</button></td>
         `;
+
         tbody.appendChild(tr);
+
+        // --- QR Column ---
+        const qrCell = tr.querySelector(".qr-cell");
+        const img = new Image();
+        img.src = entry.qr_code_url;
+        img.className = "qr-thumb";
+        img.alt = `QR for ${entry.poi_id}`;
+        img.onload = () => qrCell.appendChild(img);
+        img.onerror = () => {
+          // fallback to inline QR if PNG missing
+          const canvas = document.createElement("canvas");
+          canvas.className = "qr-inline";
+          qrCell.appendChild(canvas);
+          QRCode.toCanvas(canvas, entry.detail_url, { width: 64 }, (err) => {
+            if (err) console.error("QR generation failed", err);
+          });
+        };
+      });
+
+      // Attach delete handlers
+      document.querySelectorAll(".delete-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const i = parseInt(btn.dataset.index);
+          registry.splice(i, 1);
+          populateTable(); // re-render
+        });
       });
 
       // Hook up search filter
@@ -75,6 +111,17 @@
         });
       });
     }
+
+    // Export current registry JSON
+    document.getElementById("exportBtn").addEventListener("click", () => {
+      const blob = new Blob([JSON.stringify(registry, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.download = "index.json";
+      link.href = url;
+      link.click();
+      URL.revokeObjectURL(url);
+    });
 
     loadRegistry();
   </script>
