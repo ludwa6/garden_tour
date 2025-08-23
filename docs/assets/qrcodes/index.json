@@ -1,9 +1,16 @@
 [
   {
-    "poi_id": 123456,
-    "species_name": "Quercus suber",
-    "qr_code_url": "/assets/qrcodes/poi-123456.png",
-    "detail_url": "/poi/detail.html?obs=123456",
-    "inat_url": "https://www.inaturalist.org/observations/123456"
+    "poi_id": 308417840,
+    "species_name": "Amargoseira",
+    "qr_code_url": "/assets/qrcodes/poi-308417840.png",
+    "detail_url": "/poi/detail.html?obs=308417840",
+    "inat_url": "https://www.inaturalist.org/observations/308417840"
+  },
+  {
+    "poi_id": 308414781,
+    "species_name": "Olaia",
+    "qr_code_url": "/assets/qrcodes/poi-308414781.png",
+    "detail_url": "/poi/detail.html?obs=308414781",
+    "inat_url": "https://www.inaturalist.org/observations/308414781"
   }
 ]
