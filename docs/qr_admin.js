@@ -56,9 +56,10 @@ document.addEventListener("DOMContentLoaded", () => {
         ${photoUrl ? `<img src="${photoUrl}" alt="${species}" style="max-width:150px; display:block; margin-bottom:0.5em;">` : ""}
         <strong>${species}</strong> — ${observedOn}<br>
         <a href="${link}" target="_blank">View on iNaturalist</a><br>
-        <code>${detailUrl}</code>
+        <a href="${detailUrl}" class="detail-link">${detailUrl}</a>
       </div>
     `;
+
 
     // Update registry entry
     const qrCodeUrl = `/assets/qrcodes/poi-${obs.id}.png`;
