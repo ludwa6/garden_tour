@@ -1,5 +1,5 @@
 document.addEventListener("DOMContentLoaded", () => {
-  // --- QR Admin Script ---
+  // --- Load stored observations ---
   const stored = localStorage.getItem("erc_observations");
   let observations = [];
   try {
@@ -11,6 +11,11 @@ document.addEventListener("DOMContentLoaded", () => {
   const selectEl = document.getElementById("observationSelect");
   const qrCanvas = document.getElementById("qrCanvas");
   const previewDiv = document.getElementById("observationPreview");
+  const downloadBtn = document.getElementById("downloadQR");
+  const exportBtn = document.getElementById("exportRegistry");
+
+  // --- Local registry of generated QR codes ---
+  let registry = [];
 
   // --- Populate dropdown ---
   if (observations.length > 0) {
@@ -25,16 +30,16 @@ document.addEventListener("DOMContentLoaded", () => {
     selectEl.innerHTML = `<option>⚠️ No observations available</option>`;
   }
 
-  // --- Function to generate QR Code + preview ---
+  // --- Generate QR Code + preview ---
   function updateQRCode(obs) {
     if (!obs) return;
 
-    const ctx = qrCanvas.getContext("2d");
-    ctx.clearRect(0, 0, qrCanvas.width, qrCanvas.height);
+    const detailUrl = `/poi/detail.html?obs=${obs.id}`;
 
+    // Draw QR into canvas
     QRCode.toCanvas(
       qrCanvas,
-      `https://www.inaturalist.org/observations/${obs.id}`,
+      detailUrl,
       { width: 200 },
       function (error) {
         if (error) console.error(error);
@@ -50,19 +55,55 @@ document.addEventListener("DOMContentLoaded", () => {
       <div style="margin-top: 1em;">
         ${photoUrl ? `<img src="${photoUrl}" alt="${species}" style="max-width:150px; display:block; margin-bottom:0.5em;">` : ""}
         <strong>${species}</strong> — ${observedOn}<br>
-        <a href="${link}" target="_blank">View on iNaturalist</a>
+        <a href="${link}" target="_blank">View on iNaturalist</a><br>
+        <code>${detailUrl}</code>
       </div>
     `;
+
+    // Update registry entry
+    const qrCodeUrl = `/assets/qrcodes/poi-${obs.id}.png`;
+    const entry = {
+      poi_id: obs.id,
+      species_name: species,
+      qr_code_url: qrCodeUrl,
+      detail_url: detailUrl,
+      inat_url: link
+    };
+    registry = registry.filter(r => r.poi_id !== obs.id).concat(entry);
   }
 
-  // --- Event listener for dropdown changes ---
+  // --- Dropdown change ---
   selectEl.addEventListener("change", () => {
     const obsId = selectEl.value;
     const obs = observations.find(o => String(o.id) === String(obsId));
     updateQRCode(obs);
   });
 
-  // --- Initialize default selection ---
+  // --- Download QR button ---
+  downloadBtn.addEventListener("click", () => {
+    const obsId = selectEl.value;
+    if (!obsId) return;
+    const obs = observations.find(o => String(o.id) === String(obsId));
+    if (!obs) return;
+
+    const link = document.createElement("a");
+    link.download = `poi-${obs.id}.png`;
+    link.href = qrCanvas.toDataURL("image/png");
+    link.click();
+  });
+
+  // --- Export registry JSON ---
+  exportBtn.addEventListener("click", () => {
+    const blob = new Blob([JSON.stringify(registry, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.download = "index.json";
+    link.href = url;
+    link.click();
+    URL.revokeObjectURL(url);
+  });
+
+  // --- Init ---
   if (observations.length > 0) {
     selectEl.value = observations[0].id;
     updateQRCode(observations[0]);

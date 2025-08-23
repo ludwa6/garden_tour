@@ -1,0 +1,9 @@
+[
+  {
+    "poi_id": 123456,
+    "species_name": "Quercus suber",
+    "qr_code_url": "/assets/qrcodes/poi-123456.png",
+    "detail_url": "/poi/detail.html?obs=123456",
+    "inat_url": "https://www.inaturalist.org/observations/123456"
+  }
+]
