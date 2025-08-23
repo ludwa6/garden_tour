@@ -11,6 +11,14 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.Default.css" />
   <link rel="stylesheet" href="style.css?v=2">
+  <script>
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("/service-worker.js").then(() => {
+        console.log("✅ Service Worker registered");
+      });
+    }
+  </script>
+
 </head>
 <body class="main-page">
   <header class="appbar">

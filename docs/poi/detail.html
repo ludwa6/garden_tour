@@ -70,14 +70,24 @@
       }
     }
 
-    // --- Save for offline (localStorage for now)
-    document.getElementById("save-offline").addEventListener("click", () => {
-      const obs = window.currentObservation;
-      if (obs) {
-        localStorage.setItem(`poi-${obs.id}`, JSON.stringify(obs));
-        alert(`Saved ${obs.name} for offline use`);
-      }
-    });
+// --- Save for offline using Service Worker
+  document.getElementById("save-offline").addEventListener("click", async () => {
+    const obs = window.currentObservation;
+    if (obs && navigator.serviceWorker.controller) {
+      const jsonUrl = `https://api.inaturalist.org/v1/observations/${obs.id}`;
+      const photoUrl = obs.photo?.replace("square", "medium");
+      navigator.serviceWorker.controller.postMessage({
+        type: "CACHE_POI",
+        obsId: obs.id,
+        jsonUrl,
+        photoUrl
+      });
+      alert(`Saved ${obs.name} for offline use`);
+    } else {
+      alert("⚠️ Service Worker not ready – cannot save offline.");
+    }
+  });
+
 
     // --- Boot
     const obsId = getObservationId();
