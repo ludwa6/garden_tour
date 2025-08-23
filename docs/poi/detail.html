@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>POI Detail</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="../style.css?v=1">
+  <style>
+    body { font-family: sans-serif; padding: 1rem; }
+    header { margin-bottom: 1rem; }
+    img { max-width: 100%; border-radius: 8px; margin: 1em 0; }
+    button { padding: 0.5em 1em; border: none; border-radius: 6px; cursor: pointer; }
+    button#save-offline { background: #2c7; color: white; }
+  </style>
+</head>
+<body>
+  <header>
+    <a href="../index.html">← Back to Map</a>
+    <h1 id="species-name">Loading...</h1>
+  </header>
+
+  <main>
+    <img id="species-photo" alt="Observation photo">
+    <p><strong>Date:</strong> <span id="date-observed"></span></p>
+    <p><strong>Location:</strong> <span id="location"></span></p>
+    <p><a id="inat-link" href="#" target="_blank">View on iNaturalist</a></p>
+  </main>
+
+  <footer>
+    <button id="save-offline">⭐ Save for Offline</button>
+  </footer>
+
+  <script>
+    // --- Utility: read ?obs=123456 from URL
+    function getObservationId() {
+      const params = new URLSearchParams(window.location.search);
+      return params.get("obs");
+    }
+
+    // --- Load observation data from iNat
+    async function loadObservation(obsId) {
+      const apiUrl = `https://api.inaturalist.org/v1/observations/${obsId}`;
+
+      try {
+        const response = await fetch(apiUrl);
+        const data = await response.json();
+        const obs = data.results[0];
+
+        // Populate template
+        document.getElementById("species-name").textContent =
+          obs.taxon?.name || obs.species_guess || "Unknown species";
+        document.getElementById("species-photo").src =
+          obs.photos?.[0]?.url.replace("square", "medium") || "";
+        document.getElementById("date-observed").textContent = obs.observed_on || "";
+        document.getElementById("location").textContent = obs.location || "—";
+        document.getElementById("inat-link").href = obs.uri;
+
+        // Save reference for offline
+        window.currentObservation = {
+          id: obsId,
+          name: obs.taxon?.name || obs.species_guess,
+          date: obs.observed_on,
+          location: obs.location,
+          photo: obs.photos?.[0]?.url,
+          inatUrl: obs.uri
+        };
+      } catch (err) {
+        console.error("Failed to load observation", err);
+        document.getElementById("species-name").textContent = "⚠️ Offline – data not available";
+      }
+    }
+
+    // --- Save for offline (localStorage for now)
+    document.getElementById("save-offline").addEventListener("click", () => {
+      const obs = window.currentObservation;
+      if (obs) {
+        localStorage.setItem(`poi-${obs.id}`, JSON.stringify(obs));
+        alert(`Saved ${obs.name} for offline use`);
+      }
+    });
+
+    // --- Boot
+    const obsId = getObservationId();
+    if (obsId) {
+      loadObservation(obsId);
+    } else {
+      document.getElementById("species-name").textContent = "No observation ID given";
+    }
+  </script>
+</body>
+</html>
