@@ -2,175 +2,50 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Admin Dashboard</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" href="style.css?v=5">
+  <title>Admin Dashboard</title>
   <style>
     body { font-family: sans-serif; padding: 1rem; }
-    table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
-    th, td { padding: 0.5rem; border: 1px solid #ddd; text-align: left; vertical-align: top; }
-    th { background: #f0f0f0; }
-    canvas.qr-inline { width: 64px; height: 64px; }
-    .search-box { margin: 1rem 0; }
-    button.delete-btn { background: #d33; color: #fff; border: none; padding: 0.25em 0.5em; cursor: pointer; border-radius: 4px; }
-    button.export-btn { margin: 1rem 0; padding: 0.5em 1em; border: none; background: #2c7; color: white; cursor: pointer; border-radius: 6px; }
+    h1 { text-align: center; }
+    table { border-collapse: collapse; width: 100%; margin: 1rem 0; }
+    th, td { border: 1px solid #ccc; padding: 0.5rem; text-align: left; }
+    th { background:#eee; }
   </style>
 </head>
 <body>
-  <h1>Admin Dashboard</h1>
-  <p>Loaded from <code>/assets/qrcodes/index.json</code></p>
+  <h1>🌿 Admin Dashboard</h1>
 
-  <div class="search-box">
-    <label for="search">🔍 Search: </label>
-    <input type="text" id="search" placeholder="Filter by species or ID...">
-    <button class="export-btn" id="exportBtn">📄 Export Registry JSON</button>
-  </div>
+  <h2>Visitor Notes (Shared with Garden)</h2>
+  <table id="notesTable"><tr><td>Loading...</td></tr></table>
 
-  <nav style="
-  display:flex; 
-  justify-content:space-between; 
-  align-items:center; 
-  padding:0.6em 1em; 
-  background:#2c7; 
-  color:white;
-  border-radius:0 0 8px 8px;
-">
-  <strong>🛠 Admin Dashboard</strong>
-  <div>
-    <a href="/tripplan.html" style="color:white; text-decoration:none; font-weight:bold; margin-right:1rem;">
-      🌿 My Trip Plan
-    </a>
-    <a href="/index.html" style="color:white; text-decoration:none; font-weight:bold;">
-      ⬅ Back to Map
-    </a>
-  </div>
-</nav>
-
-  <table id="poiTable">
-    <thead>
-      <tr>
-        <th>POI ID</th>
-        <th>Species</th>
-        <th>QR</th>
-        <th>Detail Page</th>
-        <th>iNat Link</th>
-        <th>Delete</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
-
-  <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
   <script>
-    let registry = [];
-
-    async function loadRegistry() {
+    async function loadSharedNotes() {
+      const url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQOnNZh3kF5CzHEEOf6OH8pp9XT-VVS10ELP6RapiD0v2a--ybmB09LFFfFJ8VawBnVe6JI6mESYn-u/pub?gid=0&single=true&output=csvPASTE_PUBLISHED_SHEET_CSV_URL"; // from File → Publish to Web
       try {
-        const res = await fetch("/assets/qrcodes/index.json");
-        registry = await res.json();
-        populateTable();
+        const res = await fetch(url);
+        const text = await res.text();
+        const rows = text.split("\n").map(r => r.split(","));
+        
+        const table = document.getElementById("notesTable");
+        table.innerHTML = "<tr><th>POI</th><th>Species</th><th>Note</th><th>Date</th></tr>";
+
+        rows.slice(1).forEach(r => {
+          if (r[0]) {
+            table.innerHTML += `<tr>
+              <td>${r[0]}</td>
+              <td>${r[1]}</td>
+              <td>${r[2]}</td>
+              <td>${r[4]}</td>
+            </tr>`;
+          }
+        });
       } catch (err) {
-        console.error("Failed to load registry", err);
-        document.querySelector("#poiTable tbody").innerHTML =
-          "<tr><td colspan='6'>⚠️ Could not load index.json</td></tr>";
+        console.error("Failed to load notes", err);
+        document.getElementById("notesTable").innerHTML =
+          "<tr><td colspan='4'>⚠️ Could not load shared notes.</td></tr>";
       }
     }
-
-    function populateTable() {
-      const tbody = document.querySelector("#poiTable tbody");
-      tbody.innerHTML = "";
-
-      registry.forEach((entry, idx) => {
-        const tr = document.createElement("tr");
-
-        tr.innerHTML = `
-          <td>${entry.poi_id}</td>
-          <td>${entry.species_name}</td>
-          <td class="qr-cell"></td>
-          <td><a href="${entry.detail_url}">View</a></td>
-          <td><a href="${entry.inat_url}" target="_blank">iNat</a></td>
-          <td><button class="delete-btn" data-index="${idx}">❌</button></td>
-        `;
-
-        tbody.appendChild(tr);
-
-        // --- QR Column ---
-        const qrCell = tr.querySelector(".qr-cell");
-        const img = new Image();
-        img.src = entry.qr_code_url;
-        img.className = "qr-thumb";
-        img.alt = `QR for ${entry.poi_id}`;
-        img.onload = () => qrCell.appendChild(img);
-        img.onerror = () => {
-          // fallback to inline QR if PNG missing
-          const canvas = document.createElement("canvas");
-          canvas.className = "qr-inline";
-          qrCell.appendChild(canvas);
-          QRCode.toCanvas(canvas, entry.detail_url, { width: 64 }, (err) => {
-            if (err) console.error("QR generation failed", err);
-          });
-        };
-      });
-
-      // Attach delete handlers
-      document.querySelectorAll(".delete-btn").forEach(btn => {
-        btn.addEventListener("click", () => {
-          const i = parseInt(btn.dataset.index);
-          registry.splice(i, 1);
-          populateTable(); // re-render
-        });
-      });
-
-      // Hook up search filter
-      const searchInput = document.getElementById("search");
-      searchInput.addEventListener("input", () => {
-        const term = searchInput.value.toLowerCase();
-        Array.from(tbody.rows).forEach(row => {
-          const text = row.textContent.toLowerCase();
-          row.style.display = text.includes(term) ? "" : "none";
-        });
-      });
-    }
-
-    // Export current registry JSON
-    document.getElementById("exportBtn").addEventListener("click", () => {
-      const blob = new Blob([JSON.stringify(registry, null, 2)], { type: "application/json" });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.download = "index.json";
-      link.href = url;
-      link.click();
-      URL.revokeObjectURL(url);
-    });
-
-    loadRegistry();
+    loadSharedNotes();
   </script>
-
-async function loadSharedNotes() {
-  const url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQOnNZh3kF5CzHEEOf6OH8pp9XT-VVS10ELP6RapiD0v2a--ybmB09LFFfFJ8VawBnVe6JI6mESYn-u/pub?gid=0&single=true&output=csv";
-  const res = await fetch(url);
-  const text = await res.text();
-  const rows = text.split("\n").map(r => r.split(","));
-  
-  const table = document.getElementById("notesTable");
-  table.innerHTML = "<tr><th>POI</th><th>Species</th><th>Note</th><th>Date</th></tr>";
-
-  rows.slice(1).forEach(r => {
-    if (r[0]) {
-      table.innerHTML += `<tr>
-        <td>${r[0]}</td>
-        <td>${r[1]}</td>
-        <td>${r[2]}</td>
-        <td>${r[4]}</td>
-      </tr>`;
-    }
-  });
-}
-
-loadSharedNotes();
-
-<h2>Visitor Notes</h2>
-<table id="notesTable"></table>
-
 </body>
 </html>

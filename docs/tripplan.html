@@ -16,9 +16,8 @@
       margin: 0.3rem; padding: 0.5rem 1rem;
       border-radius: 6px; border: none;
       background: #2c7; color: #fff; font-weight: bold;
+      cursor:pointer;
     }
-    button.secondary { background:#555; }
-    textarea { width:100%; }
   </style>
 </head>
 <body>
@@ -30,7 +29,6 @@
   </div>
 
   <script>
-    // Load trip data
     const trip = JSON.parse(localStorage.getItem("tripPlan") || "[]");
     const tripList = document.getElementById("tripList");
 
@@ -51,24 +49,21 @@
       });
     }
 
-    // Export My Trip
     document.getElementById("exportBtn").addEventListener("click", async () => {
       const html = buildExportHTML(trip);
 
-    // ✅ New: Ask if user wants to share with Garden
-    if (confirm("Would you like to share your notes with the Garden? (anonymous)")) {
+      // ✅ Ask to Share with Garden (Google Sheets backend)
+      if (confirm("Would you like to share your notes with the Garden? (anonymous)")) {
         for (let entry of trip) {
-        await fetch("https://script.google.com/macros/s/AKfycbwDWDnZUn6CwOZcHW5Yqfw9GyscARn71XzSLEKQ1VFPU3neoWLiEfyTmvZjDuC_CQ2R/execYOUR_GOOGLE_APPS_SCRIPT_URL", {
+          await fetch("https://script.google.com/macros/s/AKfycbwDWDnZUn6CwOZcHW5Yqfw9GyscARn71XzSLEKQ1VFPU3neoWLiEfyTmvZjDuC_CQ2R/execYOUR_GOOGLE_APPS_SCRIPT_URL", {
             method: "POST",
             body: JSON.stringify(entry)
-        });
+          }).catch(err => console.error("Share failed", err));
         }
         alert("✅ Shared anonymously with Garden. Thank you!");
-    }
+      }
 
-  // ... keep existing share/download code below ...
-});
-
+      // ✅ Native share (mobile) or fallback download (desktop)
       const blob = new Blob([html], { type: "text/html" });
       const file = new File([blob], "MyNatureJournal.html", { type: "text/html" });
 
@@ -79,24 +74,19 @@
             text: "Here’s my trip plan and notes 🌿",
             files: [file]
           });
-          alert("✅ Shared successfully!");
           return;
         } catch (err) {
           console.warn("Share cancelled or failed", err);
         }
       }
 
-      // Fallback: download
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
       a.download = "MyNatureJournal.html";
       a.click();
       URL.revokeObjectURL(url);
-
-      // NEW fallback
-      alert("✅ Exported as MyNatureJournal.html\n\nOn desktop, find it in your Downloads folder.\nOn mobile, attach it in WhatsApp, email, or any app you like.");
-
+      alert("✅ Exported as MyNatureJournal.html\nFind it in your Downloads folder.");
     });
 
     function buildExportHTML(entries) {
