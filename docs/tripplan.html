@@ -40,12 +40,16 @@
         const card = document.createElement("div");
         card.className = "card";
         card.innerHTML = `
-          <img src="${poi.image}" alt="${poi.species_name}">
-          <h2>${poi.species_name}</h2>
-          <small>Saved: ${new Date(poi.date_saved).toLocaleString()}</small>
-          <p class="note">📝 ${poi.note}</p>
-          <button class="remove-btn" data-index="${i}">❌ Remove</button>
+            <h2>${poi.species_name}</h2>
+            <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+                ${poi.image ? `<div><small>Species</small><img src="${poi.image}" alt="species" style="max-width:120px; border-radius:6px;"></div>` : ""}
+                ${poi.photo ? `<div><small>My photo</small><img src="${poi.photo}" alt="user" style="max-width:120px; border-radius:6px;"></div>` : ""}
+            </div>
+            <small>Saved: ${new Date(poi.date_saved).toLocaleString()}</small>
+            ${poi.note ? `<p class="note">📝 ${poi.note}</p>` : ""}
+            <button class="remove-btn" data-index="${i}">❌ Remove</button>
         `;
+
         grid.appendChild(card);
       });
 

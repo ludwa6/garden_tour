@@ -111,7 +111,6 @@
 </div>
 
 <script>
-  // --- Add Note toggle ---
   const addNoteBtn = document.getElementById("addNoteBtn");
   const noteForm = document.getElementById("noteForm");
   const saveNoteBtn = document.getElementById("saveNoteBtn");
@@ -130,7 +129,7 @@
     }
 
     const obsId = new URLSearchParams(window.location.search).get("obs");
-    const speciesName = document.querySelector("h1")?.innerText || "Unknown species"; // assumes <h1> contains species
+    const speciesName = document.querySelector("h1")?.innerText || "Unknown species"; 
     const image = document.querySelector("img")?.src || "";
 
     const entry = {
@@ -142,18 +141,16 @@
       date_saved: new Date().toISOString()
     };
 
-    // --- Save to localStorage ---
     const existing = JSON.parse(localStorage.getItem("tripPlan") || "[]");
     existing.push(entry);
     localStorage.setItem("tripPlan", JSON.stringify(existing));
 
-    alert("✅ Note saved to My Trip Plan!");
+    alert("✅ Saved to My Trip Plan!");
     noteForm.style.display = "none";
     document.getElementById("noteInput").value = "";
     document.getElementById("photoInput").value = "";
   });
 
-  // helper: convert photo to base64 string
   function toBase64(file) {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -163,6 +160,7 @@
     });
   }
 </script>
+
 
 </body>
 </html>
