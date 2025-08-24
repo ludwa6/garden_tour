@@ -161,6 +161,59 @@
   }
 </script>
 
+<!-- Notes List Section -->
+<h3 style="margin-top:1.5rem;">📝 My Notes for this Spot</h3>
+<ul id="noteList" style="list-style:none; padding:0;"></ul>
+
+<script>
+  const obsId = new URLSearchParams(window.location.search).get("obs");
+
+  function renderNotes() {
+    const all = JSON.parse(localStorage.getItem("tripPlan") || "[]");
+    const mine = all.filter(poi => poi.poi_id === obsId);
+    const list = document.getElementById("noteList");
+    list.innerHTML = "";
+
+    if (mine.length === 0) {
+      list.innerHTML = "<li><em>No notes yet. Add one above!</em></li>";
+      return;
+    }
+
+    mine.forEach((poi, idx) => {
+      const li = document.createElement("li");
+      li.style.border = "1px solid #ccc";
+      li.style.margin = "0.5rem 0";
+      li.style.padding = "0.5rem";
+      li.style.borderRadius = "6px";
+      li.innerHTML = `
+        ${poi.photo ? `<img src="${poi.photo}" style="max-width:100px; float:right; margin-left:0.5rem; border-radius:4px;">` : ""}
+        <p><strong>${new Date(poi.date_saved).toLocaleString()}</strong></p>
+        ${poi.note ? `<p>${poi.note}</p>` : "<p><em>(no text)</em></p>"}
+        <button data-idx="${idx}" class="deleteNoteBtn">❌ Delete</button>
+      `;
+      list.appendChild(li);
+    });
+
+    // attach delete buttons
+    document.querySelectorAll(".deleteNoteBtn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const all = JSON.parse(localStorage.getItem("tripPlan") || "[]");
+        // remove this entry by its date_saved
+        const filtered = all.filter(poi => !(poi.poi_id === obsId && poi.date_saved === mine[btn.dataset.idx].date_saved));
+        localStorage.setItem("tripPlan", JSON.stringify(filtered));
+        renderNotes();
+      });
+    });
+  }
+
+  // after saving a note, refresh this list
+  saveNoteBtn.addEventListener("click", () => setTimeout(renderNotes, 200));
+
+  // render on page load
+  renderNotes();
+</script>
+
+
 <div style="margin-top:2rem; text-align:center;">
   <a href="/tripplan.html" style="
     display:inline-block; 
