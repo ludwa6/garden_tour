@@ -29,23 +29,9 @@
   <div class="card-grid" id="tripGrid"></div>
 
   <script>
-    // --- Dummy saved POIs ---
-    const savedPOIs = [
-      {
-        poi_id: 123456,
-        species_name: "Quercus suber",
-        image: "https://upload.wikimedia.org/wikipedia/commons/7/76/Quercus_suber.jpg",
-        note: "The bark smells earthy; reminded me of Portugal.",
-        date_saved: "2025-08-23T12:34:56Z"
-      },
-      {
-        poi_id: 308415317,
-        species_name: "Eurasian blue tit",
-        image: "https://upload.wikimedia.org/wikipedia/commons/4/47/Cyanistes_caeruleus.jpg",
-        note: "Saw this bird hopping between branches near the oak.",
-        date_saved: "2025-08-23T13:12:00Z"
-      }
-    ];
+    // --- Load real saved POIs ---
+    let savedPOIs = JSON.parse(localStorage.getItem("tripPlan") || "[]");
+
 
     function renderCards() {
       const grid = document.getElementById("tripGrid");
@@ -68,6 +54,7 @@
         btn.addEventListener("click", () => {
           const idx = parseInt(btn.dataset.index);
           savedPOIs.splice(idx, 1);
+          localStorage.setItem("tripPlan", JSON.stringify(savedPOIs));
           renderCards();
         });
       });

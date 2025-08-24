@@ -97,5 +97,72 @@
       document.getElementById("species-name").textContent = "No observation ID given";
     }
   </script>
+
+<!-- Add Note UI -->
+<div id="noteSection" style="margin-top:1rem;">
+  <button id="addNoteBtn">📝 Add Note</button>
+  <div id="noteForm" style="display:none; margin-top:0.5rem;">
+    <textarea id="noteInput" rows="3" placeholder="What did you notice or feel here?" style="width:100%;"></textarea>
+    <br>
+    <label>📸 Add Photo (optional): <input type="file" id="photoInput" accept="image/*"></label>
+    <br>
+    <button id="saveNoteBtn">💾 Save Note</button>
+  </div>
+</div>
+
+<script>
+  // --- Add Note toggle ---
+  const addNoteBtn = document.getElementById("addNoteBtn");
+  const noteForm = document.getElementById("noteForm");
+  const saveNoteBtn = document.getElementById("saveNoteBtn");
+
+  addNoteBtn.addEventListener("click", () => {
+    noteForm.style.display = noteForm.style.display === "none" ? "block" : "none";
+  });
+
+  saveNoteBtn.addEventListener("click", async () => {
+    const noteText = document.getElementById("noteInput").value.trim();
+    const photoFile = document.getElementById("photoInput").files[0];
+    let photoData = null;
+
+    if (photoFile) {
+      photoData = await toBase64(photoFile);
+    }
+
+    const obsId = new URLSearchParams(window.location.search).get("obs");
+    const speciesName = document.querySelector("h1")?.innerText || "Unknown species"; // assumes <h1> contains species
+    const image = document.querySelector("img")?.src || "";
+
+    const entry = {
+      poi_id: obsId,
+      species_name: speciesName,
+      image: image,
+      note: noteText,
+      photo: photoData,
+      date_saved: new Date().toISOString()
+    };
+
+    // --- Save to localStorage ---
+    const existing = JSON.parse(localStorage.getItem("tripPlan") || "[]");
+    existing.push(entry);
+    localStorage.setItem("tripPlan", JSON.stringify(existing));
+
+    alert("✅ Note saved to My Trip Plan!");
+    noteForm.style.display = "none";
+    document.getElementById("noteInput").value = "";
+    document.getElementById("photoInput").value = "";
+  });
+
+  // helper: convert photo to base64 string
+  function toBase64(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  }
+</script>
+
 </body>
 </html>
