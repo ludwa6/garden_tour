@@ -80,13 +80,9 @@
       a.click();
       URL.revokeObjectURL(url);
 
-      // Offer Send-to-Self via Email
-      setTimeout(() => {
-        const mailBody = encodeURIComponent("Here is my Nature Journal attached/downloaded.\n\nEnjoy! 🌿");
-        const mailLink = document.createElement("a");
-        mailLink.href = `mailto:?subject=My Nature Journal&body=${mailBody}`;
-        mailLink.click();
-      }, 800);
+      // NEW fallback
+      alert("✅ Exported as MyNatureJournal.html\n\nOn desktop, find it in your Downloads folder.\nOn mobile, attach it in WhatsApp, email, or any app you like.");
+
     });
 
     function buildExportHTML(entries) {
