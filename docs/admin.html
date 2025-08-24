@@ -145,5 +145,32 @@
 
     loadRegistry();
   </script>
+
+async function loadSharedNotes() {
+  const url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQOnNZh3kF5CzHEEOf6OH8pp9XT-VVS10ELP6RapiD0v2a--ybmB09LFFfFJ8VawBnVe6JI6mESYn-u/pub?gid=0&single=true&output=csv";
+  const res = await fetch(url);
+  const text = await res.text();
+  const rows = text.split("\n").map(r => r.split(","));
+  
+  const table = document.getElementById("notesTable");
+  table.innerHTML = "<tr><th>POI</th><th>Species</th><th>Note</th><th>Date</th></tr>";
+
+  rows.slice(1).forEach(r => {
+    if (r[0]) {
+      table.innerHTML += `<tr>
+        <td>${r[0]}</td>
+        <td>${r[1]}</td>
+        <td>${r[2]}</td>
+        <td>${r[4]}</td>
+      </tr>`;
+    }
+  });
+}
+
+loadSharedNotes();
+
+<h2>Visitor Notes</h2>
+<table id="notesTable"></table>
+
 </body>
 </html>

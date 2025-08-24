@@ -55,6 +55,20 @@
     document.getElementById("exportBtn").addEventListener("click", async () => {
       const html = buildExportHTML(trip);
 
+    // ✅ New: Ask if user wants to share with Garden
+    if (confirm("Would you like to share your notes with the Garden? (anonymous)")) {
+        for (let entry of trip) {
+        await fetch("https://script.google.com/macros/s/AKfycbwDWDnZUn6CwOZcHW5Yqfw9GyscARn71XzSLEKQ1VFPU3neoWLiEfyTmvZjDuC_CQ2R/execYOUR_GOOGLE_APPS_SCRIPT_URL", {
+            method: "POST",
+            body: JSON.stringify(entry)
+        });
+        }
+        alert("✅ Shared anonymously with Garden. Thank you!");
+    }
+
+  // ... keep existing share/download code below ...
+});
+
       const blob = new Blob([html], { type: "text/html" });
       const file = new File([blob], "MyNatureJournal.html", { type: "text/html" });
 
