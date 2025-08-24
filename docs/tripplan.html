@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>My Trip Plan</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body { font-family: sans-serif; padding: 1rem; background: #f9f9f9; }
+    h1 { text-align: center; }
+    .controls { text-align: center; margin: 1rem 0; }
+    button { padding: 0.5em 1em; border: none; border-radius: 6px; cursor: pointer; }
+    .export-btn { background: #2c7; color: #fff; }
+    .card-grid { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); }
+    .card { background: white; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); padding: 1rem; display: flex; flex-direction: column; }
+    .card img { max-width: 100%; border-radius: 6px; margin-bottom: 0.5rem; }
+    .card h2 { font-size: 1.2rem; margin: 0.5rem 0; }
+    .card small { color: #555; }
+    .note { margin-top: 0.5rem; font-style: italic; color: #333; }
+    .remove-btn { margin-top: auto; align-self: flex-end; background: #d33; color: white; }
+  </style>
+</head>
+<body>
+  <h1>🌿 My Trip Plan</h1>
+
+  <div class="controls">
+    <button class="export-btn" id="exportBtn">📤 Export My Trip</button>
+  </div>
+
+  <div class="card-grid" id="tripGrid"></div>
+
+  <script>
+    // --- Dummy saved POIs ---
+    const savedPOIs = [
+      {
+        poi_id: 123456,
+        species_name: "Quercus suber",
+        image: "https://upload.wikimedia.org/wikipedia/commons/7/76/Quercus_suber.jpg",
+        note: "The bark smells earthy; reminded me of Portugal.",
+        date_saved: "2025-08-23T12:34:56Z"
+      },
+      {
+        poi_id: 308415317,
+        species_name: "Eurasian blue tit",
+        image: "https://upload.wikimedia.org/wikipedia/commons/4/47/Cyanistes_caeruleus.jpg",
+        note: "Saw this bird hopping between branches near the oak.",
+        date_saved: "2025-08-23T13:12:00Z"
+      }
+    ];
+
+    function renderCards() {
+      const grid = document.getElementById("tripGrid");
+      grid.innerHTML = "";
+      savedPOIs.forEach((poi, i) => {
+        const card = document.createElement("div");
+        card.className = "card";
+        card.innerHTML = `
+          <img src="${poi.image}" alt="${poi.species_name}">
+          <h2>${poi.species_name}</h2>
+          <small>Saved: ${new Date(poi.date_saved).toLocaleString()}</small>
+          <p class="note">📝 ${poi.note}</p>
+          <button class="remove-btn" data-index="${i}">❌ Remove</button>
+        `;
+        grid.appendChild(card);
+      });
+
+      // Hook up delete buttons
+      document.querySelectorAll(".remove-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const idx = parseInt(btn.dataset.index);
+          savedPOIs.splice(idx, 1);
+          renderCards();
+        });
+      });
+    }
+
+    renderCards();
+
+    // --- Export My Trip ---
+    document.getElementById("exportBtn").addEventListener("click", () => {
+      const html = `
+        <html>
+        <head><meta charset="UTF-8"><title>My Trip Export</title></head>
+        <body style="font-family:sans-serif; padding:1rem;">
+          <h1>🌿 My Trip Plan</h1>
+          ${savedPOIs.map(poi => `
+            <div style="border:1px solid #ccc; padding:1rem; margin:1rem 0; border-radius:8px;">
+              <h2>${poi.species_name}</h2>
+              <img src="${poi.image}" style="max-width:200px;">
+              <p><strong>Saved:</strong> ${new Date(poi.date_saved).toLocaleString()}</p>
+              <p><em>${poi.note}</em></p>
+            </div>
+          `).join("")}
+          <footer><p>Exported from FieldGuide PWA — ${new Date().toLocaleString()}</p></footer>
+        </body>
+        </html>
+      `;
+      const blob = new Blob([html], { type: "text/html" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "my-trip.html";
+      a.click();
+      URL.revokeObjectURL(url);
+    });
+  </script>
+</body>
+</html>
