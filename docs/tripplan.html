@@ -2,97 +2,126 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>My Trip Plan</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Trip Plan</title>
   <style>
-    body { font-family: sans-serif; padding: 1rem; background: #f9f9f9; }
+    body { font-family: sans-serif; padding: 1rem; }
     h1 { text-align: center; }
-    .controls { text-align: center; margin: 1rem 0; }
-    button { padding: 0.5em 1em; border: none; border-radius: 6px; cursor: pointer; }
-    .export-btn { background: #2c7; color: #fff; }
-    .card-grid { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); }
-    .card { background: white; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); padding: 1rem; display: flex; flex-direction: column; }
-    .card img { max-width: 100%; border-radius: 6px; margin-bottom: 0.5rem; }
-    .card h2 { font-size: 1.2rem; margin: 0.5rem 0; }
-    .card small { color: #555; }
-    .note { margin-top: 0.5rem; font-style: italic; color: #333; }
-    .remove-btn { margin-top: auto; align-self: flex-end; background: #d33; color: white; }
+    .card {
+      border: 1px solid #ccc; border-radius: 6px; padding: 0.5rem;
+      margin: 0.5rem 0; background:#fafafa;
+    }
+    .card img { max-width: 100%; border-radius: 6px; }
+    button {
+      margin: 0.3rem; padding: 0.5rem 1rem;
+      border-radius: 6px; border: none;
+      background: #2c7; color: #fff; font-weight: bold;
+    }
+    button.secondary { background:#555; }
+    textarea { width:100%; }
   </style>
 </head>
 <body>
   <h1>🌿 My Trip Plan</h1>
+  <div id="tripList"></div>
 
-  <div class="controls">
-    <button class="export-btn" id="exportBtn">📤 Export My Trip</button>
+  <div style="text-align:center; margin-top:1.5rem;">
+    <button id="exportBtn">📤 Export My Trip</button>
   </div>
 
-  <div class="card-grid" id="tripGrid"></div>
-
   <script>
-    // --- Load real saved POIs ---
-    let savedPOIs = JSON.parse(localStorage.getItem("tripPlan") || "[]");
+    // Load trip data
+    const trip = JSON.parse(localStorage.getItem("tripPlan") || "[]");
+    const tripList = document.getElementById("tripList");
 
-
-    function renderCards() {
-      const grid = document.getElementById("tripGrid");
-      grid.innerHTML = "";
-      savedPOIs.forEach((poi, i) => {
-        const card = document.createElement("div");
-        card.className = "card";
-        card.innerHTML = `
-            <h2>${poi.species_name}</h2>
-            <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
-                ${poi.image ? `<div><small>Species</small><img src="${poi.image}" alt="species" style="max-width:120px; border-radius:6px;"></div>` : ""}
-                ${poi.photo ? `<div><small>My photo</small><img src="${poi.photo}" alt="user" style="max-width:120px; border-radius:6px;"></div>` : ""}
-            </div>
-            <small>Saved: ${new Date(poi.date_saved).toLocaleString()}</small>
-            ${poi.note ? `<p class="note">📝 ${poi.note}</p>` : ""}
-            <button class="remove-btn" data-index="${i}">❌ Remove</button>
+    if (trip.length === 0) {
+      tripList.innerHTML = "<p><em>No items yet. Visit a POI and add a note!</em></p>";
+    } else {
+      trip.forEach(entry => {
+        const div = document.createElement("div");
+        div.className = "card";
+        div.innerHTML = `
+          <h3>${entry.species_name}</h3>
+          <img src="${entry.image}" alt="${entry.species_name}">
+          ${entry.note ? `<p><strong>Note:</strong> ${entry.note}</p>` : ""}
+          ${entry.photo ? `<img src="${entry.photo}" alt="User photo">` : ""}
+          <p><em>Saved ${new Date(entry.date_saved).toLocaleString()}</em></p>
         `;
-
-        grid.appendChild(card);
-      });
-
-      // Hook up delete buttons
-      document.querySelectorAll(".remove-btn").forEach(btn => {
-        btn.addEventListener("click", () => {
-          const idx = parseInt(btn.dataset.index);
-          savedPOIs.splice(idx, 1);
-          localStorage.setItem("tripPlan", JSON.stringify(savedPOIs));
-          renderCards();
-        });
+        tripList.appendChild(div);
       });
     }
 
-    renderCards();
+    // Export My Trip
+    document.getElementById("exportBtn").addEventListener("click", async () => {
+      const html = buildExportHTML(trip);
 
-    // --- Export My Trip ---
-    document.getElementById("exportBtn").addEventListener("click", () => {
-      const html = `
-        <html>
-        <head><meta charset="UTF-8"><title>My Trip Export</title></head>
-        <body style="font-family:sans-serif; padding:1rem;">
-          <h1>🌿 My Trip Plan</h1>
-          ${savedPOIs.map(poi => `
-            <div style="border:1px solid #ccc; padding:1rem; margin:1rem 0; border-radius:8px;">
-              <h2>${poi.species_name}</h2>
-              <img src="${poi.image}" style="max-width:200px;">
-              <p><strong>Saved:</strong> ${new Date(poi.date_saved).toLocaleString()}</p>
-              <p><em>${poi.note}</em></p>
-            </div>
-          `).join("")}
-          <footer><p>Exported from FieldGuide PWA — ${new Date().toLocaleString()}</p></footer>
-        </body>
-        </html>
-      `;
       const blob = new Blob([html], { type: "text/html" });
+      const file = new File([blob], "MyNatureJournal.html", { type: "text/html" });
+
+      if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+        try {
+          await navigator.share({
+            title: "My Nature Journal",
+            text: "Here’s my trip plan and notes 🌿",
+            files: [file]
+          });
+          alert("✅ Shared successfully!");
+          return;
+        } catch (err) {
+          console.warn("Share cancelled or failed", err);
+        }
+      }
+
+      // Fallback: download
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = "my-trip.html";
+      a.download = "MyNatureJournal.html";
       a.click();
       URL.revokeObjectURL(url);
+
+      // Offer Send-to-Self via Email
+      setTimeout(() => {
+        const mailBody = encodeURIComponent("Here is my Nature Journal attached/downloaded.\n\nEnjoy! 🌿");
+        const mailLink = document.createElement("a");
+        mailLink.href = `mailto:?subject=My Nature Journal&body=${mailBody}`;
+        mailLink.click();
+      }, 800);
     });
+
+    function buildExportHTML(entries) {
+      const today = new Date().toLocaleDateString();
+      return `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>My Nature Journal</title>
+  <style>
+    body { font-family: serif; padding:1rem; line-height:1.4; }
+    h1 { text-align:center; }
+    .entry { margin:1rem 0; border-bottom:1px solid #ccc; padding-bottom:1rem; }
+    .entry img { max-width:100%; border-radius:6px; margin:0.5rem 0; }
+  </style>
+</head>
+<body>
+  <h1>🌿 My Nature Journal</h1>
+  <p><em>Visit date: ${today}</em></p>
+  ${entries.map(e => `
+    <div class="entry">
+      <h2>${e.species_name}</h2>
+      <img src="${e.image}" alt="${e.species_name}">
+      ${e.note ? `<p>${e.note}</p>` : ""}
+      ${e.photo ? `<img src="${e.photo}" alt="Visitor photo">` : ""}
+      <p><small>Saved on ${new Date(e.date_saved).toLocaleString()}</small></p>
+    </div>
+  `).join("")}
+  <hr>
+  <p><em>Thank you for connecting with nature today 🌱</em></p>
+</body>
+</html>
+      `;
+    }
   </script>
 </body>
 </html>
