@@ -170,7 +170,7 @@
 
   function renderNotes() {
     const all = JSON.parse(localStorage.getItem("tripPlan") || "[]");
-    const mine = all.filter(poi => poi.poi_id === obsId);
+    const mine = all.filter(poi => String(poi.poi_id) === String(obsId));
     const list = document.getElementById("noteList");
     list.innerHTML = "";
 
