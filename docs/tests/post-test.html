@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>POST Test</title>
+</head>
+<body>
+  <h1>POST to Google Apps Script</h1>
+  <button onclick="sendTest()">Send Test Note</button>
+
+  <pre id="output"></pre>
+
+  <script>
+    async function sendTest() {
+      const noteObj = {
+        poi_id: "TEST123",
+        species_name: "Debug Plant",
+        note: "Hello from POST test page 🌱",
+        date_saved: new Date().toISOString()
+      };
+
+      const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwDWDnZUn6CwOZcHW5Yqfw9GyscARn71XzSLEKQ1VFPU3neoWLiEfyTmvZjDuC_CQ2R/exec"; // 👈 replace with your deployed URL
+
+      try {
+        const res = await fetch(WEB_APP_URL, {
+          method: "POST",
+          body: JSON.stringify(noteObj),
+          headers: { "Content-Type": "application/json" }
+        });
+
+        const text = await res.text();
+        document.getElementById("output").textContent =
+          "Status: " + res.status + "\nResponse: " + text;
+        console.log("Response text:", text);
+
+      } catch (err) {
+        document.getElementById("output").textContent = "Error: " + err;
+        console.error(err);
+      }
+    }
+  </script>
+</body>
+</html>
