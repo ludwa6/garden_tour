@@ -1,26 +1,56 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Admin Dashboard</title>
   <style>
     body { font-family: sans-serif; padding: 1rem; }
-    h1, h2 { text-align: center; }
-    table { border-collapse: collapse; width: 100%; margin: 1rem 0; }
-    th, td { border: 1px solid #ccc; padding: 0.5rem; text-align: left; }
-    th { background:#eee; }
-    img { max-height: 50px; }
-    .qr-inline { width: 60px; height: 60px; }
+    h1 { text-align:center; margin-bottom:0.4rem; }
+    .controls { display:flex; gap:0.5rem; flex-wrap:wrap; justify-content:center; margin-bottom:0.75rem; }
+    input[type="text"]{ padding:0.5rem; width:100%; max-width:420px; }
+    button { padding:0.45rem 0.7rem; border-radius:6px; border:0; background:#2c7; color:#fff; cursor:pointer; }
+    button.ghost { background:#eee; color:#222; }
+    table { border-collapse:collapse; width:100%; margin: 0.75rem 0; }
+    th, td { border:1px solid #ddd; padding:0.5rem; text-align:left; }
+    th { background:#f6f6f6; }
+    img { max-height:48px; display:block; }
+    .qr-inline{ width:60px; height:60px; display:inline-block; }
+    .small { font-size:0.9rem; color:#555; }
+    .actions button { margin-left:0.4rem; }
+    .note { font-size:0.85rem; color:#666; text-align:center; margin-top:0.25rem; }
   </style>
 </head>
 <body>
   <h1>🌿 Admin Dashboard</h1>
 
+  <!-- Controls -->
+  <div class="controls">
+    <input id="searchBox" type="text" placeholder="Filter by species or ID (live)"/>
+    <button id="importBtn" class="ghost">Import registry JSON</button>
+    <input id="fileInput" type="file" accept=".json" style="display:none;">
+    <button id="exportBtn">Export registry (download)</button>
+    <button id="resetBtn" class="ghost">Reset to Remote</button>
+    <button id="addToggle" class="ghost">Add POI</button>
+  </div>
+
+  <!-- Add POI mini-form (hidden by default) -->
+  <div id="addForm" style="display:none; margin-bottom:0.5rem;">
+    <input id="add_id" placeholder="POI id" style="padding:.45rem; width:14%; margin-right:.5rem;">
+    <input id="add_species" placeholder="Species name" style="padding:.45rem; width:32%; margin-right:.5rem;">
+    <input id="add_qr" placeholder="qr_code_url" style="padding:.45rem; width:30%; margin-right:.5rem;">
+    <input id="add_detail" placeholder="detail_url" style="padding:.45rem; width:18%; margin-right:.5rem;">
+    <br>
+    <div style="margin-top:.5rem;">
+      <button id="addSubmit">Add POI</button>
+      <button id="addCancel" class="ghost">Cancel</button>
+      <span class="note">Tip: export registry after edits to persist to repo.</span>
+    </div>
+  </div>
+
   <!-- Registry Section -->
-  <h2>POI Registry</h2>
-  <input type="text" id="searchBox" placeholder="Filter by species or ID" style="width:100%;padding:0.5rem;">
-  <table id="registryTable">
+  <h2 style="text-align:left;">POI Registry</h2>
+  <table id="registryTable" aria-label="POI registry">
     <thead>
       <tr>
         <th>ID</th>
@@ -28,123 +58,244 @@
         <th>QR</th>
         <th>Detail Page</th>
         <th>iNat Link</th>
+        <th>Actions</th>
       </tr>
     </thead>
     <tbody></tbody>
   </table>
 
-  <p><a href="userjournals.html">📒 View Visitor Journals</a></p>
+  <p style="margin-top:.25rem"><a href="userjournals.html">📒 View Visitor Journals</a></p>
 
-  <!-- Visitor Notes Section -->
-  <h2>Visitor Notes (Shared with Garden)</h2>
+  <!-- Visitor Notes Section (unchanged) -->
+  <h2 style="text-align:left; margin-top:1.25rem;">Visitor Notes (Shared with Garden)</h2>
   <table id="notesTable"><tr><td>Loading...</td></tr></table>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
   <script>
-    // -------------------
-    // Load POI Registry
-    // -------------------
+  (function(){
+    // config
+    const REMOTE_INDEX = "/assets/qrcodes/index.json";
+
+    // in-memory registry, normalized to array of objects
+    let registry = [];
+
+    // DOM refs
+    const tbody = document.querySelector("#registryTable tbody");
+    const searchBox = document.getElementById("searchBox");
+    const importBtn = document.getElementById("importBtn");
+    const fileInput = document.getElementById("fileInput");
+    const exportBtn = document.getElementById("exportBtn");
+    const resetBtn = document.getElementById("resetBtn");
+    const addToggle = document.getElementById("addToggle");
+    const addForm = document.getElementById("addForm");
+    const addSubmit = document.getElementById("addSubmit");
+    const addCancel = document.getElementById("addCancel");
+
+    // load registry: prefer localStorage override if present; else fetch remote index.json
     async function loadRegistry() {
       try {
-        const res = await fetch("/assets/qrcodes/index.json");
-        const data = await res.json();
-        const tbody = document.querySelector("#registryTable tbody");
-        tbody.innerHTML = "";
-
-        data.forEach(item => {
-          const row = document.createElement("tr");
-
-          // Inline QR: if PNG missing, generate dynamically
-          let qrHtml = `<img src="${item.qr_code_url}" onerror="this.style.display='none';this.parentNode.querySelector('canvas').style.display='inline';">`;
-          qrHtml += `<canvas class="qr-inline" data-url="${item.detail_url}" style="display:none"></canvas>`;
-
-          row.innerHTML = `
-            <td>${item.poi_id}</td>
-            <td>${item.species_name}</td>
-            <td>${qrHtml}</td>
-            <td><a href="${item.detail_url}">View</a></td>
-            <td><a href="${item.inat_url}" target="_blank">iNat</a></td>
-          `;
-          tbody.appendChild(row);
-        });
-
-        // Generate fallback inline QRs
-        document.querySelectorAll("canvas[data-url]").forEach(canvas => {
-          const qr = new QRious({
-            element: canvas,
-            value: canvas.dataset.url,
-            size: 60
-          });
-        });
-
-        // Enable filtering
-        const searchBox = document.getElementById("searchBox");
-        searchBox.addEventListener("input", () => {
-          const filter = searchBox.value.toLowerCase();
-          Array.from(tbody.rows).forEach(row => {
-            const text = row.innerText.toLowerCase();
-            row.style.display = text.includes(filter) ? "" : "none";
-          });
-        });
-
+        const stored = localStorage.getItem("registry_override");
+        if (stored) {
+          registry = JSON.parse(stored);
+        } else {
+          const res = await fetch(REMOTE_INDEX);
+          registry = await res.json();
+        }
+        renderRegistry();
       } catch (err) {
-        console.error("Failed to load registry", err);
+        console.error("Failed to load registry:", err);
+        tbody.innerHTML = "<tr><td colspan='6'>⚠️ Could not load registry.</td></tr>";
       }
     }
 
+    // render function: builds rows and bind delete handlers
+    function renderRegistry() {
+      tbody.innerHTML = "";
+      if (!Array.isArray(registry) || registry.length === 0) {
+        tbody.innerHTML = "<tr><td colspan='6'><em>No registry entries.</em></td></tr>";
+        return;
+      }
+
+      registry.forEach(item => {
+        // normalize fields
+        const id = item.poi_id ?? item.id ?? "";
+        const species = item.species_name ?? item.species ?? "";
+        const qr = item.qr_code_url ?? item.qr ?? "";
+        const detail = item.detail_url ?? item.detail ?? "";
+        const inat = item.inat_url ?? item.inat ?? "";
+
+        const tr = document.createElement("tr");
+        tr.dataset.poiId = String(id);
+
+        // build QR html (image + fallback canvas)
+        const qrHtml = `
+          <div>
+            <img src="${qr}" alt="qr" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline-block';" style="max-height:48px;">
+            <canvas class="qr-inline" data-url="${detail}" style="display:none;"></canvas>
+          </div>
+        `;
+
+        tr.innerHTML = `
+          <td>${escapeHtml(id)}</td>
+          <td>${escapeHtml(species)}</td>
+          <td>${qrHtml}</td>
+          <td><a href="${detail}">View</a></td>
+          <td>${inat ? `<a href="${inat}" target="_blank">iNat</a>` : ""}</td>
+          <td class="actions">
+            <button data-action="delete" data-id="${escapeHtml(id)}" style="background:#d33;color:#fff;border-radius:6px;padding:.3rem .5rem;border:0;cursor:pointer;">Delete</button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      // generate inline QRs
+      document.querySelectorAll("canvas[data-url]").forEach(canvas=>{
+        try {
+          new QRious({ element: canvas, value: canvas.dataset.url, size: 60 });
+        } catch(e){}
+      });
+    }
+
+    // helper: HTML escape
+    function escapeHtml(s){ return String(s||"").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c])); }
+
+    // filter function (applies display toggling)
+    function applyFilter() {
+      const q = (searchBox.value || "").toLowerCase();
+      Array.from(tbody.rows).forEach(row => {
+        const text = row.innerText.toLowerCase();
+        row.style.display = text.includes(q) ? "" : "none";
+      });
+    }
+
+    // delete handler (delegated)
+    tbody.addEventListener("click", (ev) => {
+      const btn = ev.target.closest("button[data-action='delete']");
+      if (!btn) return;
+      const id = btn.getAttribute("data-id");
+      if (!confirm(`Delete POI ${id} from registry? This change is local until you Export.`)) return;
+      // remove from registry array (match by poi_id or id)
+      registry = registry.filter(it => String(it.poi_id ?? it.id ?? "") !== String(id));
+      // persist override to localStorage
+      localStorage.setItem("registry_override", JSON.stringify(registry));
+      renderRegistry();
+      applyFilter();
+    });
+
+    // Import (file input)
+    importBtn.addEventListener("click", ()=> fileInput.click());
+    fileInput.addEventListener("change", async (e) => {
+      const f = e.target.files[0];
+      if (!f) return;
+      try {
+        const text = await f.text();
+        const parsed = JSON.parse(text);
+        if (!Array.isArray(parsed)) throw new Error("Registry JSON must be an array");
+        registry = parsed;
+        localStorage.setItem("registry_override", JSON.stringify(registry));
+        renderRegistry();
+        alert("✅ Registry imported locally. Export to persist to repo if desired.");
+      } catch (err) {
+        alert("Invalid JSON: " + err.message);
+      } finally {
+        fileInput.value = "";
+      }
+    });
+
+    // Export: download current registry as JSON file
+    exportBtn.addEventListener("click", ()=>{
+      const blob = new Blob([JSON.stringify(registry, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "index.json";
+      a.click();
+      URL.revokeObjectURL(url);
+      alert("✅ index.json downloaded. Replace /docs/assets/qrcodes/index.json in your repo to make this permanent.");
+    });
+
+    // Reset to remote (clear override and reload from REMOTE_INDEX)
+    resetBtn.addEventListener("click", ()=>{
+      if (!confirm("Clear local registry override and reload remote index.json?")) return;
+      localStorage.removeItem("registry_override");
+      loadRegistry();
+    });
+
+    // Add POI tiny form toggles and submit
+    addToggle.addEventListener("click", ()=> addForm.style.display = addForm.style.display === "none" ? "block" : "none");
+    addCancel.addEventListener("click", ()=> addForm.style.display = "none");
+    addSubmit.addEventListener("click", ()=>{
+      const id = document.getElementById("add_id").value.trim();
+      const species = document.getElementById("add_species").value.trim();
+      const qr = document.getElementById("add_qr").value.trim();
+      const detail = document.getElementById("add_detail").value.trim();
+      if (!id || !species) { alert("Please supply at least POI id and species name"); return; }
+      const obj = { poi_id: id, species_name: species, qr_code_url: qr, detail_url: detail, inat_url: "" };
+      registry.unshift(obj);
+      localStorage.setItem("registry_override", JSON.stringify(registry));
+      renderRegistry();
+      addForm.style.display = "none";
+      document.getElementById("add_id").value = "";
+      document.getElementById("add_species").value = "";
+      document.getElementById("add_qr").value = "";
+      document.getElementById("add_detail").value = "";
+      alert("✅ POI added locally. Export to save to repo.");
+    });
+
+    // Search box live filter
+    searchBox.addEventListener("input", applyFilter);
+
     // -------------------
-    // Load Visitor Notes
+    // Visitor Notes loader (you previously had this)
     // -------------------
     async function loadSharedNotes() {
-      const url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQOnNZh3kF5CzHEEOf6OH8pp9XT-VVS10ELP6RapiD0v2a--ybmB09LFFfFJ8VawBnVe6JI6mESYn-u/pub?gid=0&single=true&output=csv"; // Replace with your published CSV link
+      const url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQOnNZh3kF5CzHEEOf6OH8pp9XT-VVS10ELP6RapiD0v2a--ybmB09LFFfFJ8VawBnVe6JI6mESYn-u/pub?gid=0&single=true&output=csv"; // replace if needed
       try {
         const res = await fetch(url);
         const text = await res.text();
-        const rows = text.split("\n").map(r => r.split(","));
-
+        const rows = text.split("\n").map(r=>r.split(","));
         const table = document.getElementById("notesTable");
         table.innerHTML = "<tr><th>POI</th><th>Species</th><th>Note</th><th>Date</th></tr>";
-
-        rows.slice(1).forEach(r => {
+        rows.slice(1).forEach(r=>{
           if (r[0]) {
             table.innerHTML += `<tr>
-              <td>${r[0]}</td>
-              <td>${r[1]}</td>
-              <td>${r[2]}</td>
-              <td>${r[4]}</td>
+              <td>${escapeHtml(r[0])}</td>
+              <td>${escapeHtml(r[1]||"")}</td>
+              <td>${escapeHtml(r[2]||"")}</td>
+              <td>${escapeHtml(r[4]||"")}</td>
             </tr>`;
           }
         });
-      } catch (err) {
+      } catch(err){
         console.error("Failed to load notes", err);
-        document.getElementById("notesTable").innerHTML =
-          "<tr><td colspan='4'>⚠️ Could not load shared notes.</td></tr>";
+        document.getElementById("notesTable").innerHTML = "<tr><td colspan='4'>⚠️ Could not load shared notes.</td></tr>";
       }
     }
 
-    // Init
+    // initialize
     loadRegistry();
     loadSharedNotes();
+
+    // expose for debugging (optional)
+    window.__admin_registry = () => registry;
+  })();
   </script>
 
   <!-- Common Navigation Bar -->
-<nav style="
-  position:fixed; bottom:0; left:0; right:0;
-  background:#2c7; color:white;
-  display:flex; justify-content:space-around;
-  padding:0.6em 0; font-size:0.9rem;
-  box-shadow:0 -2px 4px rgba(0,0,0,0.2);
-  z-index:999;">
-  <a href="/index.html" style="color:white; text-decoration:none;">🏡 Home</a>
-  <a href="/tripplan.html" style="color:white; text-decoration:none;">🌿 My Trip</a>
-  <a href="/poi/detail.html?obs=123456" style="color:white; text-decoration:none;">🔍 Sample POI</a>
-  <a href="/admin.html" style="color:white; text-decoration:none;">⚙️ Admin</a>
-  <a href="/userjournals.html" style="color:white; text-decoration:none;">📒 Journals</a>
-  <a href="/qr_admin.html" style="color:white; text-decoration:none;">🔗 QR Admin</a>
-</nav>
-
-<!-- Padding so content isn't hidden behind nav -->
-<div style="height:3.5rem;"></div>
-
+  <nav style="
+    position:fixed; bottom:0; left:0; right:0;
+    background:#2c7; color:white;
+    display:flex; justify-content:space-around;
+    padding:0.6em 0; font-size:0.9rem;
+    box-shadow:0 -2px 4px rgba(0,0,0,0.2);
+    z-index:999;">
+    <a href="/index.html" style="color:white; text-decoration:none;">🏡 Home</a>
+    <a href="/tripplan.html" style="color:white; text-decoration:none;">🌿 My Trip</a>
+    <a href="/poi/detail.html?obs=123456" style="color:white; text-decoration:none;">🔍 Sample POI</a>
+    <a href="/admin.html" style="color:white; text-decoration:none;">⚙️ Admin</a>
+    <a href="/userjournals.html" style="color:white; text-decoration:none;">📒 Journals</a>
+    <a href="/qr_admin.html" style="color:white; text-decoration:none;">🔗 QR Admin</a>
+  </nav>
+  <div style="height:3.5rem;"></div>
 </body>
 </html>
