@@ -126,6 +126,7 @@
 
     function escapeHtml(s) { return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
+    // Cache the page + JSON + image; also store base64 image fallback in localStorage
     saveOfflineBtn.addEventListener("click", async () => {
       try {
         const cache = await caches.open("fieldguide-offline-v1");
@@ -133,6 +134,8 @@
         if (current.inatApiUrl) toAdd.push(current.inatApiUrl);
         if (current.imageUrl) toAdd.push(current.imageUrl);
         await Promise.all(toAdd.map(u => cache.add(u).catch(()=>{})));
+
+        // also store a base64 copy of the main image (so it renders offline even without SW intercept)
         if (current.imageUrl) {
           try {
             const base64 = await toBase64FromUrl(current.imageUrl);
@@ -142,75 +145,158 @@
             localStorage.setItem(cacheKey, JSON.stringify(cached));
           } catch (e) {}
         }
+
         alert("✅ Saved for offline use!");
-      } catch (e) { alert("⚠️ Could not cache offline."); }
+      } catch (e) {
+        alert("⚠️ Could not cache offline. You might be in a private window.");
+      }
     });
 
-    async function toBase64FromUrl(url) { const resp = await fetch(url, { mode: "cors" }); const blob = await resp.blob(); return await blobToDataURL(blob); }
-    function blobToDataURL(blob) { return new Promise((resolve, reject) => { const r = new FileReader(); r.onload=()=>resolve(r.result); r.onerror=reject; r.readAsDataURL(blob); }); }
+    async function toBase64FromUrl(url) {
+      const resp = await fetch(url, { mode: "cors" });
+      const blob = await resp.blob();
+      return await blobToDataURL(blob);
+    }
+    function blobToDataURL(blob) {
+      return new Promise((resolve, reject) => {
+        const r = new FileReader();
+        r.onload = () => resolve(r.result);
+        r.onerror = reject;
+        r.readAsDataURL(blob);
+      });
+    }
 
+    // --- Add Note UI ---
     const addNoteBtn = document.getElementById("addNoteBtn");
     const noteForm = document.getElementById("noteForm");
     const saveNoteBtn = document.getElementById("saveNoteBtn");
 
-    addNoteBtn.addEventListener("click", () => { noteForm.style.display = noteForm.style.display==="none" ? "block" : "none"; });
+    addNoteBtn.addEventListener("click", () => {
+      noteForm.style.display = noteForm.style.display === "none" ? "block" : "none";
+    });
 
     saveNoteBtn.addEventListener("click", async () => {
       const noteText = document.getElementById("noteInput").value.trim();
       const photoFile = document.getElementById("photoInput").files[0];
-      const share = document.getElementById("shareWithGarden").checked;
+      const share = document.getElementById("shareWithGarden") ? document.getElementById("shareWithGarden").checked : false;
       let photoData = null;
       if (photoFile) photoData = await fileToBase64(photoFile);
 
-      const entry = { poi_id:String(current.id), species_name:stripHtml(nameEl.innerHTML), image: imgEl?.src || "", note:noteText, photo:photoData, date_saved:new Date().toISOString() };
+      const entry = {
+        poi_id: String(current.id),
+        species_name: stripHtml(nameEl.innerHTML),
+        image: imgEl?.src || "",
+        note: noteText,
+        photo: photoData,
+        date_saved: new Date().toISOString()
+      };
 
       const existing = safeParse(localStorage.getItem("tripPlan")) || [];
       existing.push(entry);
       localStorage.setItem("tripPlan", JSON.stringify(existing));
 
-      if (share) { await shareNoteWithGarden(entry); }
+      // Optional share to Garden (send smaller payload)
+      if (share) {
+        try {
+          const payload = {
+            poi_id: entry.poi_id,
+            species_name: entry.species_name,
+            note: entry.note,
+            photo_url: "", // not uploading files yet
+            date_saved: entry.date_saved
+          };
+          const ok = await shareNoteWithGarden(payload);
+          if (ok) {
+            alert("🌱 Your note was shared with the Garden!");
+          } else {
+            alert("⚠️ Note saved locally, but sharing failed.");
+          }
+        } catch (e) {
+          console.error("Share failed:", e);
+          alert("⚠️ Note saved locally, but sharing failed.");
+        }
+      }
 
       alert("✅ Saved to My Trip Plan!");
       noteForm.style.display = "none";
       document.getElementById("noteInput").value = "";
       document.getElementById("photoInput").value = "";
-      document.getElementById("shareWithGarden").checked = false;
+      if (document.getElementById("shareWithGarden")) document.getElementById("shareWithGarden").checked = false;
       renderNotes();
     });
 
-    function fileToBase64(file) { return new Promise((resolve,reject)=>{ const r=new FileReader(); r.onload=()=>resolve(r.result); r.onerror=reject; r.readAsDataURL(file); }); }
-    function stripHtml(html) { const tmp=document.createElement("div"); tmp.innerHTML=html; return tmp.textContent||tmp.innerText||""; }
+    function fileToBase64(file) {
+      return new Promise((resolve, reject) => {
+        const r = new FileReader();
+        r.onload = () => resolve(r.result);
+        r.onerror = reject;
+        r.readAsDataURL(file);
+      });
+    }
+    function stripHtml(html) {
+      const tmp = document.createElement("div");
+      tmp.innerHTML = html;
+      return tmp.textContent || tmp.innerText || "";
+    }
 
+    // --- Share with Garden (Google Apps Script Web App) ---
+    async function shareNoteWithGarden(noteObj) {
+      const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwDWDnZUn6CwOZcHW5Yqfw9GyscARn71XzSLEKQ1VFPU3neoWLiEfyTmvZjDuC_CQ2R/exec"; // replace with your deployed Apps Script URL ending in /exec
+      const res = await fetch(WEB_APP_URL, {
+        method: "POST",
+        body: JSON.stringify(noteObj),
+        headers: { "Content-Type": "application/json" }
+      });
+      const ct = (res.headers.get("content-type") || "").toLowerCase();
+      if (ct.includes("application/json")) {
+        const data = await res.json();
+        return data && data.status === "ok";
+      } else {
+        // Fallback: try read as text and parse
+        const text = await res.text();
+        try {
+          const data = JSON.parse(text);
+          return data && data.status === "ok";
+        } catch {
+          return res.ok; // last resort
+        }
+      }
+    }
+
+    // --- Notes list (multiple supported) ---
     function renderNotes() {
       const all = safeParse(localStorage.getItem("tripPlan")) || [];
-      const mine = all.filter(poi => String(poi.poi_id)===String(current.id));
+      const mine = all.filter(poi => String(poi.poi_id) === String(current.id));
       const list = document.getElementById("noteList");
       list.innerHTML = "";
 
-      if (mine.length===0) { list.innerHTML = "<li><em>No notes yet. Add one above!</em></li>"; return; }
-      mine.sort((a,b)=>new Date(b.date_saved)-new Date(a.date_saved));
+      if (mine.length === 0) {
+        list.innerHTML = "<li><em>No notes yet. Add one above!</em></li>";
+        return;
+      }
+
+      mine.sort((a, b) => new Date(b.date_saved) - new Date(a.date_saved));
       mine.forEach(poi => {
-        const li=document.createElement("li"); li.className="note-card";
-        li.innerHTML=`${poi.photo?`<img src="${poi.photo}" alt="My photo">`:""}
+        const li = document.createElement("li");
+        li.className = "note-card";
+        li.innerHTML = `
+          ${poi.photo ? `<img src="${poi.photo}" alt="My photo">` : ""}
           <p><small>${new Date(poi.date_saved).toLocaleString()}</small></p>
-          ${poi.note?`<p>${escapeHtml(poi.note)}</p>`:"<p><em>(no text)</em></p>"}
-          <button data-ts="${poi.date_saved}" class="deleteNoteBtn" style="background:#d33;color:#fff;">❌ Delete</button>`;
+          ${poi.note ? `<p>${escapeHtml(poi.note)}</p>` : "<p><em>(no text)</em></p>"}
+          <button data-ts="${poi.date_saved}" class="deleteNoteBtn" style="background:#d33;color:#fff;">❌ Delete</button>
+        `;
         list.appendChild(li);
       });
-      document.querySelectorAll(".deleteNoteBtn").forEach(btn=>{
-        btn.addEventListener("click", ()=>{ const ts=btn.getAttribute("data-ts"); const allNotes=safeParse(localStorage.getItem("tripPlan"))||[]; const filtered=allNotes.filter(p=>!(String(p.poi_id)===String(current.id)&&p.date_saved===ts)); localStorage.setItem("tripPlan",JSON.stringify(filtered)); renderNotes(); });
-      });
-    }
 
-    // --- Share with Garden ---
-    async function shareNoteWithGarden(noteObj) {
-      const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwDWDnZUn6CwOZcHW5Yqfw9GyscARn71XzSLEKQ1VFPU3neoWLiEfyTmvZjDuC_CQ2R/exec"; // replace with your Apps Script URL
-      try {
-        const res = await fetch(WEB_APP_URL, { method:"POST", body:JSON.stringify(noteObj), headers:{ "Content-Type":"application/json" }});
-        const data = await res.json();
-        if (data.status==="ok") { alert("🌱 Your note was shared with the Garden!"); }
-        else { alert("⚠️ Sharing failed."); }
-      } catch (err) { console.error(err); alert("⚠️ Could not share note (offline or server error)."); }
+      document.querySelectorAll(".deleteNoteBtn").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const ts = btn.getAttribute("data-ts");
+          const allNotes = safeParse(localStorage.getItem("tripPlan")) || [];
+          const filtered = allNotes.filter(p => !(String(p.poi_id) === String(current.id) && p.date_saved === ts));
+          localStorage.setItem("tripPlan", JSON.stringify(filtered));
+          renderNotes();
+        });
+      });
     }
 
     renderNotes();

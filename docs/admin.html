@@ -94,7 +94,7 @@
     // Load Visitor Notes
     // -------------------
     async function loadSharedNotes() {
-      const url = "PASTE_PUBLISHED_SHEET_CSV_URL"; // Replace with your published CSV link
+      const url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQOnNZh3kF5CzHEEOf6OH8pp9XT-VVS10ELP6RapiD0v2a--ybmB09LFFfFJ8VawBnVe6JI6mESYn-u/pub?gid=0&single=true&output=csv"; // Replace with your published CSV link
       try {
         const res = await fetch(url);
         const text = await res.text();
