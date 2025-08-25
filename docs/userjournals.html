@@ -1,126 +1,65 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>User Journals – FieldGuide PWA</title>
-  <link rel="stylesheet" href="style.css" />
+  <meta charset="UTF-8">
+  <title>User Journals – Admin</title>
   <style>
-    body { font-family: sans-serif; margin: 1em; }
-    table { border-collapse: collapse; width: 100%; margin-top: 1em; }
-    th, td { border: 1px solid #ccc; padding: 0.5em; }
-    th { background: #f0f0f0; }
-    tr:nth-child(even) { background: #fafafa; }
-    .actions { margin-top: 1em; }
+    body { font-family: system-ui, sans-serif; padding: 1rem; }
+    h1 { margin-bottom: 1rem; }
+    table { border-collapse: collapse; width: 100%; }
+    th, td { border: 1px solid #ccc; padding: 0.5rem; text-align: left; }
+    th { background: #f2f2f2; }
+    img { max-width: 80px; border-radius: 6px; }
   </style>
 </head>
 <body>
-  <h1>User Journals</h1>
-  <p>
-    <a href="admin.html">⬅ Back to Admin Dashboard</a>
-  </p>
-
-  <input type="text" id="searchBox" placeholder="Search by species or note..." />
-
+  <h1>📒 Visitor Notes (All POIs)</h1>
   <table id="notesTable">
     <thead>
       <tr>
-        <th>Date Saved</th>
         <th>POI ID</th>
         <th>Species</th>
+        <th>Date Saved</th>
         <th>Note</th>
-        <th>Photo (if any)</th>
+        <th>Photo</th>
       </tr>
     </thead>
     <tbody></tbody>
   </table>
 
-  <div class="actions">
-    <button id="exportCsvBtn">Export as CSV</button>
-  </div>
-
   <script>
-    // Open IndexedDB and read stored notes
-    const DB_NAME = "nature_journal";
-    const DB_STORE = "notes";
-    async function loadNotes() {
-        return new Promise((resolve, reject) => {
-            const req = indexedDB.open(DB_NAME, 1);
-
-            req.onupgradeneeded = (e) => {
-                const db = e.target.result;
-                if (!db.objectStoreNames.contains(DB_STORE)) {
-                    db.createObjectStore(DB_STORE, { keyPath: "id", autoIncrement: true });
-                }
-            };
-
-            req.onerror = () => reject("Failed to open IndexedDB");
-            req.onsuccess = () => {
-                const db = req.result;
-                const tx = db.transaction(DB_STORE, "readonly");
-                const store = tx.objectStore(DB_STORE);
-                const getAll = store.getAll();
-                getAll.onsuccess = () => resolve(getAll.result || []);
-                getAll.onerror = () => reject("Failed to fetch notes");
-            };
-        });                                 
-    }
-
-
-    function renderNotes(notes) {
+    function loadNotes() {
       const tbody = document.querySelector("#notesTable tbody");
       tbody.innerHTML = "";
-      notes.forEach(n => {
+
+      const all = JSON.parse(localStorage.getItem("tripPlan") || "[]");
+
+      if (all.length === 0) {
+        tbody.innerHTML = "<tr><td colspan='5'><em>No notes recorded yet.</em></td></tr>";
+        return;
+      }
+
+      all.sort((a, b) => new Date(b.date_saved) - new Date(a.date_saved));
+      all.forEach(entry => {
         const tr = document.createElement("tr");
         tr.innerHTML = `
-          <td>${new Date(n.date_saved).toLocaleString()}</td>
-          <td>${n.poi_id}</td>
-          <td>${n.species_name || "-"}</td>
-          <td>${n.note || ""}</td>
-          <td>${n.photo_url ? `<img src="${n.photo_url}" alt="photo" style="max-width:80px;" />` : "-"}</td>
+          <td>${entry.poi_id}</td>
+          <td>${entry.species_name || ""}</td>
+          <td>${new Date(entry.date_saved).toLocaleString()}</td>
+          <td>${entry.note ? escapeHtml(entry.note) : "<em>(no text)</em>"}</td>
+          <td>${entry.photo ? `<img src="${entry.photo}" alt="user photo">` : ""}</td>
         `;
         tbody.appendChild(tr);
       });
     }
 
-    function filterNotes(allNotes) {
-      const q = document.getElementById("searchBox").value.toLowerCase();
-      const filtered = allNotes.filter(n =>
-        (n.species_name && n.species_name.toLowerCase().includes(q)) ||
-        (n.note && n.note.toLowerCase().includes(q)) ||
-        (String(n.poi_id).includes(q))
-      );
-      renderNotes(filtered);
+    function escapeHtml(s) {
+      return String(s).replace(/[&<>"']/g, c => ({
+        "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+      }[c]));
     }
 
-    function exportCsv(notes) {
-      const header = ["date_saved", "poi_id", "species_name", "note", "photo_url"];
-      const rows = notes.map(n => [
-        n.date_saved,
-        n.poi_id,
-        `"${n.species_name || ""}"`,
-        `"${n.note || ""}"`,
-        n.photo_url || ""
-      ]);
-      const csv = [header.join(","), ...rows.map(r => r.join(","))].join("\n");
-      const blob = new Blob([csv], { type: "text/csv" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "user_journals.csv";
-      a.click();
-      URL.revokeObjectURL(url);
-    }
-
-    // Init
-    let allNotes = [];
-    loadNotes().then(notes => {
-      allNotes = notes;
-      renderNotes(allNotes);
-    });
-
-    document.getElementById("searchBox").addEventListener("input", () => filterNotes(allNotes));
-    document.getElementById("exportCsvBtn").addEventListener("click", () => exportCsv(allNotes));
+    loadNotes();
   </script>
 </body>
 </html>
