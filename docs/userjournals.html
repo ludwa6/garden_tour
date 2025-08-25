@@ -43,21 +43,29 @@
     // Open IndexedDB and read stored notes
     const DB_NAME = "nature_journal";
     const DB_STORE = "notes";
-
     async function loadNotes() {
-      return new Promise((resolve, reject) => {
-        const req = indexedDB.open(DB_NAME, 1);
-        req.onerror = () => reject("Failed to open IndexedDB");
-        req.onsuccess = () => {
-          const db = req.result;
-          const tx = db.transaction(DB_STORE, "readonly");
-          const store = tx.objectStore(DB_STORE);
-          const getAll = store.getAll();
-          getAll.onsuccess = () => resolve(getAll.result || []);
-          getAll.onerror = () => reject("Failed to fetch notes");
-        };
-      });
+        return new Promise((resolve, reject) => {
+            const req = indexedDB.open(DB_NAME, 1);
+
+            req.onupgradeneeded = (e) => {
+                const db = e.target.result;
+                if (!db.objectStoreNames.contains(DB_STORE)) {
+                    db.createObjectStore(DB_STORE, { keyPath: "id", autoIncrement: true });
+                }
+            };
+
+            req.onerror = () => reject("Failed to open IndexedDB");
+            req.onsuccess = () => {
+                const db = req.result;
+                const tx = db.transaction(DB_STORE, "readonly");
+                const store = tx.objectStore(DB_STORE);
+                const getAll = store.getAll();
+                getAll.onsuccess = () => resolve(getAll.result || []);
+                getAll.onerror = () => reject("Failed to fetch notes");
+            };
+        });                                 
     }
+
 
     function renderNotes(notes) {
       const tbody = document.querySelector("#notesTable tbody");
