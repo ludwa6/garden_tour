@@ -1,143 +1,278 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>QR Admin</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>QR Admin — Generate POI QR & Offline Pack</title>
+
+  <!-- Minimal styles -->
   <style>
-    body {
-      font-family: system-ui, sans-serif;
-      margin: 2rem;
-      background: #f9fafb;
-      color: #111827;
-    }
-    h1 {
-      text-align: center;
-      margin-bottom: 1.5rem;
-    }
-    .controls {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.75rem;
-      justify-content: center;
-      margin-bottom: 1.5rem;
-    }
-    select, button {
-      font-size: 1rem;
-      padding: 0.5rem 1rem;
-      border-radius: 0.5rem;
-      border: 1px solid #d1d5db;
-      background: white;
-      cursor: pointer;
-    }
-    button {
-      background: #2563eb;
-      color: white;
-      border: none;
-    }
-    button:hover {
-      background: #1e40af;
-    }
-    .preview {
-      text-align: center;
-      margin-top: 2rem;
-    }
-    .qrcode {
-      margin: 1rem auto;
-    }
-    .link-actions {
-      display: flex;
-      justify-content: center;
-      gap: 1rem;
-      margin-top: 1rem;
-    }
-    .link-actions button {
-      background: #374151;
-    }
-    .link-actions button:hover {
-      background: #111827;
-    }
+    :root{font-family:system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;}
+    body{margin:0;padding:20px;background:#f6f8fb;color:#0b1220}
+    .card{background:#fff;border-radius:10px;box-shadow:0 6px 18px rgba(12,20,30,0.08);padding:18px;max-width:960px;margin:12px auto;}
+    h1{margin:0 0 12px 0;font-size:20px}
+    label{display:block;margin-top:12px;font-size:13px;color:#334155}
+    select,input,button,textarea{font-size:14px;padding:8px;border:1px solid #e6e9ee;border-radius:6px;width:100%;box-sizing:border-box}
+    .row{display:flex;gap:12px;align-items:center}
+    .col{flex:1}
+    .small{width:140px}
+    .qr-preview{display:flex;gap:12px;align-items:center;margin-top:12px}
+    #qrcode{width:160px;height:160px;border:1px dashed #e6e9ee;display:flex;align-items:center;justify-content:center;background:#fff}
+    .muted{font-size:12px;color:#6b7280}
+    .actions{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+    button{cursor:pointer;background:#0f172a;color:#fff;border:none;padding:10px 12px;border-radius:8px}
+    button.secondary{background:#e6e9ee;color:#0b1220}
+    pre{background:#0b1220;color:#e6e9ef;padding:12px;border-radius:6px;overflow:auto}
   </style>
 </head>
 <body>
-  <h1>QR Admin</h1>
-  <div class="controls">
-    <label for="obsSelect">Select Observation:</label>
-    <select id="obsSelect"></select>
-    <button id="generateBtn">Generate QR</button>
-  </div>
+  <div class="card" id="app">
+    <h1>QR Admin — Generate QR & Offline Pack</h1>
+    <label for="obsSelect">Select Observation / POI</label>
+    <div class="row">
+      <select id="obsSelect" class="col">
+        <!-- options filled by script (or paste them here statically) -->
+      </select>
+      <input id="poiId" class="small" placeholder="POI id (optional)" />
+    </div>
 
-  <div class="preview" id="preview" style="display:none;">
-    <h2 id="obsTitle"></h2>
-    <div id="qrcode" class="qrcode"></div>
-    <div class="link-actions">
-      <button id="copyBtn">Copy Link</button>
-      <button id="openBtn">Open Link</button>
+    <label for="detailUrl">Detail URL (if different)</label>
+    <input id="detailUrl" placeholder="/poi/1234 or full URL" />
+
+    <div class="qr-preview">
+      <div id="qrcode" aria-hidden="true">— QR —</div>
+      <div style="flex:1">
+        <div class="muted">Preview / Link</div>
+        <input id="previewLink" readonly />
+        <div class="muted" style="margin-top:8px">Actions</div>
+        <div class="actions">
+          <button id="generateBtn">Generate QR</button>
+          <button id="downloadBtn" class="secondary">Download Offline Pack (zip)</button>
+          <button id="saveServerBtn" class="secondary">Send to Server</button>
+          <button id="copyBtn" class="secondary">Copy Link</button>
+        </div>
+      </div>
+    </div>
+
+    <label for="indexHtmlTpl">Offline index.html template (editable)</label>
+    <textarea id="indexHtmlTpl" rows="8">
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>{{POI_TITLE}}</title></head>
+<body>
+  <h1>{{POI_TITLE}}</h1>
+  <p>{{POI_DESC}}</p>
+  <img src="./qr.png" alt="QR">
+  <script>/* you can include local scripts here */</script>
+</body>
+</html>
+    </textarea>
+
+    <div style="margin-top:12px">
+      <div class="muted">Status</div>
+      <pre id="status">idle</pre>
     </div>
   </div>
-
-  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+  <!-- External libs: change to local copies if you prefer -->
+  <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jszip/dist/jszip.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/file-saver/dist/FileSaver.min.js"></script>
   <script>
-    const obsSelect = document.getElementById("obsSelect");
-    const generateBtn = document.getElementById("generateBtn");
-    const preview = document.getElementById("preview");
-    const obsTitle = document.getElementById("obsTitle");
-    const qrcodeContainer = document.getElementById("qrcode");
-    const copyBtn = document.getElementById("copyBtn");
-    const openBtn = document.getElementById("openBtn");
+    // CONFIG: If you have a server endpoint that accepts a POST to create a new
+    // /assets/offline/:id folder and will unpack the posted zip, set it here.
+    // Leave as null to use client-side zip-download only.
+    const API_ENDPOINT = null; // e.g. "/api/create_offline"
+    // You may need to change how the server expects the payload (form or raw).
 
-    // Mock: replace with real data fetch
-    const observations = [
-      { id: 1, title: "Oak Tree", detail_url: "/assets/offline/1/index.html" },
-      { id: 2, title: "Frog", detail_url: "/assets/offline/2/index.html" },
-      { id: 3, title: "Butterfly", detail_url: "/assets/offline/3/index.html" }
-    ];
 
-    // Populate dropdown
-    observations.forEach(obs => {
-      const option = document.createElement("option");
-      option.value = obs.id;
-      option.textContent = obs.title;
-      obsSelect.appendChild(option);
-    });
+---
 
-    let currentUrl = "";
+# Part 4 — Main JS: generate QR, zip, server send, wire actions
+```html
+<!-- PART 4 - START -->
+    // helpers
+    const el = id => document.getElementById(id);
+    const status = txt => { el('status').textContent = String(txt); console.log(txt); };
 
-    generateBtn.onclick = () => {
-      const selectedId = parseInt(obsSelect.value);
-      const item = observations.find(o => o.id === selectedId);
-      if (!item) return;
-
-      currentUrl = new URL(item.detail_url, location.origin).href;
-
-      // Update preview
-      obsTitle.textContent = item.title;
-      preview.style.display = "block";
-
-      // Clear and regenerate QR
-      qrcodeContainer.innerHTML = "";
-      new QRCode(qrcodeContainer, {
-        text: currentUrl,
-        width: 200,
-        height: 200,
-      });
-    };
-
-    copyBtn.onclick = async () => {
-      if (!currentUrl) return;
+    async function makeQRCodeToCanvas(text) {
+      const canvas = document.createElement('canvas');
       try {
-        await navigator.clipboard.writeText(currentUrl);
-        copyBtn.textContent = "Copied!";
-        setTimeout(() => (copyBtn.textContent = "Copy Link"), 2000);
-      } catch (err) {
-        alert("Failed to copy: " + err);
+        await QRCode.toCanvas(canvas, text, { width: 512 });
+        return canvas;
+      } catch (e) {
+        console.error('QR error', e);
+        throw e;
       }
-    };
+    }
 
-    openBtn.onclick = () => {
-      if (!currentUrl) return;
-      window.open(currentUrl, "_blank");
-    };
+    async function makePNGBlobFromCanvas(canvas) {
+      return await new Promise((resolve) => {
+        canvas.toBlob(blob => resolve(blob), 'image/png');
+      });
+    }
+
+    async function buildOfflineZip({ id, title, desc, detailUrl, indexHtmlTemplate }) {
+      status('building zip...');
+      const zip = new JSZip();
+      // index.html for the POI placed under folder `id/index.html`
+      let indexHtml = indexHtmlTemplate
+        .replaceAll('{{POI_TITLE}}', escapeHtml(title || `POI ${id}`))
+        .replaceAll('{{POI_DESC}}', escapeHtml(desc || `Detail: ${detailUrl || ''}`));
+
+      zip.file(`${id}/index.html`, indexHtml);
+
+      // generate QR to include as qr.png
+      const qrCanvas = await makeQRCodeToCanvas(detailUrl);
+      const qrBlob = await makePNGBlobFromCanvas(qrCanvas);
+      zip.file(`${id}/qr.png`, qrBlob);
+
+      // optionally include a small manifest or assetlist
+      zip.file(`${id}/assets.json`, JSON.stringify({ id, title, url: detailUrl }, null, 2));
+
+      status('zip built');
+      return zip.generateAsync({type:'blob'});
+    }
+
+    async function downloadOfflinePack(blob, filename) {
+      status('triggering download...');
+      saveAs(blob, filename);
+      status('download started');
+    }
+
+    async function sendZipToServer(blob, id) {
+      if (!API_ENDPOINT) throw new Error('No API_ENDPOINT configured');
+      status('sending zip to server...');
+      const form = new FormData();
+      form.append('id', id);
+      form.append('zipfile', blob, `${id}.zip`);
+      const res = await fetch(API_ENDPOINT, { method:'POST', body: form });
+      if (!res.ok) {
+        const text = await res.text().catch(()=>res.statusText);
+        throw new Error(`Server error: ${res.status} ${text}`);
+      }
+      status('server responded OK');
+      return res.json ? await res.json() : null;
+    }
+
+    function escapeHtml(s){ return String(s).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;'); }
+
+    // wire UI
+    (function wire() {
+      const obsSelect = el('obsSelect');
+      const poiIdInput = el('poiId');
+      const detailUrlInput = el('detailUrl');
+      const previewLink = el('previewLink');
+      const qrcodeDiv = el('qrcode');
+      const generateBtn = el('generateBtn');
+      const downloadBtn = el('downloadBtn');
+      const saveServerBtn = el('saveServerBtn');
+      const copyBtn = el('copyBtn');
+
+      // sample placeholder options (replace with server-injected options in production)
+      const sampleOptions = [
+        { id: 'poi-1001', title: 'Rose Bed', url: '/poi/1001', desc: 'A beautiful rose bed' },
+        { id: 'poi-1002', title: 'Herb Patch', url: '/poi/1002', desc: 'Thyme, basil, mint' },
+        { id: 'poi-1003', title: 'Pond Edge', url: '/poi/1003', desc: 'Small wildlife pond' }
+      ];
+      // populate select
+      sampleOptions.forEach(opt => {
+        const o = document.createElement('option');
+        o.value = opt.id;
+        o.dataset.url = opt.url;
+        o.dataset.title = opt.title;
+        o.dataset.desc = opt.desc || '';
+        o.textContent = `${opt.title} (${opt.id})`;
+        obsSelect.appendChild(o);
+      });
+
+      function updatePreviewFromSelect() {
+        const sel = obsSelect.selectedOptions[0];
+        if (!sel) return;
+        const url = sel.dataset.url || (location.origin + '/poi/' + sel.value);
+        detailUrlInput.value = url;
+        previewLink.value = url;
+        poiIdInput.value = sel.value;
+      }
+      obsSelect.addEventListener('change', updatePreviewFromSelect);
+      updatePreviewFromSelect();
+
+      async function renderQRFor(url) {
+        qrcodeDiv.innerHTML = '';
+        try {
+          const canvas = await makeQRCodeToCanvas(url);
+          // scale down for preview box
+          const smallCanvas = document.createElement('canvas');
+          smallCanvas.width = 160;
+          smallCanvas.height = 160;
+          const ctx = smallCanvas.getContext('2d');
+          ctx.drawImage(canvas, 0, 0, smallCanvas.width, smallCanvas.height);
+          qrcodeDiv.appendChild(smallCanvas);
+        } catch (e) {
+          qrcodeDiv.textContent = 'QR failed';
+        }
+      }
+
+      generateBtn.addEventListener('click', async () => {
+        const id = poiIdInput.value || obsSelect.value || `poi-${Date.now()}`;
+        const url = detailUrlInput.value || previewLink.value || (location.origin + '/poi/' + id);
+        previewLink.value = url;
+        status('generating QR preview...');
+        await renderQRFor(url);
+        status('QR ready');
+      });
+
+      copyBtn.addEventListener('click', async () => {
+        try {
+          await navigator.clipboard.writeText(previewLink.value);
+          status('Link copied to clipboard');
+        } catch(e){
+          status('Clipboard copy failed: ' + (e.message || e));
+        }
+      });
+
+      downloadBtn.addEventListener('click', async () => {
+        try {
+          const id = poiIdInput.value || obsSelect.value || `poi-${Date.now()}`;
+          const title = (obsSelect.selectedOptions[0]?.dataset.title) || id;
+          const desc = obsSelect.selectedOptions[0]?.dataset.desc || '';
+          const url = detailUrlInput.value || (location.origin + '/poi/' + id);
+          const tpl = el('indexHtmlTpl').value;
+          const blob = await buildOfflineZip({ id, title, desc, detailUrl: url, indexHtmlTemplate: tpl });
+          await downloadOfflinePack(blob, `${id}.zip`);
+        } catch(e){
+          status('Error building pack: ' + (e.message||e));
+          console.error(e);
+        }
+      });
+
+      saveServerBtn.addEventListener('click', async () => {
+        if (!API_ENDPOINT) {
+          status('No API_ENDPOINT configured — set API_ENDPOINT in the script to enable server upload');
+          return;
+        }
+        try {
+          const id = poiIdInput.value || obsSelect.value || `poi-${Date.now()}`;
+          const title = (obsSelect.selectedOptions[0]?.dataset.title) || id;
+          const desc = obsSelect.selectedOptions[0]?.dataset.desc || '';
+          const url = detailUrlInput.value || (location.origin + '/poi/' + id);
+          const tpl = el('indexHtmlTpl').value;
+          const zipBlob = await buildOfflineZip({ id, title, desc, detailUrl: url, indexHtmlTemplate: tpl });
+          await sendZipToServer(zipBlob, id);
+          status('Upload complete');
+        } catch(e){
+          status('Upload failed: ' + (e.message||e));
+          console.error(e);
+        }
+      });
+
+    })();
+  <script>
+    // small convenience: on first load, auto-generate a preview QR
+    document.addEventListener('DOMContentLoaded', () => {
+      const gen = document.getElementById('generateBtn');
+      if (gen) gen.click();
+    });
   </script>
+
 </body>
 </html>
