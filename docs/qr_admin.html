@@ -1,104 +1,143 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>QR Admin</title>
   <style>
-    body { font-family: sans-serif; padding: 1rem; }
-    h1 { text-align: center; }
-    #preview { margin-top: 1rem; text-align: center; }
-    #preview img { max-width: 200px; display:block; margin:0 auto; }
-    #preview p { margin: 0.5rem 0; }
-    select, button { padding:0.5rem; margin:0.5rem 0; }
+    body {
+      font-family: system-ui, sans-serif;
+      margin: 2rem;
+      background: #f9fafb;
+      color: #111827;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 1.5rem;
+    }
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      justify-content: center;
+      margin-bottom: 1.5rem;
+    }
+    select, button {
+      font-size: 1rem;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      border: 1px solid #d1d5db;
+      background: white;
+      cursor: pointer;
+    }
+    button {
+      background: #2563eb;
+      color: white;
+      border: none;
+    }
+    button:hover {
+      background: #1e40af;
+    }
+    .preview {
+      text-align: center;
+      margin-top: 2rem;
+    }
+    .qrcode {
+      margin: 1rem auto;
+    }
+    .link-actions {
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+    .link-actions button {
+      background: #374151;
+    }
+    .link-actions button:hover {
+      background: #111827;
+    }
   </style>
 </head>
 <body>
-  <h1>🔗 QR Admin</h1>
+  <h1>QR Admin</h1>
+  <div class="controls">
+    <label for="obsSelect">Select Observation:</label>
+    <select id="obsSelect"></select>
+    <button id="generateBtn">Generate QR</button>
+  </div>
 
-  <label for="obsSelect">Select Observation:</label>
-  <select id="obsSelect"></select>
-  <button id="genBtn">Generate QR</button>
+  <div class="preview" id="preview" style="display:none;">
+    <h2 id="obsTitle"></h2>
+    <div id="qrcode" class="qrcode"></div>
+    <div class="link-actions">
+      <button id="copyBtn">Copy Link</button>
+      <button id="openBtn">Open Link</button>
+    </div>
+  </div>
 
-  <div id="preview"></div>
-
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
   <script>
-    // Example: Populate dropdown with observations from index.json
-    async function loadObservations() {
-      try {
-        const res = await fetch('/assets/qrcodes/index.json');
-        const data = await res.json();
-        const sel = document.getElementById('obsSelect');
-        sel.innerHTML = '';
-        data.forEach(obs => {
-          const opt = document.createElement('option');
-          opt.value = obs.poi_id;
-          opt.textContent = `${obs.species_name} (${obs.poi_id})`;
-          sel.appendChild(opt);
-        });
-      } catch (e) {
-        console.error('Failed to load observations', e);
-      }
-    }
+    const obsSelect = document.getElementById("obsSelect");
+    const generateBtn = document.getElementById("generateBtn");
+    const preview = document.getElementById("preview");
+    const obsTitle = document.getElementById("obsTitle");
+    const qrcodeContainer = document.getElementById("qrcode");
+    const copyBtn = document.getElementById("copyBtn");
+    const openBtn = document.getElementById("openBtn");
 
-    // Get and update filteredRegistry in localStorage
-    function getRegistry() {
-      const stored = localStorage.getItem('filteredRegistry');
-      return stored ? JSON.parse(stored) : [];
-    }
-    function saveRegistry(data) {
-      localStorage.setItem('filteredRegistry', JSON.stringify(data));
-    }
+    // Mock: replace with real data fetch
+    const observations = [
+      { id: 1, title: "Oak Tree", detail_url: "/assets/offline/1/index.html" },
+      { id: 2, title: "Frog", detail_url: "/assets/offline/2/index.html" },
+      { id: 3, title: "Butterfly", detail_url: "/assets/offline/3/index.html" }
+    ];
 
-    document.getElementById('genBtn').addEventListener('click', () => {
-      const sel = document.getElementById('obsSelect');
-      const obsId = sel.value;
-      const obsText = sel.options[sel.selectedIndex].text;
-
-      const detailUrl = `/poi/detail.html?obs=${obsId}`;
-      const qr = new QRious({ value: location.origin + detailUrl, size: 200 });
-      const qrDataUrl = qr.toDataURL();
-
-      document.getElementById('preview').innerHTML = `
-        <img src="${qrDataUrl}" alt="QR Code">
-        <p>ID: ${obsId}</p>
-        <p><a href="${detailUrl}">Go to Detail Page</a></p>
-      `;
-
-      // Update registry in localStorage
-      let registry = getRegistry();
-      // Avoid duplicates
-      if (!registry.find(r => r.poi_id == obsId)) {
-        registry.push({
-          poi_id: obsId,
-          species_name: obsText.split(' (')[0],
-          qr_code_url: qrDataUrl,
-          detail_url: detailUrl,
-          inat_url: `https://www.inaturalist.org/observations/${obsId}`
-        });
-        saveRegistry(registry);
-        alert('POI saved to local registry and available in Admin Dashboard.');
-      }
+    // Populate dropdown
+    observations.forEach(obs => {
+      const option = document.createElement("option");
+      option.value = obs.id;
+      option.textContent = obs.title;
+      obsSelect.appendChild(option);
     });
 
-    loadObservations();
-  </script>
+    let currentUrl = "";
 
-  <!-- Common Navigation Bar -->
-  <nav style="
-    position:fixed; bottom:0; left:0; right:0;
-    background:#2c7; color:white;
-    display:flex; justify-content:space-around;
-    padding:0.6em 0; font-size:0.9rem;
-    box-shadow:0 -2px 4px rgba(0,0,0,0.2);
-    z-index:999;">
-    <a href="/index.html" style="color:white; text-decoration:none;">🏡 Home</a>
-    <a href="/tripplan.html" style="color:white; text-decoration:none;">🌿 My Trip</a>
-    <a href="/admin.html" style="color:white; text-decoration:none;">⚙️ Admin</a>
-    <a href="/userjournals.html" style="color:white; text-decoration:none;">📒 Journals</a>
-    <a href="/qr_admin.html" style="color:white; text-decoration:none;">🔗 QR Admin</a>
-  </nav>
-  <div style="height:3.5rem;"></div>
+    generateBtn.onclick = () => {
+      const selectedId = parseInt(obsSelect.value);
+      const item = observations.find(o => o.id === selectedId);
+      if (!item) return;
+
+      currentUrl = new URL(item.detail_url, location.origin).href;
+
+      // Update preview
+      obsTitle.textContent = item.title;
+      preview.style.display = "block";
+
+      // Clear and regenerate QR
+      qrcodeContainer.innerHTML = "";
+      new QRCode(qrcodeContainer, {
+        text: currentUrl,
+        width: 200,
+        height: 200,
+      });
+    };
+
+    copyBtn.onclick = async () => {
+      if (!currentUrl) return;
+      try {
+        await navigator.clipboard.writeText(currentUrl);
+        copyBtn.textContent = "Copied!";
+        setTimeout(() => (copyBtn.textContent = "Copy Link"), 2000);
+      } catch (err) {
+        alert("Failed to copy: " + err);
+      }
+    };
+
+    openBtn.onclick = () => {
+      if (!currentUrl) return;
+      window.open(currentUrl, "_blank");
+    };
+  </script>
 </body>
 </html>
