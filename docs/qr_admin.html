@@ -31,6 +31,61 @@
     <label for="obsSelect">Select Observation / POI</label>
     <div class="row">
       <select id="obsSelect" class="col">
+        <select id="obsSelect"></select>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      const dropdown = document.getElementById('obsSelect');
+
+      // Try to get the filtered set passed from main.html
+      try {
+        const payload = sessionStorage.getItem('qrAdminFilteredObservations');
+        if (payload) {
+          const items = JSON.parse(payload);
+          if (Array.isArray(items) && items.length) {
+            items.forEach(obs => {
+              const opt = document.createElement('option');
+              opt.value = obs.id;
+              opt.textContent = obs.title ? `${obs.id} — ${obs.title}` : `${obs.id}`;
+              if (obs.detail_url) opt.dataset.detailUrl = obs.detail_url;
+              dropdown.appendChild(opt);
+            });
+            // Clean up after use
+            sessionStorage.removeItem('qrAdminFilteredObservations');
+            // Optionally pre-select the first item and update preview
+            dropdown.selectedIndex = 0;
+            dropdown.dispatchEvent(new Event('change'));
+            return; // done
+          }
+        }
+      } catch (err) {
+        console.error('Error reading filtered observations for QR Admin:', err);
+      }
+
+      // FALLBACK: nothing found in sessionStorage => load default behaviour
+      // e.g. fetch local observations.json, or fall back to iNaturalist / server API
+      try {
+        // adjust path as needed
+        const resp = await fetch('./observations.json');
+        if (resp.ok) {
+          const observations = await resp.json();
+          observations.forEach(obs => {
+            const opt = document.createElement('option');
+            opt.value = obs.id;
+            opt.textContent = obs.title ? `${obs.id} — ${obs.title}` : `${obs.id}`;
+            if (obs.detail_url) opt.dataset.detailUrl = obs.detail_url;
+            dropdown.appendChild(opt);
+          });
+          dropdown.dispatchEvent(new Event('change'));
+        } else {
+          console.warn('No session payload and no local observations.json; admin dropdown empty.');
+        }
+      } catch (err) {
+        console.error('Error loading fallback observations:', err);
+      }
+    });
+    </script>
+
         <!-- options filled by script (or paste them here statically) -->
       </select>
       <input id="poiId" class="small" placeholder="POI id (optional)" />
@@ -87,9 +142,8 @@
 
 ---
 
-# Part 4 — Main JS: generate QR, zip, server send, wire actions
-```html
-<!-- PART 4 - START -->
+// Part 4 — Main JS: generate QR, zip, server send, wire actions
+
     // helpers
     const el = id => document.getElementById(id);
     const status = txt => { el('status').textContent = String(txt); console.log(txt); };

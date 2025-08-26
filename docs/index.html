@@ -59,12 +59,16 @@
 <script src="https://unpkg.com/leaflet-omnivore@0.3.4/leaflet-omnivore.min.js"></script>
 <script src="app.js?v=2"></script>
 <script>
-  // keep this near the bottom of index.html
+/*   // keep this near the bottom of index.html
   document.getElementById('qr-admin-link').addEventListener('click', (e) => {
     e.preventDefault();
     const url = `qr_admin.html?range=${currentRange}`;
     window.location.href = url;
-  });
+  }); */
+  // when navigating to QR Admin
+  const filtered = observations.filter(obs => obs.isVisible);
+  localStorage.setItem("filteredObservations", JSON.stringify(filtered));
+  window.location.href = "qr_admin.html";
 </script>
 <script src="app.js"></script>
 
