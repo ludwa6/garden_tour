@@ -58,26 +58,6 @@
 <script src="https://unpkg.com/leaflet.markercluster/dist/leaflet.markercluster.js"></script>
 <script src="https://unpkg.com/leaflet-omnivore@0.3.4/leaflet-omnivore.min.js"></script>
 <script src="app.js?v=2"></script>
-<!-- <script src="app.js"></script>
-<script>
-  document.addEventListener('DOMContentLoaded', () => {
-    document.getElementById('qr-admin-link').addEventListener('click', (e) => {
-      e.preventDefault(); // prevent immediate navigation
-
-      // Ensure observations is an array
-      const obsArray = Array.isArray(window.observations) ? window.observations : [];
-
-      // Filter only currently visible observations
-      const filtered = obsArray.filter(obs => obs.isVisible);
-
-      // Store filtered observations in localStorage for qr_admin.html
-      localStorage.setItem('observations', JSON.stringify(filtered));
-
-      // Navigate to QR Admin page
-      window.location.href = e.target.href;
-    });
-  });
-</script> -->
 <script>
   // keep this near the bottom of index.html
   document.getElementById('qr-admin-link').addEventListener('click', (e) => {
