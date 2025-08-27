@@ -377,3 +377,755 @@ cat 01_project-overview.md 02_current-features.md 03_roadmap.md \
 ---
 
 If you want the small Express server snippet now, reply **"Express module please"** and I'll add `14_express_server.md` as one additional module (short, copy/paste ready). Otherwise tell me which other focused module you want next (SVG flowchart, Add Note UX spec page, or chunked qr\_admin parts).
+
+---
+
+Got it — thank you for clarifying. We should keep the Notes workflow intact (tripplan.html for logging personal notes, and userjournals.html for aggregated shared notes). The rollback should only remove the broken Google Sheets integration experiment, not the core Notes features.
+
+Here’s what I’ll do:
+
+✅ Keep tripplan.html and userjournals.html exactly as they were, with full Notes functionality.
+
+✅ Roll back index.html and qr_admin.html to their clean state, but without removing any Notes-related links or affordances.
+
+❌ Strip out only the parts where Notes were miswired to Google Sheets.
+
+👉 Next step: I’ll prepare updated drop‑in replacements for index.html and qr_admin.html that (a) restore their clean baseline map + QR admin functionality, and (b) keep all Notes functionality intact (as it connects with tripplan/userjournals).
+
+Do you want me to show you those two corrected versions now, in full, as drop‑ins?
+
+
+
+### 15_notes-rollback-plan.md
+
+# Rollback while keeping Notes (client-side only)
+
+Goal: remove Google Sheet posting, retain Notes UX (tripplan → export/share → userjournals).
+
+Safe sequence
+
+Back up current files (copy to /backup_YYYY-MM-DD/).
+
+Replace index.html and qr_admin.html with the pre‑Sheets versions already in this canvas (keep their filenames).
+
+Drop in notes-core.js (module 16) and link it from pages that use Notes.
+
+Replace tripplan.html with modules 17A–C.
+
+Replace userjournals.html with modules 18A–C.
+
+Test offline (toggle airplane mode): add text/photo notes, export HTML/JSON, share (if supported), then reopen userjournals.html and verify entries render.
+
+If anything breaks, restore from step 1 backup.
+
+
+### 16_notes-core.js
+
+```
+<!-- Include this on pages that need Notes (tripplan, userjournals, any POI page). -->
+<script>
+(() => {
+  const NOTES_KEY = 'tripNotes';
+  const META_KEY = 'tripMeta';
+
+  function _load(key, fallback) {
+    try { return JSON.parse(localStorage.getItem(key)) ?? fallback; } catch { return fallback; }
+  }
+  function _save(key, value) { localStorage.setItem(key, JSON.stringify(value)); }
+
+  function getMeta() { return _load(META_KEY, { title: 'My Trip Journal', startedAt: new Date().toISOString() }); }
+  function setMeta(meta) { _save(META_KEY, { ...getMeta(), ...meta }); }
+
+  function getAllNotes() { return _load(NOTES_KEY, {}); }
+  function getNotesForObs(obsId) { const n = getAllNotes(); return n[obsId] || []; }
+  function clearAllNotes() { _save(NOTES_KEY, {}); }
+
+  async function fileToDataURL(file) {
+    if (!file) return null;
+    return new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = rej; r.readAsDataURL(file); });
+  }
+
+  function addNote(obsId, { text = '', photoDataUrl = null, title = '' } = {}) {
+    if (!obsId) throw new Error('obsId required');
+    const notes = getAllNotes();
+    const id = (self.crypto?.randomUUID?.() || Date.now().toString());
+    const entry = { id, obsId: String(obsId), ts: new Date().toISOString(), title, text, photo: photoDataUrl };
+    if (!notes[obsId]) notes[obsId] = [];
+    notes[obsId].push(entry);
+    _save(NOTES_KEY, notes);
+    return entry;
+  }
+
+  function toHTML({ title, notesByObs }) {
+    const esc = (s) => String(s||'').replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[m]));
+    const groups = Object.keys(notesByObs).sort();
+    const parts = [
+      '<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">',
+      `<title>${esc(title)}</title>`,
+      '<style>body{font-family:system-ui,Segoe UI,Arial,sans-serif;margin:1rem;}h1{margin:0 0 .5rem} .group{margin:1rem 0;padding:1rem;border:1px solid #eee;border-radius:12px} .note{margin:.5rem 0;padding:.5rem;border-radius:8px;background:#fafafa} .note time{font-size:.85em;color:#666} img{max-width:100%;height:auto;border-radius:8px;margin-top:.25rem}</style>',
+      '</head><body>',
+      `<h1>${esc(title)}</h1>`
+    ];
+    for (const k of groups) {
+      parts.push(`<div class="group"><h2>Observation ${esc(k)}</h2>`);
+      for (const n of notesByObs[k]) {
+        parts.push(`<div class="note"><time>${esc(n.ts)}</time>${n.title?`<div><strong>${esc(n.title)}</strong></div>`:''}${n.text?`<div>${esc(n.text)}</div>`:''}${n.photo?`<div><img src="${n.photo}" alt="photo"></div>`:''}</div>`);
+      }
+      parts.push('</div>');
+    }
+    parts.push('</body></html>');
+    return parts.join('');
+  }
+
+  function download(filename, mime, content) {
+    const blob = new Blob([content], { type: mime });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url; a.download = filename; a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 5000);
+  }
+
+  async function exportJournalHTML(filename = 'trip_journal.html') {
+    const meta = getMeta();
+    const notes = getAllNotes();
+    const html = toHTML({ title: meta.title || 'My Trip Journal', notesByObs: notes });
+    download(filename, 'text/html', html);
+  }
+
+  async function exportJournalJSON(filename = 'trip_journal.json') {
+    const payload = { meta: getMeta(), notes: getAllNotes() };
+    download(filename, 'application/json', JSON.stringify(payload, null, 2));
+  }
+
+  async function shareJournalHTML() {
+    const meta = getMeta();
+    const html = toHTML({ title: meta.title || 'My Trip Journal', notesByObs: getAllNotes() });
+    const blob = new Blob([html], { type: 'text/html' });
+    if (navigator.share && navigator.canShare?.({ files: [new File([blob], 'trip_journal.html', { type: 'text/html' })] })) {
+      const file = new File([blob], 'trip_journal.html', { type: 'text/html' });
+      return navigator.share({ title: meta.title || 'My Trip Journal', text: 'My garden trip journal', files: [file] });
+    }
+    // Fallback to download
+    download('trip_journal.html', 'text/html', html);
+  }
+
+  // Expose
+  window.TripNotes = { getMeta, setMeta, getAllNotes, getNotesForObs, addNote, clearAllNotes, exportJournalHTML, exportJournalJSON, shareJournalHTML };
+})();
+</script>
+```
+
+### 17A_tripplan-head.html
+
+```
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Trip Plan</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header><h1>My Trip Plan</h1></header>
+<main>
+```
+
+### 17B_tripplan-body.html
+
+```
+<section>
+  <label>Trip Title
+    <input id="tripTitle" type="text" placeholder="My Trip Journal">
+  </label>
+</section>
+
+<section id="poiList">
+  <h2>Planned Observations</h2>
+  <p class="muted">Pick one, add a note or photo. (This list populates from your current plan if available; otherwise enter an ID manually.)</p>
+  <div id="obsChooser"></div>
+  <div class="inline-form">
+    <input id="manualObsId" type="text" placeholder="Or enter Observation ID">
+  </div>
+</section>
+
+<section id="noteForm">
+  <h2>Add Note</h2>
+  <label>Title <input id="noteTitle" type="text" placeholder="Optional"></label>
+  <label>Text <textarea id="noteText" rows="4" placeholder="What did you see?"></textarea></label>
+  <label>Photo <input id="notePhoto" type="file" accept="image/*" capture="environment"></label>
+  <div>
+    <button id="saveNote">Save Note</button>
+  </div>
+</section>
+
+<section>
+  <h2>My Trip Journal</h2>
+  <div id="notesView"></div>
+  <div class="actions">
+    <button id="exportHtml">Export HTML</button>
+    <button id="exportJson">Export JSON</button>
+    <button id="shareHtml">Share</button>
+  </div>
+</section>
+```
+
+### 17C_tripplan-scripts.html
+
+```
+</main>
+<footer><a href="index.html">⬅ Back to Map</a> · <a href="userjournals.html">Open My Journals</a></footer>
+
+<!-- Notes core -->
+<!-- (module 16 must be included on this page) -->
+
+<script>
+  // Initialize from stored plan if present
+  const obsChooser = document.getElementById('obsChooser');
+  const manualObsId = document.getElementById('manualObsId');
+  const noteTitle = document.getElementById('noteTitle');
+  const noteText = document.getElementById('noteText');
+  const notePhoto = document.getElementById('notePhoto');
+  const notesView = document.getElementById('notesView');
+  const tripTitle = document.getElementById('tripTitle');
+
+  // Apply stored meta
+  const meta = TripNotes.getMeta();
+  tripTitle.value = meta.title || '';
+  tripTitle.addEventListener('input', () => TripNotes.setMeta({ title: tripTitle.value }));
+
+  // Populate chooser from filteredObservations (if user came from map)
+  const stored = localStorage.getItem('filteredObservations');
+  let plan = [];
+  try { plan = stored ? JSON.parse(stored) : []; } catch {}
+  if (Array.isArray(plan) && plan.length) {
+    const select = document.createElement('select');
+    select.id = 'obsSelectPlan';
+    select.innerHTML = '<option value="">Select an observation</option>' + plan.map((o, i)=>`<option value="${o.id}">${o.title || 'Observation'} (#${o.id})</option>`).join('');
+    obsChooser.appendChild(select);
+  } else {
+    obsChooser.innerHTML = '<p class="muted">No planned observations loaded.</p>';
+  }
+
+  function currentObsId() {
+    const sel = document.getElementById('obsSelectPlan');
+    return sel && sel.value ? sel.value : (manualObsId.value || '').trim();
+  }
+
+  function renderNotes() {
+    const byObs = TripNotes.getAllNotes();
+    const keys = Object.keys(byObs);
+    if (!keys.length) { notesView.innerHTML = '<p class="muted">No notes yet.</p>'; return; }
+    notesView.innerHTML = keys.map(k => {
+      const items = byObs[k].map(n => `
+        <div class="note">
+          <time>${n.ts}</time>
+          ${n.title?`<div><strong>${n.title}</strong></div>`:''}
+          ${n.text?`<div>${n.text}</div>`:''}
+          ${n.photo?`<div><img src="${n.photo}" alt="photo"></div>`:''}
+        </div>`).join('');
+      return `<div class="group"><h3>Observation ${k}</h3>${items}</div>`;
+    }).join('');
+  }
+
+  renderNotes();
+
+  document.getElementById('saveNote').addEventListener('click', async () => {
+    const obsId = currentObsId();
+    if (!obsId) { alert('Select or enter an Observation ID first'); return; }
+    let dataUrl = null;
+    const file = notePhoto.files?.[0];
+    if (file) dataUrl = await (async f => new Promise((res, rej)=>{ const r = new FileReader(); r.onload = ()=>res(r.result); r.onerror = rej; r.readAsDataURL(f); }))(file);
+    TripNotes.addNote(obsId, { title: noteTitle.value, text: noteText.value, photoDataUrl: dataUrl });
+    noteTitle.value = ''; noteText.value = ''; notePhoto.value='';
+    renderNotes();
+  });
+
+document.getElementById('exportHtml').addEventListener('click', () => {
+    const data = JSON.parse(localStorage.getItem('tripNotes') || '[]');
+    const html = exportNotesAsHTML(data);
+    const blob = new Blob([html], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'My_Trip_Journal.html';
+    a.click();
+    URL.revokeObjectURL(url);
+  });
+
+  document.getElementById('exportJson').addEventListener('click', () => {
+    const data = JSON.parse(localStorage.getItem('tripNotes') || '[]');
+    const json = exportNotesAsJSON(data);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'My_Trip_Journal.json';
+    a.click();
+    URL.revokeObjectURL(url);
+  });
+
+  document.getElementById('shareNotes').addEventListener('click', async () => {
+    const data = JSON.parse(localStorage.getItem('tripNotes') || '[]');
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: 'My Trip Journal',
+          text: 'Check out my notes from the tour!',
+          url: window.location.href
+        });
+      } catch (err) {
+        console.error('Error sharing', err);
+      }
+    } else {
+      alert('Web Share API not supported. Please use Export instead.');
+    }
+  });
+
+  renderNotes();
+</script>
+</body>
+</html>
+```
+
+### 18c_userjournals-scripts.html
+
+```
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>User Journals</title>
+  <link rel="stylesheet" href="styles.css"/>
+</head>
+<body>
+  <header>
+    <h1>Shared Trip Journals</h1>
+    <nav>
+      <a href="index.html">🏠 Map</a>
+      <a href="tripplan.html">📝 My Trip Plan</a>
+      <a href="userjournals.html" class="active">📚 User Journals</a>
+    </nav>
+  </header>
+
+  <main>
+    <section id="journalsSection">
+      <p>Loading shared journals...</p>
+    </section>
+  </main>
+
+  <footer>
+    <a href="qr_admin.html">QR Admin</a>
+    <a href="admin.html">🔧 Admin Dashboard</a>
+    <span class="footer-sep"> :: </span>
+    <a href="https://www.inaturalist.org/projects/197410" target="_blank" rel="noopener noreferrer">
+      View Project at iNaturalist
+    </a>
+  </footer>
+
+  <script>
+    // Simulated fetch from server or shared storage
+    async function fetchSharedJournals() {
+      // Placeholder: could be replaced with API/DB call later
+      return JSON.parse(localStorage.getItem("sharedJournals") || "[]");
+    }
+
+    function renderJournals(list) {
+      const section = document.getElementById('journalsSection');
+      if (!list.length) {
+        section.innerHTML = "<p>No shared journals yet. Be the first to share your trip notes!</p>";
+        return;
+      }
+
+      section.innerHTML = "";
+      list.forEach((journal, idx) => {
+        const wrapper = document.createElement('article');
+        wrapper.className = "journal";
+
+        const title = document.createElement('h2');
+        title.textContent = journal.title || `Journal ${idx+1}`;
+        wrapper.appendChild(title);
+
+        const meta = document.createElement('p');
+        meta.className = "meta";
+        meta.textContent = `Shared on ${journal.date || new Date().toLocaleDateString()}`;
+        wrapper.appendChild(meta);
+
+        const notesList = document.createElement('ul');
+        journal.notes.forEach(note => {
+          const li = document.createElement('li');
+          if (note.text) {
+            li.textContent = note.text;
+          }
+          if (note.photo) {
+            const img = document.createElement('img');
+            img.src = note.photo;
+            img.alt = "Journal photo";
+            img.className = "journal-photo";
+            li.appendChild(img);
+          }
+          notesList.appendChild(li);
+        });
+        wrapper.appendChild(notesList);
+
+        section.appendChild(wrapper);
+      });
+    }
+
+    document.addEventListener("DOMContentLoaded", async () => {
+      const journals = await fetchSharedJournals();
+      renderJournals(journals);
+    });
+  </script>
+</body>
+</html>
+```
+
+### 19c_admin.html
+
+```
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin Dashboard</title>
+  <link rel="stylesheet" href="styles.css"/>
+</head>
+<body>
+  <header>
+    <h1>🔧 Admin Dashboard</h1>
+    <nav>
+      <a href="index.html">🏠 Map</a>
+      <a href="tripplan.html">📝 My Trip Plan</a>
+      <a href="userjournals.html">📚 User Journals</a>
+      <a href="qr_admin.html">QR Admin</a>
+    </nav>
+  </header>
+
+  <main>
+    <section>
+      <h2>📊 Project Stats</h2>
+      <div id="stats">Loading stats...</div>
+    </section>
+
+    <section>
+      <h2>🧾 Export Data</h2>
+      <button id="exportObservations">Export Observations JSON</button>
+      <button id="exportJournals">Export Journals JSON</button>
+    </section>
+
+    <section>
+      <h2>⚙️ Admin Tools</h2>
+      <ul>
+        <li><a href="qr_admin.html">QR Code Manager</a></li>
+        <li><a href="index.html">Return to Map</a></li>
+      </ul>
+    </section>
+  </main>
+
+  <footer>
+    <a href="qr_admin.html">QR Admin</a>
+    <a href="admin.html" class="active">🔧 Admin Dashboard</a>
+    <span class="footer-sep"> :: </span>
+    <a href="https://www.inaturalist.org/projects/197410" target="_blank" rel="noopener noreferrer">
+      View Project at iNaturalist
+    </a>
+  </footer>
+
+  <script>
+    function loadStats() {
+      const obs = JSON.parse(localStorage.getItem("observations") || "[]");
+      const journals = JSON.parse(localStorage.getItem("sharedJournals") || "[]");
+      const statsDiv = document.getElementById("stats");
+      statsDiv.innerHTML = `
+        <p>Total Observations: ${obs.length}</p>
+        <p>Total Shared Journals: ${journals.length}</p>
+      `;
+    }
+
+    document.getElementById("exportObservations").addEventListener("click", () => {
+      const obs = localStorage.getItem("observations") || "[]";
+      const blob = new Blob([obs], {type: "application/json"});
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = "observations.json";
+      link.click();
+    });
+
+    document.getElementById("exportJournals").addEventListener("click", () => {
+      const journals = localStorage.getItem("sharedJournals") || "[]";
+      const blob = new Blob([journals], {type: "application/json"});
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = "sharedJournals.json";
+      link.click();
+    });
+
+    document.addEventListener("DOMContentLoaded", loadStats);
+  </script>
+</body>
+</html>
+```
+
+### admin_dashboard.css (drop-in file, or add to styles.css)
+✨ What this adds:
+
+* Clean grid-based layout for sections.
+
+* Card-style panels with rounded corners + subtle shadows.
+
+* Polished buttons with hover states.
+
+* Unified header/footer color scheme (dark slate + light text).
+
+* Responsive design (single-column, mobile-friendly).
+
+```
+/* Admin Dashboard Styling */
+
+/* General Layout */
+body {
+  font-family: system-ui, sans-serif;
+  background: #fafafa;
+  color: #222;
+  margin: 0;
+  padding: 0;
+}
+
+header {
+  background: #2c3e50;
+  color: white;
+  padding: 1rem;
+}
+
+header h1 {
+  margin: 0;
+  font-size: 1.6rem;
+}
+
+header nav {
+  margin-top: 0.5rem;
+}
+
+header nav a {
+  color: #ecf0f1;
+  text-decoration: none;
+  margin-right: 1rem;
+  font-weight: 500;
+}
+
+header nav a:hover,
+header nav a.active {
+  text-decoration: underline;
+}
+
+main {
+  max-width: 900px;
+  margin: 1.5rem auto;
+  padding: 0 1rem;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+}
+
+section {
+  background: white;
+  padding: 1.2rem;
+  border-radius: 12px;
+  box-shadow: 0 3px 8px rgba(0,0,0,0.08);
+}
+
+section h2 {
+  margin-top: 0;
+  font-size: 1.3rem;
+  border-bottom: 2px solid #eee;
+  padding-bottom: 0.5rem;
+  margin-bottom: 0.8rem;
+}
+
+/* Buttons */
+button {
+  background: #3498db;
+  color: white;
+  border: none;
+  padding: 0.6rem 1rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.95rem;
+  margin-right: 0.5rem;
+  transition: background 0.2s ease;
+}
+
+button:hover {
+  background: #2980b9;
+}
+
+/* Footer */
+footer {
+  text-align: center;
+  background: #2c3e50;
+  color: white;
+  padding: 0.8rem;
+  margin-top: 2rem;
+}
+
+footer a {
+  color: #ecf0f1;
+  text-decoration: none;
+  margin: 0 0.5rem;
+}
+
+footer a.active {
+  font-weight: bold;
+  text-decoration: underline;
+}
+
+.footer-sep {
+  margin: 0 0.5rem;
+  opacity: 0.6;
+}
+```
+
+### userjournals.css
+
+✨ What this does:
+
+* Harmonizes colors + layout with admin-dashboard.css (slate header/footer, card sections).
+
+* Adds hover-highlighted journal entries so scanning logs is easy.
+
+* Consistent rounded cards + shadows across both dashboards.
+
+* Clean button styles (green theme for journals, blue theme for admin).
+
+```
+/* User Journals Styling */
+
+/* General Layout */
+body {
+  font-family: system-ui, sans-serif;
+  background: #fdfdfd;
+  color: #222;
+  margin: 0;
+  padding: 0;
+}
+
+header {
+  background: #34495e;
+  color: white;
+  padding: 1rem;
+}
+
+header h1 {
+  margin: 0;
+  font-size: 1.6rem;
+}
+
+header nav {
+  margin-top: 0.5rem;
+}
+
+header nav a {
+  color: #ecf0f1;
+  text-decoration: none;
+  margin-right: 1rem;
+  font-weight: 500;
+}
+
+header nav a:hover,
+header nav a.active {
+  text-decoration: underline;
+}
+
+/* Main Layout */
+main {
+  max-width: 900px;
+  margin: 1.5rem auto;
+  padding: 0 1rem;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+}
+
+section {
+  background: white;
+  padding: 1.2rem;
+  border-radius: 12px;
+  box-shadow: 0 3px 8px rgba(0,0,0,0.08);
+}
+
+section h2 {
+  margin-top: 0;
+  font-size: 1.3rem;
+  border-bottom: 2px solid #eee;
+  padding-bottom: 0.5rem;
+  margin-bottom: 0.8rem;
+}
+
+/* Journals List */
+.journal-entry {
+  padding: 1rem;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  background: #fafafa;
+  transition: background 0.2s ease;
+}
+
+.journal-entry:hover {
+  background: #f0f8ff;
+}
+
+.journal-entry h3 {
+  margin-top: 0;
+  font-size: 1.1rem;
+}
+
+.journal-entry small {
+  color: #666;
+}
+
+/* Buttons */
+button {
+  background: #27ae60;
+  color: white;
+  border: none;
+  padding: 0.6rem 1rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.95rem;
+  margin-right: 0.5rem;
+  transition: background 0.2s ease;
+}
+
+button:hover {
+  background: #1e8449;
+}
+
+/* Footer */
+footer {
+  text-align: center;
+  background: #34495e;
+  color: white;
+  padding: 0.8rem;
+  margin-top: 2rem;
+}
+
+footer a {
+  color: #ecf0f1;
+  text-decoration: none;
+  margin: 0 0.5rem;
+}
+
+footer a.active {
+  font-weight: bold;
+  text-decoration: underline;
+}
+
+.footer-sep {
+  margin: 0 0.5rem;
+  opacity: 0.6;
+}
+```
+

@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Trip Plan</title>
+  <style>
+    body { font-family: sans-serif; padding: 1rem; }
+    h1 { text-align: center; }
+    .card {
+      border: 1px solid #ccc; border-radius: 6px; padding: 0.5rem;
+      margin: 0.5rem 0; background:#fafafa;
+    }
+    .card img { max-width: 100%; border-radius: 6px; }
+    button {
+      margin: 0.3rem; padding: 0.5rem 1rem;
+      border-radius: 6px; border: none;
+      background: #2c7; color: #fff; font-weight: bold;
+      cursor:pointer;
+    }
+  </style>
+</head>
+<body>
+  <h1>🌿 My Trip Plan</h1>
+  <div id="tripList"></div>
+
+  <div style="text-align:center; margin-top:1.5rem;">
+    <button id="exportBtn">📤 Export My Trip</button>
+  </div>
+
+  <script>
+    const trip = JSON.parse(localStorage.getItem("tripPlan") || "[]");
+    const tripList = document.getElementById("tripList");
+
+    if (trip.length === 0) {
+      tripList.innerHTML = "<p><em>No items yet. Visit a POI and add a note!</em></p>";
+    } else {
+      trip.forEach(entry => {
+        const div = document.createElement("div");
+        div.className = "card";
+        div.innerHTML = `
+          <h3>${entry.species_name}</h3>
+          <img src="${entry.image}" alt="${entry.species_name}">
+          ${entry.note ? `<p><strong>Note:</strong> ${entry.note}</p>` : ""}
+          ${entry.photo ? `<img src="${entry.photo}" alt="User photo">` : ""}
+          <p><em>Saved ${new Date(entry.date_saved).toLocaleString()}</em></p>
+        `;
+        tripList.appendChild(div);
+      });
+    }
+
+    document.getElementById("exportBtn").addEventListener("click", async () => {
+      const html = buildExportHTML(trip);
+
+      // ✅ Ask to Share with Garden (Google Sheets backend)
+      if (confirm("Would you like to share your notes with the Garden? (anonymous)")) {
+        for (let entry of trip) {
+          await fetch("https://script.google.com/macros/s/AKfycbwDWDnZUn6CwOZcHW5Yqfw9GyscARn71XzSLEKQ1VFPU3neoWLiEfyTmvZjDuC_CQ2R/execYOUR_GOOGLE_APPS_SCRIPT_URL", {
+            method: "POST",
+            body: JSON.stringify(entry)
+          }).catch(err => console.error("Share failed", err));
+        }
+        alert("✅ Shared anonymously with Garden. Thank you!");
+      }
+
+      // ✅ Native share (mobile) or fallback download (desktop)
+      const blob = new Blob([html], { type: "text/html" });
+      const file = new File([blob], "MyNatureJournal.html", { type: "text/html" });
+
+      if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+        try {
+          await navigator.share({
+            title: "My Nature Journal",
+            text: "Here’s my trip plan and notes 🌿",
+            files: [file]
+          });
+          return;
+        } catch (err) {
+          console.warn("Share cancelled or failed", err);
+        }
+      }
+
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "MyNatureJournal.html";
+      a.click();
+      URL.revokeObjectURL(url);
+      alert("✅ Exported as MyNatureJournal.html\nFind it in your Downloads folder.");
+    });
+
+    function buildExportHTML(entries) {
+      const today = new Date().toLocaleDateString();
+      return `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>My Nature Journal</title>
+  <style>
+    body { font-family: serif; padding:1rem; line-height:1.4; }
+    h1 { text-align:center; }
+    .entry { margin:1rem 0; border-bottom:1px solid #ccc; padding-bottom:1rem; }
+    .entry img { max-width:100%; border-radius:6px; margin:0.5rem 0; }
+  </style>
+</head>
+<body>
+  <h1>🌿 My Nature Journal</h1>
+  <p><em>Visit date: ${today}</em></p>
+  ${entries.map(e => `
+    <div class="entry">
+      <h2>${e.species_name}</h2>
+      <img src="${e.image}" alt="${e.species_name}">
+      ${e.note ? `<p>${e.note}</p>` : ""}
+      ${e.photo ? `<img src="${e.photo}" alt="Visitor photo">` : ""}
+      <p><small>Saved on ${new Date(e.date_saved).toLocaleString()}</small></p>
+    </div>
+  `).join("")}
+  <hr>
+  <p><em>Thank you for connecting with nature today 🌱</em></p>
+      `;
+    }
+  </script>
+
+  <!-- Common Navigation Bar -->
+<nav style="
+  position:fixed; bottom:0; left:0; right:0;
+  background:#2c7; color:white;
+  display:flex; justify-content:space-around;
+  padding:0.6em 0; font-size:0.9rem;
+  box-shadow:0 -2px 4px rgba(0,0,0,0.2);
+  z-index:999;">
+  <a href="/index.html" style="color:white; text-decoration:none;">🏡 Home</a>
+  <a href="/tripplan.html" style="color:white; text-decoration:none;">🌿 My Trip</a>
+  <a href="/poi/detail.html?obs=123456" style="color:white; text-decoration:none;">🔍 Sample POI</a>
+  <a href="/admin.html" style="color:white; text-decoration:none;">⚙️ Admin</a>
+  <a href="/userjournals.html" style="color:white; text-decoration:none;">📒 Journals</a>
+  <a href="/qr_admin.html" style="color:white; text-decoration:none;">🔗 QR Admin</a>
+</nav>
+
+<!-- Padding so content isn't hidden behind nav -->
+<div style="height:3.5rem;"></div>
+</body>
+</html>
