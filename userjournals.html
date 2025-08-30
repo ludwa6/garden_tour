@@ -1,0 +1,379 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>My Journals - Field Guide</title>
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; padding: 1rem; margin: 0; }
+    .topbar { display: flex; justify-content: space-between; align-items: center; gap: 1rem; margin-bottom: 1rem; }
+    .cta { display: inline-block; padding: 0.55em 1em; background: #2c7; color: #fff; border-radius: 8px; text-decoration: none; font-weight: 600; }
+    h1 { margin: 0.25rem 0 0.5rem; }
+    .journal-entry { border: 1px solid #ddd; border-radius: 8px; padding: 1rem; margin: 1rem 0; }
+    .journal-entry h3 { margin: 0 0 0.5rem; color: #2c7; }
+    .journal-entry .meta { color: #666; font-size: 0.9rem; margin-bottom: 0.5rem; }
+    .journal-entry .note { background: #f9f9f9; padding: 0.75rem; border-radius: 4px; margin: 0.5rem 0; line-height: 1.4; }
+    .journal-entry img { max-width: 200px; border-radius: 6px; margin: 0.5rem 0; }
+    .empty-state { text-align: center; padding: 2rem; color: #666; }
+    .empty-state img { width: 64px; opacity: 0.5; margin-bottom: 1rem; }
+    button { padding: 0.5rem 1rem; border: none; border-radius: 6px; cursor: pointer; margin: 0.25rem; }
+    .delete-btn { background: #d33; color: white; }
+    .export-btn { background: #2c7; color: white; }
+    .filter-btn { background: #f0f0f0; color: #333; border: 1px solid #ddd; }
+    .filter-btn.active { background: #2c7; color: white; }
+    .stats { background: #f5f5f5; padding: 1rem; border-radius: 8px; margin-bottom: 1rem; }
+    .filters { margin-bottom: 1rem; }
+    .search-box { width: 100%; max-width: 300px; padding: 0.5rem; border: 1px solid #ddd; border-radius: 6px; margin-bottom: 1rem; }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <a class="cta" href="/index.html">🏡 Back to Map</a>
+    <div>
+      <button class="export-btn" id="exportBtn">📄 Export Journal</button>
+      <button class="delete-btn" id="clearBtn">🗑️ Clear All</button>
+    </div>
+  </div>
+
+  <h1>📒 My Nature Journals</h1>
+
+  <div class="stats" id="stats">
+    <strong>0</strong> journal entries
+  </div>
+
+  <div class="filters">
+    <input type="text" class="search-box" id="searchBox" placeholder="🔍 Search notes and species...">
+    <div>
+      <button class="filter-btn active" data-filter="all">📝 All Entries</button>
+      <button class="filter-btn" data-filter="with-photos">📸 With Photos</button>
+      <button class="filter-btn" data-filter="recent">🕒 Recent (7 days)</button>
+    </div>
+  </div>
+
+  <div id="journalList">
+    <!-- Journal entries will be inserted here -->
+  </div>
+
+  <div class="empty-state" id="emptyState" style="display: none;">
+    <div style="font-size: 3rem;">📔</div>
+    <h3>No journal entries yet</h3>
+    <p>Save observations with notes from the POI detail pages to build your nature journal!</p>
+    <a href="/index.html" class="cta">🗺️ Start Exploring</a>
+  </div>
+
+  <script>
+    let currentFilter = 'all';
+    let searchTerm = '';
+
+    function safeParse(str) {
+      try {
+        return str ? JSON.parse(str) : null;
+      } catch {
+        return null;
+      }
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    function formatDate(dateString) {
+      const date = new Date(dateString);
+      const now = new Date();
+      const diffTime = Math.abs(now - date);
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      
+      if (diffDays === 1) return 'Today';
+      if (diffDays === 2) return 'Yesterday';
+      if (diffDays <= 7) return `${diffDays - 1} days ago`;
+      
+      return date.toLocaleDateString();
+    }
+
+    function filterEntries(entries) {
+      let filtered = [...entries];
+
+      // Apply search filter
+      if (searchTerm) {
+        filtered = filtered.filter(entry => 
+          (entry.species_name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+          (entry.note || '').toLowerCase().includes(searchTerm.toLowerCase())
+        );
+      }
+
+      // Apply category filter
+      switch (currentFilter) {
+        case 'with-photos':
+          filtered = filtered.filter(entry => entry.photo);
+          break;
+        case 'recent':
+          const weekAgo = new Date();
+          weekAgo.setDate(weekAgo.getDate() - 7);
+          filtered = filtered.filter(entry => new Date(entry.date_saved) > weekAgo);
+          break;
+        // 'all' - no additional filtering
+      }
+
+      return filtered;
+    }
+
+    function renderJournal() {
+      const tripPlan = safeParse(localStorage.getItem('tripPlan')) || [];
+      // Only show entries that have notes
+      const journalEntries = tripPlan.filter(entry => entry.note && entry.note.trim());
+      
+      const listEl = document.getElementById('journalList');
+      const emptyEl = document.getElementById('emptyState');
+      const statsEl = document.getElementById('stats');
+
+      // Apply filters
+      const filteredEntries = filterEntries(journalEntries);
+
+      // Update stats
+      statsEl.innerHTML = `<strong>${filteredEntries.length}</strong> journal entr${filteredEntries.length !== 1 ? 'ies' : 'y'}${journalEntries.length !== filteredEntries.length ? ` (${journalEntries.length} total)` : ''}`;
+
+      if (filteredEntries.length === 0) {
+        listEl.innerHTML = '';
+        if (journalEntries.length === 0) {
+          emptyEl.style.display = 'block';
+        } else {
+          listEl.innerHTML = '<div class="empty-state"><p>No entries match your search or filter criteria.</p></div>';
+          emptyEl.style.display = 'none';
+        }
+        return;
+      }
+
+      emptyEl.style.display = 'none';
+      
+      // Sort by date saved (newest first)
+      filteredEntries.sort((a, b) => new Date(b.date_saved) - new Date(a.date_saved));
+
+      listEl.innerHTML = filteredEntries.map((entry, index) => {
+        const originalIndex = tripPlan.findIndex(item => 
+          item.poi_id === entry.poi_id && item.date_saved === entry.date_saved
+        );
+        
+        return `
+        <div class="journal-entry">
+          <h3>${escapeHtml(entry.species_name || 'Unknown Species')}</h3>
+          <div class="meta">
+            <span>📍 POI ID: ${escapeHtml(entry.poi_id || 'n/a')}</span> • 
+            <span>📅 ${formatDate(entry.date_saved)}</span>
+          </div>
+          
+          ${entry.note ? `<div class="note">${escapeHtml(entry.note)}</div>` : ''}
+          
+          ${entry.image ? `<div><img src="${entry.image}" alt="${escapeHtml(entry.species_name || 'Species')}" style="max-width:150px;border-radius:4px;" /></div>` : ''}
+          
+          ${entry.photo ? `<div><strong>My Photo:</strong><br><img src="${entry.photo}" alt="My photo" /></div>` : ''}
+          
+          <div style="margin-top:0.75rem;">
+            <a href="/poi/detail.html?obs=${encodeURIComponent(entry.poi_id || '')}" class="cta" style="font-size:0.9rem;">🔍 View Full Details</a>
+            <button class="delete-btn" onclick="deleteEntry(${originalIndex})" style="font-size:0.9rem;">🗑️ Delete</button>
+          </div>
+        </div>
+      `}).join('');
+    }
+
+    function deleteEntry(index) {
+      const tripPlan = safeParse(localStorage.getItem('tripPlan')) || [];
+      if (confirm('Delete this journal entry? This cannot be undone.')) {
+        tripPlan.splice(index, 1);
+        localStorage.setItem('tripPlan', JSON.stringify(tripPlan));
+        renderJournal();
+      }
+    }
+
+    function clearAll() {
+      if (confirm('Clear your entire journal? This will remove all saved observations and notes. This cannot be undone.')) {
+        localStorage.removeItem('tripPlan');
+        renderJournal();
+      }
+    }
+
+    function exportJournal() {
+      const tripPlan = safeParse(localStorage.getItem('tripPlan')) || [];
+      const journalEntries = tripPlan.filter(entry => entry.note && entry.note.trim());
+      
+      if (journalEntries.length === 0) {
+        alert('No journal entries to export!');
+        return;
+      }
+
+      // Create formatted text export
+      let exportText = `My Vale da Lama Nature Journal\nGenerated: ${new Date().toLocaleString()}\n`;
+      exportText += `${'='.repeat(50)}\n\n`;
+      
+      journalEntries
+        .sort((a, b) => new Date(b.date_saved) - new Date(a.date_saved))
+        .forEach((entry, i) => {
+          exportText += `Entry ${i + 1}: ${entry.species_name || 'Unknown Species'}\n`;
+          exportText += `Date: ${new Date(entry.date_saved).toLocaleString()}\n`;
+          exportText += `Location POI: ${entry.poi_id || 'n/a'}\n`;
+          exportText += `\nObservations:\n${entry.note}\n`;
+          exportText += `${'-'.repeat(30)}\n\n`;
+        });
+
+      // Download as text file
+      const blob = new Blob([exportText], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `nature-journal-${new Date().toISOString().split('T')[0]}.txt`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    // Event listeners
+    document.getElementById('clearBtn').addEventListener('click', clearAll);
+    document.getElementById('exportBtn').addEventListener('click', exportJournal);
+
+    // Search functionality
+    document.getElementById('searchBox').addEventListener('input', (e) => {
+      searchTerm = e.target.value;
+      renderJournal();
+    });
+
+    // Filter functionality
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentFilter = btn.dataset.filter;
+        renderJournal();
+      });
+    });
+
+    // Initial render
+    renderJournal();
+
+    // Make deleteEntry available globally
+    window.deleteEntry = deleteEntry;
+
+    // Auto-refresh when localStorage changes (if user saves from another tab)
+    window.addEventListener('storage', (e) => {
+      if (e.key === 'tripPlan') {
+        renderJournal();
+      }
+    });
+  </script>
+
+  <!-- Common Navigation Bar -->
+  <nav style="
+    position:fixed; bottom:0; left:0; right:0;
+    background:#2c7; color:white;
+    display:flex; justify-content:space-around;
+    padding:0.6em 0; font-size:0.9rem;
+    box-shadow:0 -2px 4px rgba(0,0,0,0.2);
+    z-index:999;">
+    <a href="/index.html" style="color:white; text-decoration:none;">🏡 Home</a>
+    <a href="/tripplan.html" style="color:white; text-decoration:none;">🌿 My Trip</a>
+    <a href="/poi/detail.html?obs=123456" style="color:white; text-decoration:none;">🔍 Sample POI</a>
+    <a href="/admin.html" style="color:white; text-decoration:none;">⚙️ Admin</a>
+    <a href="/userjournals.html" style="color:white; text-decoration:none;">📒 Journals</a>
+    <a href="/qr_admin.html" style="color:white; text-decoration:none;">🔗 QR Admin</a>
+  </nav>
+
+  <!-- Padding so content isn't hidden behind nav -->
+  <div style="height:3.5rem;"></div>
+
+</body>
+</html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Garden Journals</title>
+  <style>
+    body { font-family: system-ui, -apple-system, sans-serif; margin: 0; padding: 1rem; }
+    .topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+    .cta { display: inline-block; padding: 0.5em 1em; background: #2c7; color: white; border-radius: 8px; text-decoration: none; }
+    .journal-entry { border: 1px solid #ddd; border-radius: 8px; padding: 1rem; margin: 1rem 0; }
+    .journal-entry img { max-width: 150px; border-radius: 6px; float: right; margin-left: 1rem; }
+    .export-btn { background: #1e88e5; color: white; border: none; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <h1>📒 My Garden Journals</h1>
+    <button class="export-btn" onclick="exportJournals()">📤 Export</button>
+  </div>
+
+  <div id="journalsList"></div>
+
+  <script>
+    function loadJournals() {
+      const tripPlan = JSON.parse(localStorage.getItem('tripPlan') || '[]');
+      const journalsList = document.getElementById('journalsList');
+      
+      if (tripPlan.length === 0) {
+        journalsList.innerHTML = '<p><em>No journal entries yet. Visit some plants and add notes!</em></p>';
+        return;
+      }
+
+      // Group by species
+      const groupedBySpecies = {};
+      tripPlan.forEach(entry => {
+        const species = entry.species_name || 'Unknown Species';
+        if (!groupedBySpecies[species]) {
+          groupedBySpecies[species] = [];
+        }
+        groupedBySpecies[species].push(entry);
+      });
+
+      let html = '';
+      Object.keys(groupedBySpecies).forEach(species => {
+        const entries = groupedBySpecies[species];
+        html += `<div class="journal-entry">
+          <h3>${species}</h3>`;
+        
+        entries.forEach(entry => {
+          html += `
+            ${entry.photo ? `<img src="${entry.photo}" alt="My photo">` : ''}
+            <p><strong>${new Date(entry.date_saved).toLocaleDateString()}</strong></p>
+            ${entry.note ? `<p>${entry.note}</p>` : '<p><em>No notes</em></p>'}
+          `;
+        });
+        
+        html += '</div>';
+      });
+
+      journalsList.innerHTML = html;
+    }
+
+    function exportJournals() {
+      const tripPlan = JSON.parse(localStorage.getItem('tripPlan') || '[]');
+      const dataStr = JSON.stringify(tripPlan, null, 2);
+      const dataBlob = new Blob([dataStr], { type: 'application/json' });
+      const url = URL.createObjectURL(dataBlob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `garden-journals-${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    }
+
+    loadJournals();
+  </script>
+
+  <!-- Common Navigation Bar -->
+  <nav style="position:fixed; bottom:0; left:0; right:0; background:#2c7; color:white; display:flex; justify-content:space-around; padding:0.6em 0; font-size:0.9rem; box-shadow:0 -2px 4px rgba(0,0,0,0.2); z-index:999;">
+    <a href="/index.html" style="color:white; text-decoration:none;">🏡 Home</a>
+    <a href="/tripplan.html" style="color:white; text-decoration:none;">🌿 My Trip</a>
+    <a href="/poi/detail.html?obs=123456" style="color:white; text-decoration:none;">🔍 Sample POI</a>
+    <a href="/admin.html" style="color:white; text-decoration:none;">⚙️ Admin</a>
+    <a href="/userjournals.html" style="color:white; text-decoration:none;">📒 Journals</a>
+    <a href="/qr_admin.html" style="color:white; text-decoration:none;">🔗 QR Admin</a>
+  </nav>
+
+  <div style="height:3.5rem;"></div>
+</body>
+</html>
