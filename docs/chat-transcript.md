@@ -4,7 +4,7 @@ WL
 
 ##### **You said:**
 
-I need to produce a consumer-facing app that will enable self-guided tours through a botanic garden.  Our aim is to facilitate  experiences of closer connection to nature, so their mobile device (iOS or Android) should be not the focus, but a tool to inform and enrich that connection.  Gamification of the experience- perhaps as a user option \-would be good, to engage people whose botanical knowledge and/or intrinsic motivation to learn it, is weak.  I can't afford any significant investment in development and maintenance of the app, so to whatever extent i can leverage existing technologies \-ideally free and open source- that would always be my preference. As a next step in this project, what can you suggest?
+I need to produce a consumer-facing app that should enable self-guided tours through a botanic garden.  Our aim is to facilitate  experiences of closer connection to nature, so their mobile device (iOS or Android) should be not the focus, but a tool to inform and enrich that connection.  Gamification of the experience- perhaps as a user option \-would be good, to engage people whose botanical knowledge and/or intrinsic motivation to learn it, is weak.  I can't afford any significant investment in development and maintenance of the app, so to whatever extent i can leverage existing technologies \-ideally free and open source- that would always be my preference. As a next step in this project, what can you suggest?
 
 ###### **ChatGPT said:**
 
