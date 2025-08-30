@@ -39,7 +39,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (!obs) return;
 
     // Generate QR code pointing to POI detail page
-    const detailUrl = `${window.location.origin}/poi/detail.html?obs=${obsId}`;
+    const detailUrl = `${window.location.origin}poi/detail.html?obs=${obsId}`;
     
     if (typeof QRCode !== 'undefined') {
       QRCode.toCanvas(qrCanvas, detailUrl, {
