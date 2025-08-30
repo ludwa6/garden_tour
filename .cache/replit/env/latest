@@ -1,0 +1,132 @@
+declare -gx DETERMINISTIC_BUILD=1
+declare -gx AS=as
+declare -gx builder=/nix/store/ih68ar79msmj0496pgld4r3vqfr7bbin-bash-5.2p37/bin/bash
+declare -gx NIX_HARDENING_ENABLE='bindnow format fortify fortify3 pic relro stackclashprotection stackprotector strictoverflow zerocallusedregs'
+declare -gx PGPORT=5432
+declare -gx NIX_BINTOOLS=/nix/store/2gkh9v7wrzjq6ws312c6z6ajwnjvwcmb-binutils-wrapper-2.44
+declare -gx patches=''
+declare -gx depsHostHost=''
+declare -gx REPLIT_LD_AUDIT=/nix/store/6y0zqxaf220r36b74hwsq9m2b2av3lw7-replit_rtld_loader-1/rtld_loader.so
+read -r _new_path <<< "/nix/store/0nxvi9r5ymdlr2p24rjj9qzyms72zld1-bash-interactive-5.2p37/bin:/nix/store/0flj33q30lmzdjagwjqh964qmiyklww2-patchelf-0.15.0/bin:/nix/store/a0d7m3zn9p2dfa1h7ag9h2wzzr2w25sn-gcc-wrapper-14.2.1.20250322/bin:/nix/store/6i862vz60awrlsila8vw18rg4d4l66iy-gcc-14.2.1.20250322/bin:/nix/store/y2xdxp8r4g92q28am6mbxj44rivnyirl-glibc-2.40-66-bin/bin:/nix/store/mp7ba85zcqdj2sqwa29pql02s6nqpcxy-coreutils-9.7/bin:/nix/store/2gkh9v7wrzjq6ws312c6z6ajwnjvwcmb-binutils-wrapper-2.44/bin:/nix/store/mkvc0lnnpmi604rqsjdlv1pmhr638nbd-binutils-2.44/bin:/nix/store/7yjp3kyzf692r8dbybb3gll2198f40am-nodejs-20.19.3-dev/bin:/nix/store/r201x5hk7sxmxd9myi7hl43229znn1nd-nodejs-20.19.3/bin:/nix/store/h097imm3w6dpx10qynrd2sz9fks2wbq8-python3-3.12.11/bin:/nix/store/05bkr4016y72fj2r1ram8m6s6n3s31y1-python3.12-pip-25.0.1/bin:/nix/store/cpwib3zazj49fm0y04y53w4xkbqsgrgm-mesa-25.0.7/bin:/nix/store/3r2184gwq0cjmwf9f819xdm2ggqnjijg-libcap-2.75/bin:/nix/store/px08h5pmb6vr98y751ck1gwn0852iqqq-pulseaudio-17.0/bin:/nix/store/7fjnb79r7p38piiyn5xwgcj5w7fpfi02-findutils-4.10.0/bin:/nix/store/1pi99mlqimxmqm1jvllbcaj8v16w2nbv-diffutils-3.12/bin:/nix/store/x23s7lcvhf18zz3rj543680jgrj71vil-gnused-4.9/bin:/nix/store/8b4vn1iyn6kqiisjvlmv67d1c0p3j6wj-gnugrep-3.11/bin:/nix/store/n8825s8qprf8p70m0hq6pz7rvlnsxdjm-gawk-5.3.2/bin:/nix/store/7nilh5hvnfbsx3vn020pkjkgx9rgsizb-gnutar-1.35/bin:/nix/store/gqpd9ax2s6jjf7mjyv1q7bwbsycyaxic-gzip-1.14/bin:/nix/store/28z6bx9sg0lsr7wra22pbjsk6fzfphy4-bzip2-1.0.8-bin/bin:/nix/store/8dl5ryfna3hjqhvnkw7srm6wnka6agxl-gnumake-4.4.1/bin:/nix/store/ih68ar79msmj0496pgld4r3vqfr7bbin-bash-5.2p37/bin:/nix/store/kc8h52p4dfgajrg3qlgx246hl0znr213-patch-2.7.6/bin:/nix/store/cmv326slnswzsjm2sqgbz16hzzqvkfjy-xz-5.8.1-bin/bin:/nix/store/v5skl3bspzhm2y13vcxcrw8w29g6phi0-file-5.45/bin:/nix/store/8vhwrcdzx8mayr7mlq2qazyydzrk58v4-pid1/bin:/nix/store/szf89saxncsyafizk6n1akv8rf0bxjzy-replit-runtime-path/bin:/home/runner/.nix-profile/bin:/home/runner/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+#PATH=/nix/store/0nxvi9r5ymdlr2p24rjj9qzyms72zld1-bash-interactive-5.2p37/bin:/nix/store/0flj33q30lmzdjagwjqh964qmiyklww2-patchelf-0.15.0/bin:/nix/store/a0d7m3zn9p2dfa1h7ag9h2wzzr2w25sn-gcc-wrapper-14.2.1.20250322/bin:/nix/store/6i862vz60awrlsila8vw18rg4d4l66iy-gcc-14.2.1.20250322/bin:/nix/store/y2xdxp8r4g92q28am6mbxj44rivnyirl-glibc-2.40-66-bin/bin:/nix/store/mp7ba85zcqdj2sqwa29pql02s6nqpcxy-coreutils-9.7/bin:/nix/store/2gkh9v7wrzjq6ws312c6z6ajwnjvwcmb-binutils-wrapper-2.44/bin:/nix/store/mkvc0lnnpmi604rqsjdlv1pmhr638nbd-binutils-2.44/bin:/nix/store/7yjp3kyzf692r8dbybb3gll2198f40am-nodejs-20.19.3-dev/bin:/nix/store/r201x5hk7sxmxd9myi7hl43229znn1nd-nodejs-20.19.3/bin:/nix/store/h097imm3w6dpx10qynrd2sz9fks2wbq8-python3-3.12.11/bin:/nix/store/05bkr4016y72fj2r1ram8m6s6n3s31y1-python3.12-pip-25.0.1/bin:/nix/store/cpwib3zazj49fm0y04y53w4xkbqsgrgm-mesa-25.0.7/bin:/nix/store/3r2184gwq0cjmwf9f819xdm2ggqnjijg-libcap-2.75/bin:/nix/store/px08h5pmb6vr98y751ck1gwn0852iqqq-pulseaudio-17.0/bin:/nix/store/7fjnb79r7p38piiyn5xwgcj5w7fpfi02-findutils-4.10.0/bin:/nix/store/1pi99mlqimxmqm1jvllbcaj8v16w2nbv-diffutils-3.12/bin:/nix/store/x23s7lcvhf18zz3rj543680jgrj71vil-gnused-4.9/bin:/nix/store/8b4vn1iyn6kqiisjvlmv67d1c0p3j6wj-gnugrep-3.11/bin:/nix/store/n8825s8qprf8p70m0hq6pz7rvlnsxdjm-gawk-5.3.2/bin:/nix/store/7nilh5hvnfbsx3vn020pkjkgx9rgsizb-gnutar-1.35/bin:/nix/store/gqpd9ax2s6jjf7mjyv1q7bwbsycyaxic-gzip-1.14/bin:/nix/store/28z6bx9sg0lsr7wra22pbjsk6fzfphy4-bzip2-1.0.8-bin/bin:/nix/store/8dl5ryfna3hjqhvnkw7srm6wnka6agxl-gnumake-4.4.1/bin:/nix/store/ih68ar79msmj0496pgld4r3vqfr7bbin-bash-5.2p37/bin:/nix/store/kc8h52p4dfgajrg3qlgx246hl0znr213-patch-2.7.6/bin:/nix/store/cmv326slnswzsjm2sqgbz16hzzqvkfjy-xz-5.8.1-bin/bin:/nix/store/v5skl3bspzhm2y13vcxcrw8w29g6phi0-file-5.45/bin:/nix/store/8vhwrcdzx8mayr7mlq2qazyydzrk58v4-pid1/bin:/nix/store/szf89saxncsyafizk6n1akv8rf0bxjzy-replit-runtime-path/bin:/home/runner/.nix-profile/bin:/home/runner/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+if [ -e "/run/replit/env/last" ]; then read -r _last_path < <(\grep '^#PATH=' /run/replit/env/last | cut -f 2 -d =); fi
+_user_components="$(\tr : $'\n' <<< "${PATH:-}" |\grep -xv -f <(\tr : $'\n' <<< "${_last_path}") |\tr $'\n' :)"
+declare -gx PATH="${_user_components}${_new_path}"
+declare -gx LOCALE_ARCHIVE=/usr/lib/locale/locale-archive
+declare -gx COLORTERM=truecolor
+declare -gx NODE_PATH=/nix/store/r201x5hk7sxmxd9myi7hl43229znn1nd-nodejs-20.19.3/lib/node_modules
+declare -gx depsBuildBuild=''
+declare -gx REPLIT_PID1_FLAG_PREEVALED_SYSPKGS=1
+declare -gx REPLIT_RTLD_LOADER=1
+declare -gx propagatedBuildInputs=''
+declare -gx NIX_PATH=nixpkgs=/home/runner/.nix-defexpr/channels/nixpkgs-stable-25_05:/home/runner/.nix-defexpr/channels
+declare -gx REPLIT_CONTAINER=gcr.io/marine-cycle-160323/repl-base:97433c06ca04972a1619dedd971cb3a93f4a5087
+declare -gx depsBuildTargetPropagated=''
+declare -gx OBJDUMP=objdump
+declare -gx PYTHONHASHSEED=0
+declare -gx READELF=readelf
+declare -gx CC=gcc
+declare -gx PGDATABASE=heliumdb
+declare -gx PGHOST=helium
+declare -gx USER=runner
+declare -gx DOCKER_CONFIG=/home/runner/workspace/.config/docker
+declare -gx REPLIT_CLI=/nix/store/adcnb817l0ms8yvw7vjj8nk4mcawghrf-pid1-0.0.1/bin/replit
+declare -gx REPLIT_RIPPKGS_INDICES=/nix/store/sic31kz2lvpf4v5wlaldrla7ivz4v2j2-rippkgs-indices
+declare -gx LIBGL_DRIVERS_PATH=/nix/store/cpwib3zazj49fm0y04y53w4xkbqsgrgm-mesa-25.0.7/lib/dri
+declare -gx REPLIT_DEV_DOMAIN=10f47f9c-b2a0-40e8-96ca-9ac75f378535-00-27dlyb6yeaw28.spock.replit.dev
+declare -gx XDG_CACHE_HOME=/home/runner/workspace/.cache
+declare -gx PYTHONNOUSERSITE=1
+declare -gx doCheck=''
+declare -gx __EGL_VENDOR_LIBRARY_FILENAMES=/nix/store/cpwib3zazj49fm0y04y53w4xkbqsgrgm-mesa-25.0.7/share/glvnd/egl_vendor.d/50_mesa.json
+declare -gx NIX_CC=/nix/store/a0d7m3zn9p2dfa1h7ag9h2wzzr2w25sn-gcc-wrapper-14.2.1.20250322
+declare -gx REPL_OWNER_ID=43332044
+declare -gx out=/nix/store/l8wdni83yd0wpjhfvcpvb84rjfwbcy2y-nix-shell
+declare -gx cmakeFlags=''
+declare -gx outputs=out
+declare -gx RANLIB=ranlib
+declare -gx system=x86_64-linux
+declare -gx NIX_CFLAGS_COMPILE=' -frandom-seed=l8wdni83yd -isystem /nix/store/7yjp3kyzf692r8dbybb3gll2198f40am-nodejs-20.19.3-dev/include -isystem /nix/store/r201x5hk7sxmxd9myi7hl43229znn1nd-nodejs-20.19.3/include -isystem /nix/store/h097imm3w6dpx10qynrd2sz9fks2wbq8-python3-3.12.11/include -isystem /nix/store/cpwib3zazj49fm0y04y53w4xkbqsgrgm-mesa-25.0.7/include -isystem /nix/store/akn28bf4vh2q3p2czwkm37acmf33bvgd-libglvnd-1.7.0-dev/include -isystem /nix/store/5h8ny2nvix2vz1s3rbpvqj25ri7jh8km-pulseaudio-17.0-dev/include -isystem /nix/store/5p91yhpd1hpjzlshrwbd0ivkhx8d0588-libcap-2.75-dev/include -isystem /nix/store/7yjp3kyzf692r8dbybb3gll2198f40am-nodejs-20.19.3-dev/include -isystem /nix/store/r201x5hk7sxmxd9myi7hl43229znn1nd-nodejs-20.19.3/include -isystem /nix/store/h097imm3w6dpx10qynrd2sz9fks2wbq8-python3-3.12.11/include -isystem /nix/store/cpwib3zazj49fm0y04y53w4xkbqsgrgm-mesa-25.0.7/include -isystem /nix/store/akn28bf4vh2q3p2czwkm37acmf33bvgd-libglvnd-1.7.0-dev/include -isystem /nix/store/5h8ny2nvix2vz1s3rbpvqj25ri7jh8km-pulseaudio-17.0-dev/include -isystem /nix/store/5p91yhpd1hpjzlshrwbd0ivkhx8d0588-libcap-2.75-dev/include'
+declare -gx CXX=g++
+declare -gx LD=ld
+declare -gx strictDeps=''
+declare -gx GLIBC_TUNABLES=glibc.rtld.optional_static_tls=10000
+declare -gx _PYTHON_HOST_PLATFORM=linux-x86_64
+declare -gx stdenv=/nix/store/qjjpd1310d6qi63pdmjigykcznfi3n4y-stdenv-linux
+declare -gx AR=ar
+declare -gx REPL_LANGUAGE=nix
+declare -gx _=/nix/store/mp7ba85zcqdj2sqwa29pql02s6nqpcxy-coreutils-9.7/bin/env
+declare -gx XDG_CONFIG_HOME=/home/runner/workspace/.config
+declare -gx preferLocalBuild=1
+declare -gx REPL_OWNER=walt6
+declare -gx __structuredAttrs=''
+declare -gx STRINGS=strings
+declare -gx NIX_BUILD_CORES=4
+declare -gx SIZE=size
+declare -gx DISPLAY=:0
+declare -gx NIX_PS1='\[\033[01;34m\]\w\[\033[00m\]\$ '
+declare -gx mesonFlags=''
+declare -gx SOURCE_DATE_EPOCH=315532800
+declare -gx configureFlags=''
+declare -gx STRIP=strip
+declare -gx LANG=en_US.UTF-8
+declare -gx REPL_ID=10f47f9c-b2a0-40e8-96ca-9ac75f378535
+declare -gx buildPhase='{ echo "------------------------------------------------------------";
+  echo " WARNING: the existence of this path is not guaranteed.";
+  echo " It is an internal implementation detail for pkgs.mkShell.";
+  echo "------------------------------------------------------------";
+  echo;
+  # Record all build inputs as runtime dependencies
+  export;
+} >> "$out"
+'
+declare -gx REPLIT_BASHRC=/nix/store/vgmsjrn5bbcdwgqxy27njrq6n8scc2nc-replit-bashrc/bashrc
+declare -gx __ETC_PROFILE_SOURCED=1
+declare -gx doInstallCheck=''
+declare -gx LD_AUDIT=/nix/store/6y0zqxaf220r36b74hwsq9m2b2av3lw7-replit_rtld_loader-1/rtld_loader.so
+declare -gx REPL_SLUG=workspace
+declare -gx REPLIT_CLUSTER=spock
+declare -gx PROMPT_DIRTRIM=2
+declare -gx depsTargetTargetPropagated=''
+declare -gx shell=/nix/store/ih68ar79msmj0496pgld4r3vqfr7bbin-bash-5.2p37/bin/bash
+declare -gx depsBuildBuildPropagated=''
+declare -gx REPLIT_PID1_VERSION=0.0.0-51e9f3e
+declare -gx REPLIT_ENVIRONMENT=production
+declare -gx NIX_LDFLAGS='-rpath /nix/store/l8wdni83yd0wpjhfvcpvb84rjfwbcy2y-nix-shell/lib  -L/nix/store/h097imm3w6dpx10qynrd2sz9fks2wbq8-python3-3.12.11/lib -L/nix/store/cpwib3zazj49fm0y04y53w4xkbqsgrgm-mesa-25.0.7/lib -L/nix/store/7227amwg7k4sbl6mhglq17v5x5ki54ks-libglvnd-1.7.0/lib -L/nix/store/q2ps6hq2jr2xwvs60m39fnjrnsx94a3w-libcap-2.75-lib/lib -L/nix/store/px08h5pmb6vr98y751ck1gwn0852iqqq-pulseaudio-17.0/lib -L/nix/store/h097imm3w6dpx10qynrd2sz9fks2wbq8-python3-3.12.11/lib -L/nix/store/cpwib3zazj49fm0y04y53w4xkbqsgrgm-mesa-25.0.7/lib -L/nix/store/7227amwg7k4sbl6mhglq17v5x5ki54ks-libglvnd-1.7.0/lib -L/nix/store/q2ps6hq2jr2xwvs60m39fnjrnsx94a3w-libcap-2.75-lib/lib -L/nix/store/px08h5pmb6vr98y751ck1gwn0852iqqq-pulseaudio-17.0/lib'
+declare -gx REPL_PUBKEYS='{"crosis-ci":"7YlpcYh82oR9NSTtSYtR5jDL4onNzCGJGq6b+9CuZII=","crosis-ci:1":"7YlpcYh82oR9NSTtSYtR5jDL4onNzCGJGq6b+9CuZII=","crosis-ci:latest":"7YlpcYh82oR9NSTtSYtR5jDL4onNzCGJGq6b+9CuZII=","prod":"tGsjlu/BJvWTgvMaX7acuUb7AO1dXOrRiuk7y083RFE=","prod:1":"tGsjlu/BJvWTgvMaX7acuUb7AO1dXOrRiuk7y083RFE=","prod:3":"9+MCOSHQSQlcodXoot8dC8NLhc862nLkx1/VMsbY2h8=","prod:4":"8uGN+vfszlnV93/HCSHlVLG0xddMlPkir1Ni4JKT4+w=","prod:5":"9+MCOSHQSQlcodXoot8dC8NLhc862nLkx1/VMsbY2h8=","prod:latest":"tGsjlu/BJvWTgvMaX7acuUb7AO1dXOrRiuk7y083RFE=","vault-goval-token":"D5jJoMx1Ml54HM92NLgXl+MzptwDqbSsfyFG6f52g9E=","vault-goval-token:1":"D5jJoMx1Ml54HM92NLgXl+MzptwDqbSsfyFG6f52g9E=","vault-goval-token:latest":"D5jJoMx1Ml54HM92NLgXl+MzptwDqbSsfyFG6f52g9E="}'
+declare -gx REPL_HOME=/home/runner/workspace
+declare -gx XDG_DATA_HOME=/home/runner/workspace/.local/share
+declare -gx phases=buildPhase
+declare -gx HOSTNAME=f880342b303b
+declare -gx DATABASE_URL='postgresql://postgres:password@helium/heliumdb?sslmode=disable'
+declare -gx GIT_ASKPASS=replit-git-askpass
+declare -gx NIX_BUILD_TOP=/tmp/nix-shell-1840-2899343070
+declare -gx depsBuildTarget=''
+declare -gx depsTargetTarget=''
+declare -gx nativeBuildInputs=''
+declare -gx NM=nm
+declare -gx NIXPKGS_ALLOW_UNFREE=1
+declare -gx REPLIT_DOMAINS=10f47f9c-b2a0-40e8-96ca-9ac75f378535-00-27dlyb6yeaw28.spock.replit.dev
+declare -gx shellHook=''
+declare -gx NIX_STORE=/nix/store
+declare -gx REPLIT_LD_LIBRARY_PATH=/nix/store/r201x5hk7sxmxd9myi7hl43229znn1nd-nodejs-20.19.3/lib:/nix/store/h097imm3w6dpx10qynrd2sz9fks2wbq8-python3-3.12.11/lib:/nix/store/05bkr4016y72fj2r1ram8m6s6n3s31y1-python3.12-pip-25.0.1/lib:/nix/store/cpwib3zazj49fm0y04y53w4xkbqsgrgm-mesa-25.0.7/lib:/nix/store/7227amwg7k4sbl6mhglq17v5x5ki54ks-libglvnd-1.7.0/lib:/nix/store/px08h5pmb6vr98y751ck1gwn0852iqqq-pulseaudio-17.0/lib
+declare -gx NIX_ENFORCE_NO_NATIVE=1
+declare -gx REPLIT_SUBCLUSTER=paid
+declare -gx PGPASSWORD=password
+declare -gx buildInputs='/nix/store/7yjp3kyzf692r8dbybb3gll2198f40am-nodejs-20.19.3-dev /nix/store/h097imm3w6dpx10qynrd2sz9fks2wbq8-python3-3.12.11 /nix/store/05bkr4016y72fj2r1ram8m6s6n3s31y1-python3.12-pip-25.0.1 /nix/store/cpwib3zazj49fm0y04y53w4xkbqsgrgm-mesa-25.0.7 /nix/store/akn28bf4vh2q3p2czwkm37acmf33bvgd-libglvnd-1.7.0-dev /nix/store/5h8ny2nvix2vz1s3rbpvqj25ri7jh8km-pulseaudio-17.0-dev'
+declare -gx REPLIT_HELIUM_ENABLED=true
+declare -gx REPL_IMAGE=gcr.io/marine-cycle-160323/nix:bf8590a3e2f0a8b70b7ca175eeed9074dffbfca9
+declare -gx GIT_EDITOR=replit-git-editor
+declare -gx _PYTHON_SYSCONFIGDATA_NAME=_sysconfigdata__linux_x86_64-linux-gnu
+declare -gx NIX_CC_WRAPPER_TARGET_HOST_x86_64_unknown_linux_gnu=1
+declare -gx OBJCOPY=objcopy
+declare -gx propagatedNativeBuildInputs=''
+declare -gx CONFIG_SHELL=/nix/store/ih68ar79msmj0496pgld4r3vqfr7bbin-bash-5.2p37/bin/bash
+declare -gx NIX_PROFILES='/nix/var/nix/profiles/default /home/runner/.nix-profile'
+declare -gx HOME=/home/runner
+declare -gx REPLIT_NIX_CHANNEL=stable-25_05
+declare -gx NIX_BINTOOLS_WRAPPER_TARGET_HOST_x86_64_unknown_linux_gnu=1
+declare -gx PGUSER=postgres
+declare -gx depsHostHostPropagated=''
+declare -gx XDG_DATA_DIRS=/nix/store/0flj33q30lmzdjagwjqh964qmiyklww2-patchelf-0.15.0/share:/nix/store/szf89saxncsyafizk6n1akv8rf0bxjzy-replit-runtime-path/share
+declare -gx PYTHONPATH=/nix/store/h097imm3w6dpx10qynrd2sz9fks2wbq8-python3-3.12.11/lib/python3.12/site-packages:/nix/store/05bkr4016y72fj2r1ram8m6s6n3s31y1-python3.12-pip-25.0.1/lib/python3.12/site-packages
+declare -gx HOST_PATH=/nix/store/7yjp3kyzf692r8dbybb3gll2198f40am-nodejs-20.19.3-dev/bin:/nix/store/r201x5hk7sxmxd9myi7hl43229znn1nd-nodejs-20.19.3/bin:/nix/store/h097imm3w6dpx10qynrd2sz9fks2wbq8-python3-3.12.11/bin:/nix/store/05bkr4016y72fj2r1ram8m6s6n3s31y1-python3.12-pip-25.0.1/bin:/nix/store/cpwib3zazj49fm0y04y53w4xkbqsgrgm-mesa-25.0.7/bin:/nix/store/3r2184gwq0cjmwf9f819xdm2ggqnjijg-libcap-2.75/bin:/nix/store/px08h5pmb6vr98y751ck1gwn0852iqqq-pulseaudio-17.0/bin:/nix/store/mp7ba85zcqdj2sqwa29pql02s6nqpcxy-coreutils-9.7/bin:/nix/store/7fjnb79r7p38piiyn5xwgcj5w7fpfi02-findutils-4.10.0/bin:/nix/store/1pi99mlqimxmqm1jvllbcaj8v16w2nbv-diffutils-3.12/bin:/nix/store/x23s7lcvhf18zz3rj543680jgrj71vil-gnused-4.9/bin:/nix/store/8b4vn1iyn6kqiisjvlmv67d1c0p3j6wj-gnugrep-3.11/bin:/nix/store/n8825s8qprf8p70m0hq6pz7rvlnsxdjm-gawk-5.3.2/bin:/nix/store/7nilh5hvnfbsx3vn020pkjkgx9rgsizb-gnutar-1.35/bin:/nix/store/gqpd9ax2s6jjf7mjyv1q7bwbsycyaxic-gzip-1.14/bin:/nix/store/28z6bx9sg0lsr7wra22pbjsk6fzfphy4-bzip2-1.0.8-bin/bin:/nix/store/8dl5ryfna3hjqhvnkw7srm6wnka6agxl-gnumake-4.4.1/bin:/nix/store/ih68ar79msmj0496pgld4r3vqfr7bbin-bash-5.2p37/bin:/nix/store/kc8h52p4dfgajrg3qlgx246hl0znr213-patch-2.7.6/bin:/nix/store/cmv326slnswzsjm2sqgbz16hzzqvkfjy-xz-5.8.1-bin/bin:/nix/store/v5skl3bspzhm2y13vcxcrw8w29g6phi0-file-5.45/bin
