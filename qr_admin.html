@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>QR Admin</title>
+  <link rel="stylesheet" href="style.css?v=2">
+</head>
+<body class="qr-admin-page">
+  <div class="appbar">
+    <h1>QR Admin</h1>
+    <a href="index.html" class="back-btn">← Back to main</a>
+  </div>
+
+  <main id="qr-admin-content">
+    <!-- Controls -->
+    <div class="controls">
+      <label for="observationSelect">Select Observation:</label>
+      <select id="observationSelect">
+        <option value="">Loading...</option>
+      </select>
+    </div>
+
+    <!-- QR code preview -->
+    <div id="qr-preview">
+      <h3>Custom QR Code:</h3>
+      <canvas id="qrCanvas"></canvas>
+    </div>
+    
+    <!-- Observation preview -->
+    <div id="observationPreview" class="preview"></div>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+  <script src="qr_admin.js"></script>
+
+!-- Common Navigation Bar -->
+  <nav style="
+    position:fixed; bottom:0; left:0; right:0;
+    background:#2c7; color:white;
+    display:flex; justify-content:space-around;
+    padding:0.6em 0; font-size:0.9rem;
+    box-shadow:0 -2px 4px rgba(0,0,0,0.2);
+    z-index:999;">
+    <a href="/index.html" style="color:white; text-decoration:none;">🏡 Home</a>
+    <a href="/tripplan.html" style="color:white; text-decoration:none;">🌿 My Trip</a>
+    <a href="/poi/detail.html?obs=123456" style="color:white; text-decoration:none;">🔍 Sample POI</a>
+    <a href="/admin.html" style="color:white; text-decoration:none;">⚙️ Admin</a>
+    <a href="/userjournals.html" style="color:white; text-decoration:none;">📒 Journals</a>
+    <a href="/qr_admin.html" style="color:white; text-decoration:none;">🔗 QR Admin</a>
+  </nav>
+
+</body>
+</html>
+

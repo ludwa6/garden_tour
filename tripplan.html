@@ -1,0 +1,185 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>My Trip Plan - Field Guide</title>
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; padding: 1rem; margin: 0; }
+    .topbar { display: flex; justify-content: space-between; align-items: center; gap: 1rem; margin-bottom: 1rem; }
+    .cta { display: inline-block; padding: 0.55em 1em; background: #2c7; color: #fff; border-radius: 8px; text-decoration: none; font-weight: 600; }
+    h1 { margin: 0.25rem 0 0.5rem; }
+    .trip-item { border: 1px solid #ddd; border-radius: 8px; padding: 1rem; margin: 1rem 0; display: flex; gap: 1rem; }
+    .trip-item img { width: 120px; height: 120px; object-fit: cover; border-radius: 6px; flex-shrink: 0; }
+    .trip-content { flex: 1; }
+    .trip-content h3 { margin: 0 0 0.5rem; }
+    .trip-content p { margin: 0.25rem 0; color: #666; }
+    .trip-content .note { background: #f9f9f9; padding: 0.5rem; border-radius: 4px; margin: 0.5rem 0; }
+    .empty-state { text-align: center; padding: 2rem; color: #666; }
+    .empty-state img { width: 64px; opacity: 0.5; margin-bottom: 1rem; }
+    button { padding: 0.5rem 1rem; border: none; border-radius: 6px; cursor: pointer; margin: 0.25rem; }
+    .delete-btn { background: #d33; color: white; }
+    .export-btn { background: #2c7; color: white; }
+    .stats { background: #f5f5f5; padding: 1rem; border-radius: 8px; margin-bottom: 1rem; }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <a class="cta" href="/index.html">🏡 Back to Map</a>
+    <div>
+      <button class="export-btn" id="exportBtn">📄 Export Trip</button>
+      <button class="delete-btn" id="clearBtn">🗑️ Clear All</button>
+    </div>
+  </div>
+
+  <h1>🌿 My Trip Plan</h1>
+
+  <div class="stats" id="stats">
+    <strong>0</strong> observations saved
+  </div>
+
+  <div id="tripList">
+    <!-- Trip items will be inserted here -->
+  </div>
+
+  <div class="empty-state" id="emptyState" style="display: none;">
+    <div style="font-size: 3rem;">🌱</div>
+    <h3>No observations saved yet</h3>
+    <p>Visit the map and save observations to build your trip plan!</p>
+    <a href="/index.html" class="cta">🗺️ Explore the Map</a>
+  </div>
+
+  <script>
+    function safeParse(str) {
+      try {
+        return str ? JSON.parse(str) : null;
+      } catch {
+        return null;
+      }
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    function renderTripPlan() {
+      const tripPlan = safeParse(localStorage.getItem('tripPlan')) || [];
+      const listEl = document.getElementById('tripList');
+      const emptyEl = document.getElementById('emptyState');
+      const statsEl = document.getElementById('stats');
+
+      // Update stats
+      statsEl.innerHTML = `<strong>${tripPlan.length}</strong> observation${tripPlan.length !== 1 ? 's' : ''} saved`;
+
+      if (tripPlan.length === 0) {
+        listEl.innerHTML = '';
+        emptyEl.style.display = 'block';
+        return;
+      }
+
+      emptyEl.style.display = 'none';
+      
+      // Sort by date saved (newest first)
+      tripPlan.sort((a, b) => new Date(b.date_saved) - new Date(a.date_saved));
+
+      listEl.innerHTML = tripPlan.map((item, index) => `
+        <div class="trip-item">
+          ${item.image ? `<img src="${item.image}" alt="${escapeHtml(item.species_name || 'Unknown')}" />` : '<div style="width:120px;height:120px;background:#f0f0f0;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#999;">📷</div>'}
+          <div class="trip-content">
+            <h3>${escapeHtml(item.species_name || 'Unknown Species')}</h3>
+            <p><strong>POI ID:</strong> ${escapeHtml(item.poi_id || 'n/a')}</p>
+            <p><strong>Saved:</strong> ${new Date(item.date_saved).toLocaleString()}</p>
+            ${item.note ? `<div class="note"><strong>My Note:</strong> ${escapeHtml(item.note)}</div>` : ''}
+            ${item.photo ? `<div style="margin-top:0.5rem;"><img src="${item.photo}" style="max-width:200px;border-radius:4px;" alt="My photo" /></div>` : ''}
+            <div style="margin-top:0.5rem;">
+              <button class="delete-btn" onclick="deleteItem(${index})">🗑️ Remove</button>
+              <a href="/poi/detail.html?obs=${encodeURIComponent(item.poi_id || '')}" class="cta" style="margin-left:0.5rem;">🔍 View Details</a>
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function deleteItem(index) {
+      const tripPlan = safeParse(localStorage.getItem('tripPlan')) || [];
+      if (confirm('Remove this observation from your trip plan?')) {
+        tripPlan.splice(index, 1);
+        localStorage.setItem('tripPlan', JSON.stringify(tripPlan));
+        renderTripPlan();
+      }
+    }
+
+    function clearAll() {
+      if (confirm('Clear your entire trip plan? This cannot be undone.')) {
+        localStorage.removeItem('tripPlan');
+        renderTripPlan();
+      }
+    }
+
+    function exportTrip() {
+      const tripPlan = safeParse(localStorage.getItem('tripPlan')) || [];
+      if (tripPlan.length === 0) {
+        alert('No observations to export!');
+        return;
+      }
+
+      // Create simple text export
+      let exportText = `My Vale da Lama Trip Plan\nGenerated: ${new Date().toLocaleString()}\n\n`;
+      
+      tripPlan.forEach((item, i) => {
+        exportText += `${i + 1}. ${item.species_name || 'Unknown Species'}\n`;
+        exportText += `   POI ID: ${item.poi_id || 'n/a'}\n`;
+        exportText += `   Saved: ${new Date(item.date_saved).toLocaleString()}\n`;
+        if (item.note) {
+          exportText += `   Note: ${item.note}\n`;
+        }
+        exportText += '\n';
+      });
+
+      // Download as text file
+      const blob = new Blob([exportText], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `vale-da-lama-trip-${new Date().toISOString().split('T')[0]}.txt`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    // Event listeners
+    document.getElementById('clearBtn').addEventListener('click', clearAll);
+    document.getElementById('exportBtn').addEventListener('click', exportTrip);
+
+    // Initial render
+    renderTripPlan();
+
+    // Make deleteItem available globally
+    window.deleteItem = deleteItem;
+  </script>
+
+  <!-- Common Navigation Bar -->
+  <nav style="
+    position:fixed; bottom:0; left:0; right:0;
+    background:#2c7; color:white;
+    display:flex; justify-content:space-around;
+    padding:0.6em 0; font-size:0.9rem;
+    box-shadow:0 -2px 4px rgba(0,0,0,0.2);
+    z-index:999;">
+    <a href="/index.html" style="color:white; text-decoration:none;">🏡 Home</a>
+    <a href="/tripplan.html" style="color:white; text-decoration:none;">🌿 My Trip</a>
+    <a href="/poi/detail.html?obs=123456" style="color:white; text-decoration:none;">🔍 Sample POI</a>
+    <a href="/admin.html" style="color:white; text-decoration:none;">⚙️ Admin</a>
+    <a href="/userjournals.html" style="color:white; text-decoration:none;">📒 Journals</a>
+    <a href="/qr_admin.html" style="color:white; text-decoration:none;">🔗 QR Admin</a>
+  </nav>
+
+  <!-- Padding so content isn't hidden behind nav -->
+  <div style="height:3.5rem;"></div>
+
+</body>
+</html>
