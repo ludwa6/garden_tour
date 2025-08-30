@@ -38,8 +38,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const obs = observations.find(o => o.id == obsId);
     if (!obs) return;
 
-    // Generate QR code pointing to POI detail page
-    const detailUrl = `${window.location.origin}poi/detail.html?obs=${obsId}`;
+    const detailUrl = `poi/detail.html?obs=${obsId}`;
+    detailLink.href = detailUrl;
     
     if (typeof QRCode !== 'undefined') {
       QRCode.toCanvas(qrCanvas, detailUrl, {
