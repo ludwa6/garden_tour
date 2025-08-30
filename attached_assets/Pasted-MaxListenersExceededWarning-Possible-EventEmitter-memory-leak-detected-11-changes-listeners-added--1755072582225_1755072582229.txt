@@ -1,0 +1,93 @@
+MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 changes listeners added. Use emitter.setMaxListeners() to increase limit
+    at c (https://cdn.replit.com/_next/static/chunks/4102-f722a798cbf11282.js:1:87556)
+    at u.addListener (https://cdn.replit.com/_next/static/chunks/4102-f722a798cbf11282.js:1:90442)
+    at h (https://cdn.replit.com/_next/static/chunks/4359-9054f1dd4a916e11.js:1:46205)
+    at Object.watchTextFile (https://cdn.replit.com/_next/static/chunks/4359-9054f1dd4a916e11.js:1:47153)
+    at https://cdn.replit.com/_next/static/chunks/4891-9682feeec7cbca77.js:1:1599084
+    at Array.map (<anonymous>)
+    at https://cdn.replit.com/_next/static/chunks/4891-9682feeec7cbca77.js:1:1599059
+    at oO (https://cdn.replit.com/_next/static/chunks/framework-d49db226030ffeda.js:1:125395)
+    at uB (https://cdn.replit.com/_next/static/chunks/framework-d49db226030ffeda.js:1:154390)
+    at https://cdn.replit.com/_next/static/chunks/framework-d49db226030ffeda.js:1:152776
+    at uO (https://cdn.replit.com/_next/static/chunks/framework-d49db226030ffeda.js:1:152842)
+    at u_ (https://cdn.replit.com/_next/static/chunks/framework-d49db226030ffeda.js:1:137506)
+    at r6 (https://cdn.replit.com/_next/static/chunks/framework-d49db226030ffeda.js:1:86196)
+    at https://cdn.replit.com/_next/static/chunks/framework-d49db226030ffeda.js:1:134884
+(anonymous) @ _app-87e3bcb1484a8afd.js:13
+_app-87e3bcb1484a8afd.js:13 webglcontextlost event received
+workspace_iframe.html:32 Unrecognized feature: 'ambient-light-sensor'.
+workspace_iframe.html:32 Unrecognized feature: 'ambient-light-sensor'.
+workspace_iframe.html:32 Unrecognized feature: 'battery'.
+workspace_iframe.html:32 Unrecognized feature: 'battery'.
+workspace_iframe.html:32 Unrecognized feature: 'execution-while-not-rendered'.
+workspace_iframe.html:32 Unrecognized feature: 'execution-while-not-rendered'.
+workspace_iframe.html:32 Unrecognized feature: 'execution-while-out-of-viewport'.
+workspace_iframe.html:32 Unrecognized feature: 'execution-while-out-of-viewport'.
+workspace_iframe.html:32 Unrecognized feature: 'layout-animations'.
+workspace_iframe.html:32 Unrecognized feature: 'layout-animations'.
+workspace_iframe.html:32 Unrecognized feature: 'legacy-image-formats'.
+workspace_iframe.html:32 Unrecognized feature: 'legacy-image-formats'.
+workspace_iframe.html:32 Unrecognized feature: 'navigation-override'.
+workspace_iframe.html:32 Unrecognized feature: 'navigation-override'.
+workspace_iframe.html:32 Unrecognized feature: 'oversized-images'.
+workspace_iframe.html:32 Unrecognized feature: 'oversized-images'.
+workspace_iframe.html:32 Unrecognized feature: 'publickey-credentials'.
+workspace_iframe.html:32 Unrecognized feature: 'publickey-credentials'.
+workspace_iframe.html:32 Unrecognized feature: 'speaker-selection'.
+workspace_iframe.html:32 Unrecognized feature: 'speaker-selection'.
+workspace_iframe.html:32 Unrecognized feature: 'unoptimized-images'.
+workspace_iframe.html:32 Unrecognized feature: 'unoptimized-images'.
+workspace_iframe.html:32 Unrecognized feature: 'unsized-media'.
+workspace_iframe.html:32 Unrecognized feature: 'unsized-media'.
+workspace_iframe.html:32 Unrecognized feature: 'web-share'.
+workspace_iframe.html:32 Unrecognized feature: 'web-share'.
+workspace_iframe.html:32 Allow attribute will take precedence over 'allowfullscreen'.
+workspace_iframe.html:32 Allow attribute will take precedence over 'allowfullscreen'.
+workspace_iframe.html:32 Allow attribute will take precedence over 'allowpaymentrequest'.
+workspace_iframe.html:32 Allow attribute will take precedence over 'allowpaymentrequest'.
+ 🌱 Garden Tour App loaded successfully!
+ Test with: ?poi=maple, ?poi=herbs, or ?poi=oak
+ SW registered:  ServiceWorkerRegistration
+_app-87e3bcb1484a8afd.js:13 webglcontextrestored event received
+(anonymous) @ _app-87e3bcb1484a8afd.js:13
+ 🌱 Garden Tour App loaded successfully!
+ Test with: ?poi=maple, ?poi=herbs, or ?poi=oak
+ SW registered:  ServiceWorkerRegistration
+393 log entries are not shown.
+_app-87e3bcb1484a8afd.js:13 task queue exceeded allotted deadline by 64ms
+(anonymous) @ _app-87e3bcb1484a8afd.js:13
+_process @ 7b975a49.9f2b73ee86f51364.js:3
+(anonymous) @ 7b975a49.9f2b73ee86f51364.js:3
+n @ _app-87e3bcb1484a8afd.js:13
+setTimeout (async)
+(anonymous) @ _app-87e3bcb1484a8afd.js:13
+_requestCallback @ 7b975a49.9f2b73ee86f51364.js:3
+_start @ 7b975a49.9f2b73ee86f51364.js:3
+enqueue @ 7b975a49.9f2b73ee86f51364.js:3
+set @ 7b975a49.9f2b73ee86f51364.js:3
+handleResize @ 7b975a49.9f2b73ee86f51364.js:3
+(anonymous) @ 7b975a49.9f2b73ee86f51364.js:3
+fire @ 7b975a49.9f2b73ee86f51364.js:3
+(anonymous) @ 7b975a49.9f2b73ee86f51364.js:3
+fire @ 7b975a49.9f2b73ee86f51364.js:3
+resize @ 7b975a49.9f2b73ee86f51364.js:3
+resize @ 7b975a49.9f2b73ee86f51364.js:3
+resize @ 7b975a49.9f2b73ee86f51364.js:3
+resize @ 7b975a49.9f2b73ee86f51364.js:3
+fit @ 127.5bb7dcbbcd10c3ad.js:1
+fit @ 4891-9682feeec7cbca77.js:1
+Y.H.type @ 4891-9682feeec7cbca77.js:1
+(anonymous) @ _app-87e3bcb1484a8afd.js:40
+v @ _app-87e3bcb1484a8afd.js:40
+S @ _app-87e3bcb1484a8afd.js:40
+E @ _app-87e3bcb1484a8afd.js:40
+n @ _app-87e3bcb1484a8afd.js:13
+VM30:155 🌱 Garden Tour App loaded successfully!
+VM30:156 Test with: ?poi=maple, ?poi=herbs, or ?poi=oak
+VM29 sw-register.js:7 SW registered:  ServiceWorkerRegistration {installing: null, waiting: null, active: ServiceWorker, navigationPreload: NavigationPreloadManager, scope: 'https://10f47f9c-b2a0-40e8-96ca-9ac75f378535-00-27dlyb6yeaw28.spock.replit.dev/', …}
+VM35:155 🌱 Garden Tour App loaded successfully!
+VM35:156 Test with: ?poi=maple, ?poi=herbs, or ?poi=oak
+VM34 sw-register.js:7 SW registered:  ServiceWorkerRegistration {installing: null, waiting: null, active: ServiceWorker, navigationPreload: NavigationPreloadManager, scope: 'https://10f47f9c-b2a0-40e8-96ca-9ac75f378535-00-27dlyb6yeaw28.spock.replit.dev/', …}active: ServiceWorker {scriptURL: 'https://10f47f9c-b2a0-40e8-96ca-9ac75f378535-00-27dlyb6yeaw28.spock.replit.dev/sw.js', state: 'activated', onstatechange: null, onerror: null}backgroundFetch: BackgroundFetchManager {}cookies: CookieStoreManager {}installing: nullnavigationPreload: NavigationPreloadManager {}onupdatefound: nullpaymentManager: PaymentManager {userHint: ''}periodicSync: PeriodicSyncManager {}pushManager: PushManager {}scope: "https://10f47f9c-b2a0-40e8-96ca-9ac75f378535-00-27dlyb6yeaw28.spock.replit.dev/"sync: SyncManager {}updateViaCache: "imports"waiting: null[[Prototype]]: ServiceWorkerRegistration
+(index):502 🌱 Garden Tour App loaded successfully!
+(index):503 Test with: ?poi=maple, ?poi=herbs, or ?poi=oak
+sw-register.js:7 SW registered:  ServiceWorkerRegistration {installing: null, waiting: null, active: ServiceWorker, navigationPreload: NavigationPreloadManager, scope: 'https://10f47f9c-b2a0-40e8-96ca-9ac75f378535-00-27dlyb6yeaw28.spock.replit.dev/', …}
