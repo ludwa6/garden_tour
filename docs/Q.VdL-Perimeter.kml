@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2" xmlns:gx="http://www.google.com/kml/ext/2.2" xmlns:kml="http://www.opengis.net/kml/2.2" xmlns:atom="http://www.w3.org/2005/Atom">
+<Document>
+	<name>Q.VdL-Perimeter.kml</name>
+	<StyleMap id="inline">
+		<Pair>
+			<key>normal</key>
+			<styleUrl>#inline1</styleUrl>
+		</Pair>
+		<Pair>
+			<key>highlight</key>
+			<styleUrl>#inline0</styleUrl>
+		</Pair>
+	</StyleMap>
+	<Style id="inline0">
+		<LineStyle>
+			<color>ff0000ff</color>
+			<width>2</width>
+		</LineStyle>
+		<PolyStyle>
+			<fill>0</fill>
+		</PolyStyle>
+	</Style>
+	<Style id="inline1">
+		<LineStyle>
+			<color>ff0000ff</color>
+			<width>2</width>
+		</LineStyle>
+		<PolyStyle>
+			<fill>0</fill>
+		</PolyStyle>
+	</Style>
+	<Placemark>
+		<name>Q.VdL-Perimeter</name>
+		<styleUrl>#inline</styleUrl>
+		<Polygon>
+			<tessellate>1</tessellate>
+			<outerBoundaryIs>
+				<LinearRing>
+					<coordinates>
+						-8.636271847257497,37.13924265139369,0 -8.635269398509895,37.14086023764482,0 -8.635877138091065,37.14144605960031,0 -8.63351206678051,37.14123571107703,0 -8.633209839587328,37.14095257049191,0 -8.629377242951762,37.14172254184141,0 -8.629864942912429,37.14261830051814,0 -8.627471631952385,37.14458273318047,0 -8.628750482809236,37.14623518069011,0 -8.626737950593748,37.14530688164007,0 -8.625694678399823,37.14553633367225,0 -8.623646841721781,37.14236038350018,0 -8.624383073647007,37.14157444769558,0 -8.62491747613085,37.14063036758847,0 -8.625473425030657,37.14064868092568,0 -8.626020893255692,37.14010298450564,0 -8.62564351434529,37.1398366431013,0 -8.626963150246794,37.13947473942091,0 -8.627775745822682,37.13976179830679,0 -8.630340385274378,37.13908310908406,0 -8.636876973793695,37.13785769840761,0 -8.635865251824153,37.13875636864039,0 -8.636271847257497,37.13924265139369,0 
+					</coordinates>
+				</LinearRing>
+			</outerBoundaryIs>
+		</Polygon>
+		<atom:link rel="app" href="https://www.google.com/earth/about/versions/#earth-pro" title="Google Earth Pro 7.3.6.10201"></atom:link>
+	</Placemark>
+</Document>
+</kml>

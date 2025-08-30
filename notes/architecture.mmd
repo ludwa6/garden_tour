@@ -1,0 +1,20 @@
+flowchart TD
+  subgraph Client["PWA Client (Browser)"]
+    UI["Map UI (Leaflet + MarkerCluster)"]
+    SW["Service Worker"]
+    LS["localStorage (points, badges, cache refs)"]
+    IDB["Cache Storage (runtime images/tiles)"]
+  end
+
+  subgraph Internet["Network"]
+    INAT["iNaturalist API"]
+    OSM["OSM Tile Server (or local tiles)"]
+    CDN["CDN: Leaflet, MarkerCluster, QR libs"]
+  end
+
+  UI -->|fetch observations| INAT
+  UI -->|tile requests| OSM
+  UI -->|first load of libs| CDN
+  SW <-->|caches app shell & runtime| UI
+  UI -->|save progress| LS
+  SW --> IDB

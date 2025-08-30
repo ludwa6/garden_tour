@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>User Journals – Admin</title>
+  <style>
+    body { font-family: system-ui, sans-serif; padding: 1rem; }
+    h1 { margin-bottom: 1rem; }
+    table { border-collapse: collapse; width: 100%; }
+    th, td { border: 1px solid #ccc; padding: 0.5rem; text-align: left; }
+    th { background: #f2f2f2; }
+    img { max-width: 80px; border-radius: 6px; }
+  </style>
+</head>
+<body>
+  <h1>📒 Visitor Notes (All POIs)</h1>
+  <table id="notesTable">
+    <thead>
+      <tr>
+        <th>POI ID</th>
+        <th>Species</th>
+        <th>Date Saved</th>
+        <th>Note</th>
+        <th>Photo</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <script>
+    function loadNotes() {
+      const tbody = document.querySelector("#notesTable tbody");
+      tbody.innerHTML = "";
+
+      const all = JSON.parse(localStorage.getItem("tripPlan") || "[]");
+
+      if (all.length === 0) {
+        tbody.innerHTML = "<tr><td colspan='5'><em>No notes recorded yet.</em></td></tr>";
+        return;
+      }
+
+      all.sort((a, b) => new Date(b.date_saved) - new Date(a.date_saved));
+      all.forEach(entry => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${entry.poi_id}</td>
+          <td>${entry.species_name || ""}</td>
+          <td>${new Date(entry.date_saved).toLocaleString()}</td>
+          <td>${entry.note ? escapeHtml(entry.note) : "<em>(no text)</em>"}</td>
+          <td>${entry.photo ? `<img src="${entry.photo}" alt="user photo">` : ""}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function escapeHtml(s) {
+      return String(s).replace(/[&<>"']/g, c => ({
+        "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+      }[c]));
+    }
+
+    loadNotes();
+  </script>
+
+  <!-- Common Navigation Bar -->
+<nav style="
+  position:fixed; bottom:0; left:0; right:0;
+  background:#2c7; color:white;
+  display:flex; justify-content:space-around;
+  padding:0.6em 0; font-size:0.9rem;
+  box-shadow:0 -2px 4px rgba(0,0,0,0.2);
+  z-index:999;">
+  <a href="/index.html" style="color:white; text-decoration:none;">🏡 Home</a>
+  <a href="/tripplan.html" style="color:white; text-decoration:none;">🌿 My Trip</a>
+  <a href="/poi/detail.html?obs=123456" style="color:white; text-decoration:none;">🔍 Sample POI</a>
+  <a href="/admin.html" style="color:white; text-decoration:none;">⚙️ Admin</a>
+  <a href="/userjournals.html" style="color:white; text-decoration:none;">📒 Journals</a>
+  <a href="/qr_admin.html" style="color:white; text-decoration:none;">🔗 QR Admin</a>
+</nav>
+
+<!-- Padding so content isn't hidden behind nav -->
+<div style="height:3.5rem;"></div>
+
+</body>
+</html>

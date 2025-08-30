@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>a Field Guide to Quinta Vale da Lama</title>
+  <link rel="icon" href="icons/icon-192.png">
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#0ea5e9" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.Default.css" />
+  <link rel="stylesheet" href="style.css?v=2">
+  <script>
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("/service-worker.js").then(() => {
+        console.log("✅ Service Worker registered");
+      });
+    }
+  </script>
+
+</head>
+<body class="main-page">
+  <header class="appbar">
+    <h1>a Field Guide to Quinta Vale da Lama</h1>
+    <div class="controls">
+      <button data-range="today" class="active">Today</button>
+      <button data-range="week">This Week</button>
+      <button data-range="all">All</button>
+    </div>
+    <div class="gamification">
+      <span id="points">0 pts</span>
+      <span id="badges"></span>
+      <button id="settingsBtn" aria-label="Open settings">⚙️</button>
+    </div>
+  </header>
+
+  <div id="map" role="region" aria-label="Observation map"></div>
+
+  <section id="observations" aria-live="polite">Loading...</section>
+
+  <div id="settingsPanel" class="panel hidden" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+    <h2 id="settingsTitle">Settings</h2>
+    <button id="resetBtn" class="danger">Reset My Tour</button>
+    <button id="closeSettings">Close</button>
+  </div>
+
+<footer class="footer">
+  <!-- Footer link with id -->
+  <a href="qr_admin.html" id="qr-admin-link">QR Admin</a>
+  <a href="admin.html">🔧 Admin Dashboard</a>
+  <span class="footer-sep"> :: </span>
+  <a href="https://www.inaturalist.org/projects/197410" target="_blank" rel="noopener noreferrer">
+    View Project at iNaturalist
+  </a>
+</footer>
+
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet.markercluster/dist/leaflet.markercluster.js"></script>
+<script src="https://unpkg.com/leaflet-omnivore@0.3.4/leaflet-omnivore.min.js"></script>
+<script src="app.js?v=2"></script>
+<script src="app.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('qr-admin-link').addEventListener('click', (e) => {
+      e.preventDefault(); // prevent immediate navigation
+
+      // Ensure observations is an array
+      const obsArray = Array.isArray(window.observations) ? window.observations : [];
+
+      // Filter only currently visible observations
+      const filtered = obsArray.filter(obs => obs.isVisible);
+
+      // Store filtered observations in localStorage for qr_admin.html
+      localStorage.setItem('observations', JSON.stringify(filtered));
+
+      // Navigate to QR Admin page
+      window.location.href = e.target.href;
+    });
+  });
+</script>
+
+
+</body>
+</html>

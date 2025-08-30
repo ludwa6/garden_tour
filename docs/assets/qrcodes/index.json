@@ -1,0 +1,44 @@
+[
+  {
+    "poi_id": 308417840,
+    "species_name": "Amargoseira",
+    "qr_code_url": "/assets/qrcodes/poi-308417840.png",
+    "detail_url": "/poi/detail.html?obs=308417840",
+    "inat_url": "https://www.inaturalist.org/observations/308417840"
+  },
+  {
+    "poi_id": 307968025,
+    "species_name": "Citrinos",
+    "qr_code_url": "/assets/qrcodes/poi-307968025.png",
+    "detail_url": "/poi/detail.html?obs=307968025",
+    "inat_url": "https://www.inaturalist.org/observations/307968025"
+  },
+  {
+    "poi_id": 307969981,
+    "species_name": "Amoreira-branca",
+    "qr_code_url": "/assets/qrcodes/poi-307969981.png",
+    "detail_url": "/poi/detail.html?obs=307969981",
+    "inat_url": "https://www.inaturalist.org/observations/307969981"
+  },
+  {
+    "poi_id": 307969855,
+    "species_name": "Lódão-bastardo",
+    "qr_code_url": "/assets/qrcodes/poi-307969855.png",
+    "detail_url": "/poi/detail.html?obs=307969855",
+    "inat_url": "https://www.inaturalist.org/observations/307969855"
+  },
+  {
+    "poi_id": 307968480,
+    "species_name": "Citrinos",
+    "qr_code_url": "/assets/qrcodes/poi-307968480.png",
+    "detail_url": "/poi/detail.html?obs=307968480",
+    "inat_url": "https://www.inaturalist.org/observations/307968480"
+  },
+  {
+    "poi_id": 307967783,
+    "species_name": "Grevilleas",
+    "qr_code_url": "/assets/qrcodes/poi-307967783.png",
+    "detail_url": "/poi/detail.html?obs=307967783",
+    "inat_url": "https://www.inaturalist.org/observations/307967783"
+  }
+]

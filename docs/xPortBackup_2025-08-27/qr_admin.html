@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QR Admin</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+</head>
+<body>
+  <header>
+    <h1>QR Admin — Generate QR & Offline Pack</h1>
+  </header>
+
+  <main>
+    <section id="selection">
+      <label for="obsSelect">Select Observation:</label>
+      <select id="obsSelect">
+        <option value="">-- Loading observations... --</option>
+      </select>
+      <div class="actions">
+        <button id="generateQR">Generate QR</button>
+        <button id="copyLink">Copy Link</button>
+        <button id="downloadPack">Download Offline Pack</button>
+      </div>
+    </section>
+
+    <section id="metadata">
+      <h2>Metadata Editor</h2>
+      <label for="titleInput">Title:</label>
+      <input type="text" id="titleInput" placeholder="Enter custom title">
+
+      <label for="descInput">Description:</label>
+      <textarea id="descInput" placeholder="Enter description"></textarea>
+
+      <label for="imgInput">Image URL:</label>
+      <input type="text" id="imgInput" placeholder="Paste image link">
+    </section>
+
+    <section id="template">
+      <h2>Template Editor</h2>
+      <textarea id="templateInput" rows="6" placeholder="Customize HTML template here..."></textarea>
+      <button id="saveTemplate">Save Template</button>
+    </section>
+
+    <section id="qrPreview">
+      <h2>QR Code Preview</h2>
+      <div id="qrcode"></div>
+      <div id="preview"></div>
+    </section>
+
+    <section id="status">
+      <h2>Status Log</h2>
+      <pre id="statusLog">No actions yet.</pre>
+    </section>
+
+  </main>
+
+  <script>
+    // Restore observations from localStorage (populated in index.html)
+    const obsSelect = document.getElementById("obsSelect");
+    const statusLog = document.getElementById("statusLog");
+    const qrcodeDiv = document.getElementById("qrcode");
+
+    function log(msg) {
+      statusLog.textContent += "\n" + msg;
+    }
+
+    // Populate dropdown with observations stored from main page
+    document.addEventListener("DOMContentLoaded", () => {
+      const stored = localStorage.getItem("observations");
+      if (stored) {
+        try {
+          const observations = JSON.parse(stored);
+          obsSelect.innerHTML = "<option value=''>-- Select an observation --</option>";
+          observations.forEach(obs => {
+            const option = document.createElement("option");
+            option.value = obs.id;
+            option.textContent = `${obs.species_guess || "Unknown species"} — ${obs.place || "Unknown place"}`;
+            option.dataset.detailUrl = obs.detail_url;
+            obsSelect.appendChild(option);
+          });
+          log("Loaded observations from localStorage.");
+        } catch (e) {
+          log("Error parsing stored observations: " + e);
+        }
+      } else {
+        log("No stored observations found. Please load index.html first.");
+      }
+    });
+
+    // Wire up QR code generator
+    document.getElementById("generateQR").onclick = () => {
+      const selected = obsSelect.options[obsSelect.selectedIndex];
+      if (!selected || !selected.value) {
+        log("Please select an observation first.");
+        return;
+      }
+      qrcodeDiv.innerHTML = ""; // clear old code
+      new QRCode(qrcodeDiv, {
+        text: selected.dataset.detailUrl,
+        width: 128,
+        height: 128
+      });
+      log("Generated QR code for: " + selected.textContent);
+    };
+
+    // Wire up copy link
+    document.getElementById("copyLink").onclick = async () => {
+      const selected = obsSelect.options[obsSelect.selectedIndex];
+      if (!selected || !selected.dataset.detailUrl) return;
+      try {
+        await navigator.clipboard.writeText(new URL(selected.dataset.detailUrl, location.origin).href);
+        log("Copied link to clipboard.");
+      } catch (e) {
+        log("Clipboard copy failed: " + e);
+      }
+    };
+
+    // Stub: Download pack
+    document.getElementById("downloadPack").onclick = () => {
+      log("[TODO] Implement offline pack generation.");
+    };
+  </script>
+</body>
+</html>
+

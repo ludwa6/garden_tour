@@ -1,0 +1,30 @@
+docs/
+├── index.html              # Main Field Guide (map + observations)
+├── qr_admin.html           # Admin page for QR generation
+├── app.js                  # Main logic (map, fetch, rendering)
+├── qr_admin.js             # QR admin logic
+├── style.css               # Unified styling
+├── manifest.json           # PWA manifest
+├── service-worker.js       # Cache logic (extend for offline mode)
+├── assets/
+│   ├── icons/              # App icons for manifest & PWA
+│   │   ├── icon-192.png
+│   │   ├── icon-512.png
+│   │   └── ...
+│   ├── qrcodes/            # Auto-generated QR codes (admin output)
+│   │   ├── poi-123456.png
+│   │   ├── poi-123457.png
+│   │   └── ...
+│   ├── offline/            # Offline content cache
+│   │   ├── 123456/         # Folder for POI 123456
+│   │   │   ├── index.html  # Cached detail page
+│   │   │   ├── photo.jpg   # Primary image
+│   │   │   └── audio.mp3   # (optional) narration
+│   │   ├── 123457/
+│   │   │   ├── index.html
+│   │   │   └── photo.jpg
+│   │   └── ...
+│   ├── logo.png
+│   └── (other static assets)
+└── data/
+    └── poi_manifest.json   # Tabular metadata for all POIs

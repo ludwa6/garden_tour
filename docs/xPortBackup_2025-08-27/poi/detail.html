@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>POI Detail</title>
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; padding: 1rem; }
+    .topbar { display:flex; justify-content:space-between; align-items:center; gap:1rem; margin-bottom:1rem; }
+    .cta { display:inline-block; padding:0.55em 1em; background:#2c7; color:#fff; border-radius:8px; text-decoration:none; font-weight:600; }
+    h1 { margin: 0.25rem 0 0.5rem; }
+    #speciesImage { width:100%; max-width:720px; border-radius:8px; background:#f3f3f3; }
+    .meta { margin:0.25rem 0 1rem; color:#555; font-size:0.95rem; }
+    textarea { width: 100%; margin: 0.5rem 0; }
+    button { margin-top: 0.4rem; padding: 0.45rem 0.8rem; border-radius:6px; border:none; cursor:pointer; }
+    #saveOfflineBtn { background:#1e88e5; color:#fff; }
+    #addNoteBtn, #saveNoteBtn { background:#2c7; color:#fff; }
+    .note-card { border: 1px solid #ddd; border-radius: 8px; padding: 0.6rem; margin: 0.6rem 0; }
+    .note-card img { max-width: 120px; border-radius:6px; float: right; margin-left: 0.6rem; }
+    .note-card small { color:#666; }
+    .divider { height:1px; background:#eee; margin:1.25rem 0; }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <a class="cta" href="/tripplan.html">🌿 My Trip Plan</a>
+    <a class="cta" href="/admin.html" style="background:#555;">🛠 Admin</a>
+  </div>
+
+  <div id="status" class="meta">Loading observation…</div>
+  <h1 id="speciesName">Observation</h1>
+  <img id="speciesImage" alt="Species image" />
+  <div class="meta">
+    <a id="inatLink" href="#" target="_blank" rel="noopener">View on iNaturalist</a>
+  </div>
+
+  <!-- Save for Offline -->
+  <button id="saveOfflineBtn">⭐ Save for Offline</button>
+
+  <!-- Add Note -->
+  <div id="noteSection" style="margin-top:1rem;">
+    <button id="addNoteBtn">📝 Add Note</button>
+    <div id="noteForm" style="display:none; margin-top:0.5rem;">
+      <textarea id="noteInput" rows="3" placeholder="What did you notice or feel here?"></textarea>
+      <br />
+      <label>📸 Add Photo (optional): <input type="file" id="photoInput" accept="image/*"></label>
+      <br />
+      <label><input type="checkbox" id="shareWithGarden"> 🌱 Share this note with the Garden</label>
+      <br />
+      <button id="saveNoteBtn">💾 Save Note</button>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- Notes List -->
+  <h3>📝 My Notes for this Spot</h3>
+  <ul id="noteList" style="list-style:none; padding:0;"></ul>
+
+  <div style="height:2rem"></div>
+
+  <script>
+    const obsId = new URLSearchParams(location.search).get("obs");
+    const statusEl = document.getElementById("status");
+    const nameEl = document.getElementById("speciesName");
+    const imgEl = document.getElementById("speciesImage");
+    const inatLink = document.getElementById("inatLink");
+    const saveOfflineBtn = document.getElementById("saveOfflineBtn");
+
+    let current = { id: String(obsId || ""), titleHTML: "", imageUrl: "", imageData: null, inatUrl: "" };
+
+    if (!obsId) { statusEl.textContent = "No observation id provided."; } else { boot(); }
+
+    async function boot() {
+      const cacheKey = `inat:${current.id}`;
+      const cached = safeParse(localStorage.getItem(cacheKey));
+      if (cached) setUI(cached, { from: "cache" });
+
+      try {
+        const live = await fetchObsFromINat(current.id);
+        if (live) {
+          setUI(live, { from: "network" });
+          localStorage.setItem(cacheKey, JSON.stringify(live));
+          try {
+            const c = await caches.open("fieldguide-offline-v1");
+            const toAdd = [live.inatApiUrl].concat(live.imageUrl ? [live.imageUrl] : []);
+            await Promise.all(toAdd.map(url => c.add(url).catch(()=>{})));
+          } catch (e) {}
+        } else if (!cached) statusEl.textContent = "Observation not found.";
+      } catch (e) { if (!cached) statusEl.textContent = "Offline or fetch failed — showing placeholders."; }
+    }
+
+    function safeParse(s) { try { return s ? JSON.parse(s) : null; } catch { return null; } }
+
+    async function fetchObsFromINat(id) {
+      const apiUrl = `https://api.inaturalist.org/v1/observations/${id}`;
+      const res = await fetch(apiUrl);
+      if (!res.ok) throw new Error("iNat fetch failed");
+      const data = await res.json();
+      const obs = data?.results?.[0];
+      if (!obs) return null;
+
+      const taxon = obs.taxon || {};
+      const common = taxon.preferred_common_name || taxon.english_common_name || "";
+      const sci = taxon.name || "";
+      const titleHTML = (common ? `${escapeHtml(common)} ` : "") + (sci ? `<em>${escapeHtml(sci)}</em>` : `Observation ${id}`);
+
+      let imageUrl = "";
+      if (obs.photos?.length) {
+        imageUrl = String(obs.photos[0].url || "");
+        imageUrl = imageUrl.replace("square.", "large.").replace("medium.", "large.");
+      }
+
+      return { id: String(id), titleHTML, imageUrl, imageData: null, inatUrl: `https://www.inaturalist.org/observations/${id}`, inatApiUrl: apiUrl };
+    }
+
+    function setUI(state, { from } = {}) {
+      current = { ...current, ...state };
+      nameEl.innerHTML = current.titleHTML || `Observation ${current.id}`;
+      inatLink.href = current.inatUrl || `https://www.inaturalist.org/observations/${current.id}`;
+      if (current.imageUrl) { imgEl.src = current.imageUrl; imgEl.style.display = ""; }
+      else if (current.imageData) { imgEl.src = current.imageData; imgEl.style.display = ""; }
+      else { imgEl.style.display = "none"; }
+      statusEl.textContent = from==="network"?"Loaded from iNaturalist.":from==="cache"?"Loaded from local cache.":"";
+    }
+
+    function escapeHtml(s) { return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+    // Cache the page + JSON + image; also store base64 image fallback in localStorage
+    saveOfflineBtn.addEventListener("click", async () => {
+      try {
+        const cache = await caches.open("fieldguide-offline-v1");
+        const toAdd = [location.href];
+        if (current.inatApiUrl) toAdd.push(current.inatApiUrl);
+        if (current.imageUrl) toAdd.push(current.imageUrl);
+        await Promise.all(toAdd.map(u => cache.add(u).catch(()=>{})));
+
+        // also store a base64 copy of the main image (so it renders offline even without SW intercept)
+        if (current.imageUrl) {
+          try {
+            const base64 = await toBase64FromUrl(current.imageUrl);
+            const cacheKey = `inat:${current.id}`;
+            const cached = safeParse(localStorage.getItem(cacheKey)) || {};
+            cached.imageData = base64;
+            localStorage.setItem(cacheKey, JSON.stringify(cached));
+          } catch (e) {}
+        }
+
+        alert("✅ Saved for offline use!");
+      } catch (e) {
+        alert("⚠️ Could not cache offline. You might be in a private window.");
+      }
+    });
+
+    async function toBase64FromUrl(url) {
+      const resp = await fetch(url, { mode: "cors" });
+      const blob = await resp.blob();
+      return await blobToDataURL(blob);
+    }
+    function blobToDataURL(blob) {
+      return new Promise((resolve, reject) => {
+        const r = new FileReader();
+        r.onload = () => resolve(r.result);
+        r.onerror = reject;
+        r.readAsDataURL(blob);
+      });
+    }
+
+    // --- Add Note UI ---
+    const addNoteBtn = document.getElementById("addNoteBtn");
+    const noteForm = document.getElementById("noteForm");
+    const saveNoteBtn = document.getElementById("saveNoteBtn");
+
+    addNoteBtn.addEventListener("click", () => {
+      noteForm.style.display = noteForm.style.display === "none" ? "block" : "none";
+    });
+
+    saveNoteBtn.addEventListener("click", async () => {
+      const noteText = document.getElementById("noteInput").value.trim();
+      const photoFile = document.getElementById("photoInput").files[0];
+      const share = document.getElementById("shareWithGarden") ? document.getElementById("shareWithGarden").checked : false;
+      let photoData = null;
+      if (photoFile) photoData = await fileToBase64(photoFile);
+
+      const entry = {
+        poi_id: String(current.id),
+        species_name: stripHtml(nameEl.innerHTML),
+        image: imgEl?.src || "",
+        note: noteText,
+        photo: photoData,
+        date_saved: new Date().toISOString()
+      };
+
+      const existing = safeParse(localStorage.getItem("tripPlan")) || [];
+      existing.push(entry);
+      localStorage.setItem("tripPlan", JSON.stringify(existing));
+
+      // Optional share to Garden (send smaller payload)
+      if (share) {
+        try {
+          const payload = {
+            poi_id: entry.poi_id,
+            species_name: entry.species_name,
+            note: entry.note,
+            photo_url: "", // not uploading files yet
+            date_saved: entry.date_saved
+          };
+          const ok = await shareNoteWithGarden(payload);
+          if (ok) {
+            alert("🌱 Your note was shared with the Garden!");
+          } else {
+            alert("⚠️ Note saved locally, but sharing failed.");
+          }
+        } catch (e) {
+          console.error("Share failed:", e);
+          alert("⚠️ Note saved locally, but sharing failed.");
+        }
+      }
+
+      alert("✅ Saved to My Trip Plan!");
+      noteForm.style.display = "none";
+      document.getElementById("noteInput").value = "";
+      document.getElementById("photoInput").value = "";
+      if (document.getElementById("shareWithGarden")) document.getElementById("shareWithGarden").checked = false;
+      renderNotes();
+    });
+
+    function fileToBase64(file) {
+      return new Promise((resolve, reject) => {
+        const r = new FileReader();
+        r.onload = () => resolve(r.result);
+        r.onerror = reject;
+        r.readAsDataURL(file);
+      });
+    }
+    function stripHtml(html) {
+      const tmp = document.createElement("div");
+      tmp.innerHTML = html;
+      return tmp.textContent || tmp.innerText || "";
+    }
+
+    // --- Share with Garden (Google Apps Script Web App) ---
+    async function shareNoteWithGarden(noteObj) {
+      const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwDWDnZUn6CwOZcHW5Yqfw9GyscARn71XzSLEKQ1VFPU3neoWLiEfyTmvZjDuC_CQ2R/exec"; // replace with your deployed Apps Script URL ending in /exec
+      const res = await fetch(WEB_APP_URL, {
+        method: "POST",
+        body: JSON.stringify(noteObj),
+        headers: { "Content-Type": "application/json" }
+      });
+      const ct = (res.headers.get("content-type") || "").toLowerCase();
+      if (ct.includes("application/json")) {
+        const data = await res.json();
+        return data && data.status === "ok";
+      } else {
+        // Fallback: try read as text and parse
+        const text = await res.text();
+        try {
+          const data = JSON.parse(text);
+          return data && data.status === "ok";
+        } catch {
+          return res.ok; // last resort
+        }
+      }
+    }
+
+    // --- Notes list (multiple supported) ---
+    function renderNotes() {
+      const all = safeParse(localStorage.getItem("tripPlan")) || [];
+      const mine = all.filter(poi => String(poi.poi_id) === String(current.id));
+      const list = document.getElementById("noteList");
+      list.innerHTML = "";
+
+      if (mine.length === 0) {
+        list.innerHTML = "<li><em>No notes yet. Add one above!</em></li>";
+        return;
+      }
+
+      mine.sort((a, b) => new Date(b.date_saved) - new Date(a.date_saved));
+      mine.forEach(poi => {
+        const li = document.createElement("li");
+        li.className = "note-card";
+        li.innerHTML = `
+          ${poi.photo ? `<img src="${poi.photo}" alt="My photo">` : ""}
+          <p><small>${new Date(poi.date_saved).toLocaleString()}</small></p>
+          ${poi.note ? `<p>${escapeHtml(poi.note)}</p>` : "<p><em>(no text)</em></p>"}
+          <button data-ts="${poi.date_saved}" class="deleteNoteBtn" style="background:#d33;color:#fff;">❌ Delete</button>
+        `;
+        list.appendChild(li);
+      });
+
+      document.querySelectorAll(".deleteNoteBtn").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const ts = btn.getAttribute("data-ts");
+          const allNotes = safeParse(localStorage.getItem("tripPlan")) || [];
+          const filtered = allNotes.filter(p => !(String(p.poi_id) === String(current.id) && p.date_saved === ts));
+          localStorage.setItem("tripPlan", JSON.stringify(filtered));
+          renderNotes();
+        });
+      });
+    }
+
+    renderNotes();
+  </script>
+
+  <!-- Common Navigation Bar -->
+<nav style="
+  position:fixed; bottom:0; left:0; right:0;
+  background:#2c7; color:white;
+  display:flex; justify-content:space-around;
+  padding:0.6em 0; font-size:0.9rem;
+  box-shadow:0 -2px 4px rgba(0,0,0,0.2);
+  z-index:999;">
+  <a href="/index.html" style="color:white; text-decoration:none;">🏡 Home</a>
+  <a href="/tripplan.html" style="color:white; text-decoration:none;">🌿 My Trip</a>
+  <a href="/poi/detail.html?obs=123456" style="color:white; text-decoration:none;">🔍 Sample POI</a>
+  <a href="/admin.html" style="color:white; text-decoration:none;">⚙️ Admin</a>
+  <a href="/userjournals.html" style="color:white; text-decoration:none;">📒 Journals</a>
+  <a href="/qr_admin.html" style="color:white; text-decoration:none;">🔗 QR Admin</a>
+</nav>
+
+<!-- Padding so content isn't hidden behind nav -->
+<div style="height:3.5rem;"></div>
+
+</body>
+</html>

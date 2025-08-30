@@ -1,0 +1,20 @@
+```markdown
+# Pull Request
+
+## Description
+What does this PR do? Please include a summary of the change and relevant context.
+
+## Related Issues
+Closes #(issue)
+
+## How to Test
+Steps to test the changes:
+1. Open `index.html`
+2. Do X, Y, Z
+3. Verify that...
+
+## Checklist
+- [ ] I’ve tested my changes locally
+- [ ] I’ve updated documentation if needed
+- [ ] I’ve linked related issues
+```
