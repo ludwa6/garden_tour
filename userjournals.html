@@ -5,7 +5,16 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>My Journals - Field Guide</title>
-  <base href="/garden_tour/">
+
+    <!-- Dynamic base path: works on localhost and GitHub Pages -->
+  <script>
+    if (location.hostname === "127.0.0.1" || location.hostname === "localhost") {
+      document.write('<base href="/">');
+    } else {
+      document.write('<base href="/garden_tour/">');
+    }
+  </script>
+
   <style>
     body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; padding: 1rem; margin: 0; }
     .topbar { display: flex; justify-content: space-between; align-items: center; gap: 1rem; margin-bottom: 1rem; }

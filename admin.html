@@ -4,7 +4,16 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Admin Dashboard</title>
-  <base href="/garden_tour/">
+
+    <!-- Dynamic base path: works on localhost and GitHub Pages -->
+  <script>
+    if (location.hostname === "127.0.0.1" || location.hostname === "localhost") {
+      document.write('<base href="/">');
+    } else {
+      document.write('<base href="/garden_tour/">');
+    }
+  </script>
+
   <style>
     body { font-family: sans-serif; padding: 1rem; }
     h1, h2 { text-align: center; }

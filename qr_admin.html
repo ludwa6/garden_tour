@@ -3,7 +3,16 @@
 <head>
   <meta charset="UTF-8">
   <title>QR Admin</title>
-  <base href="/garden_tour/">
+
+    <!-- Dynamic base path: works on localhost and GitHub Pages -->
+  <script>
+    if (location.hostname === "127.0.0.1" || location.hostname === "localhost") {
+      document.write('<base href="/">');
+    } else {
+      document.write('<base href="/garden_tour/">');
+    }
+  </script>
+
   <link rel="stylesheet" href="style.css?v=2">
 </head>
 <body class="qr-admin-page">
