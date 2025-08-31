@@ -312,30 +312,25 @@
     renderNotes();
   </script>
 
-<footer>
-  <nav>
-    <a class="nav-link" data-target="index.html">🏠 Home</a>
-    <a class="nav-link" data-target="qr_admin.html">📷 QR Admin</a>
-    <a class="nav-link" data-target="tripplan.html">🗺 Trip Plan</a>
-    <a class="nav-link" data-target="userjournals.html">📓 User Journals</a>
-    <a class="nav-link" data-target="admin.html">🔧 Admin Dashboard</a>
-  </nav>
-</footer>
+<footer id="site-footer"></footer>
 
 <script>
-  // detect whether we’re on GitHub Pages or local dev
-  const basePath = window.location.hostname.includes("github.io")
-    ? "/garden_tour/"
-    : "/";
+  // Inject shared footer.html into this page
+  fetch("footer.html")
+    .then(res => res.text())
+    .then(html => {
+      document.getElementById("site-footer").innerHTML = html;
 
-  // rewrite footer nav links
-  document.querySelectorAll(".nav-link").forEach(link => {
-    link.href = basePath + link.dataset.target;
-  });
-</script> 
-
-<!-- Padding so content isn't hidden behind nav -->
-<div style="height:3.5rem;"></div>
+      // Fix link paths based on environment
+      const basePath = window.location.hostname.includes("github.io")
+        ? "/garden_tour/"
+        : "/";
+      document.querySelectorAll("#site-footer .nav-link").forEach(link => {
+        link.href = basePath + link.dataset.target;
+      });
+    })
+    .catch(err => console.error("Failed to load footer:", err));
+</script>
 
 </body>
 </html>
