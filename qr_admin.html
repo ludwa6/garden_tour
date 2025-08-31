@@ -45,12 +45,22 @@
 
 <footer>
   <nav>
+    <nav style="
+    position:fixed; bottom:0; left:0; right:0;
+    background:#2c7; color:white;
+    display:flex; justify-content:space-around;
+    padding:0.6em 0; font-size:0.9rem;
+    box-shadow:0 -2px 4px rgba(0,0,0,0.2);
+    z-index:999;">
     <a class="nav-link" data-target="index.html">🏠 Home</a>
     <a class="nav-link" data-target="qr_admin.html">📷 QR Admin</a>
     <a class="nav-link" data-target="tripplan.html">🗺 Trip Plan</a>
     <a class="nav-link" data-target="userjournals.html">📓 User Journals</a>
     <a class="nav-link" data-target="admin.html">🔧 Admin Dashboard</a>
   </nav>
+  
+<!-- Padding so content isn't hidden behind nav -->
+<div style="height:3.5rem;"></div>
 </footer>
 
 <script>
