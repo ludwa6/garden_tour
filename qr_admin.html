@@ -43,33 +43,24 @@
   <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
   <script src="qr_admin.js"></script>
 
-<footer>
-  <nav style="
-    position:fixed; bottom:0; left:0; right:0;
-    background:#2c7; color:white;
-    display:flex; justify-content:space-around;
-    padding:0.6em 0; font-size:0.9rem;
-    box-shadow:0 -2px 4px rgba(0,0,0,0.2);
-    z-index:999;">
-    
-    <a class="nav-link" href="index.html" data-target="index.html">🏠 Home</a>
-    <a class="nav-link" href="qr_admin.html" data-target="qr_admin.html">📷 QR Admin</a>
-    <a class="nav-link" href="tripplan.html" data-target="tripplan.html">🗺 Trip Plan</a>
-    <a class="nav-link" href="userjournals.html" data-target="userjournals.html">📓 User Journals</a>
-    <a class="nav-link" href="admin.html" data-target="admin.html">🔧 Admin Dashboard</a>
-  </nav>
-</footer>
+<footer id="site-footer"></footer>
 
 <script>
-  // Detect whether we’re on GitHub Pages or local dev
-  const basePath = window.location.hostname.includes("github.io")
-    ? "/garden_tour/"
-    : "/";
+  // Inject shared footer.html into this page
+  fetch("footer.html")
+    .then(res => res.text())
+    .then(html => {
+      document.getElementById("site-footer").innerHTML = html;
 
-  // Rewrite footer nav links
-  document.querySelectorAll(".nav-link").forEach(link => {
-    link.href = basePath + link.dataset.target;
-  });
+      // Fix link paths based on environment
+      const basePath = window.location.hostname.includes("github.io")
+        ? "/garden_tour/"
+        : "/";
+      document.querySelectorAll("#site-footer .nav-link").forEach(link => {
+        link.href = basePath + link.dataset.target;
+      });
+    })
+    .catch(err => console.error("Failed to load footer:", err));
 </script>
 
 </body>
