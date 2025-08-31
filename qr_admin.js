@@ -1,10 +1,13 @@
-
 // qr_admin.js
 document.addEventListener('DOMContentLoaded', function() {
   const observationSelect = document.getElementById('observationSelect');
   const qrCanvas = document.getElementById('qrCanvas');
   const observationPreview = document.getElementById('observationPreview');
-  const BASE_PATH = '/garden_tour/';
+
+  // Detect correct base path: use '/garden_tour/' on GitHub Pages, '/' locally
+  const BASE_PATH = window.location.hostname.includes('github.io') 
+    ? '/garden_tour/' 
+    : '/';
 
   // Load observations from localStorage (set by app.js)
   function loadObservations() {
@@ -41,8 +44,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Generate QR code pointing to POI detail page
     const detailUrl = `${window.location.origin}${BASE_PATH}poi/detail.html?obs=${obsId}`;
-    document.getElementById('detailUrlLink').href = detailUrl;
-    document.getElementById('detailUrlLink').textContent = `Detail URL: ${detailUrl}`;
     
     if (typeof QRCode !== 'undefined') {
       QRCode.toCanvas(qrCanvas, detailUrl, {
