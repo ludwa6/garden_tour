@@ -44,32 +44,33 @@
   <script src="qr_admin.js"></script>
 
 <footer>
-  <nav>
-    <nav style="
+  <nav style="
     position:fixed; bottom:0; left:0; right:0;
     background:#2c7; color:white;
     display:flex; justify-content:space-around;
     padding:0.6em 0; font-size:0.9rem;
     box-shadow:0 -2px 4px rgba(0,0,0,0.2);
     z-index:999;">
-    <a class="nav-link" data-target="index.html">🏠 Home</a>
-    <a class="nav-link" data-target="qr_admin.html">📷 QR Admin</a>
-    <a class="nav-link" data-target="tripplan.html">🗺 Trip Plan</a>
-    <a class="nav-link" data-target="userjournals.html">📓 User Journals</a>
-    <a class="nav-link" data-target="admin.html">🔧 Admin Dashboard</a>
+    
+    <a class="nav-link" href="index.html" data-target="index.html">🏠 Home</a>
+    <a class="nav-link" href="qr_admin.html" data-target="qr_admin.html">📷 QR Admin</a>
+    <a class="nav-link" href="tripplan.html" data-target="tripplan.html">🗺 Trip Plan</a>
+    <a class="nav-link" href="userjournals.html" data-target="userjournals.html">📓 User Journals</a>
+    <a class="nav-link" href="admin.html" data-target="admin.html">🔧 Admin Dashboard</a>
   </nav>
+</footer>
 
 <script>
-  // detect whether we’re on GitHub Pages or local dev
+  // Detect whether we’re on GitHub Pages or local dev
   const basePath = window.location.hostname.includes("github.io")
     ? "/garden_tour/"
     : "/";
 
-  // rewrite footer nav links
+  // Rewrite footer nav links
   document.querySelectorAll(".nav-link").forEach(link => {
     link.href = basePath + link.dataset.target;
   });
-</script> 
+</script>
 
 </body>
 </html>
