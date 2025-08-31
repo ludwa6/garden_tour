@@ -4,6 +4,7 @@ document.addEventListener('DOMContentLoaded', function() {
   const observationSelect = document.getElementById('observationSelect');
   const qrCanvas = document.getElementById('qrCanvas');
   const observationPreview = document.getElementById('observationPreview');
+  const BASE_PATH = '/garden_tour/';
 
   // Load observations from localStorage (set by app.js)
   function loadObservations() {
@@ -39,7 +40,9 @@ document.addEventListener('DOMContentLoaded', function() {
     if (!obs) return;
 
     // Generate QR code pointing to POI detail page
-    const detailUrl = `${window.location.origin}poi/detail.html?obs=${obsId}`;
+    const detailUrl = `${window.location.origin}${BASE_PATH}poi/detail.html?obs=${obsId}`;
+    document.getElementById('detailUrlLink').href = detailUrl;
+    document.getElementById('detailUrlLink').textContent = `Detail URL: ${detailUrl}`;
     
     if (typeof QRCode !== 'undefined') {
       QRCode.toCanvas(qrCanvas, detailUrl, {
