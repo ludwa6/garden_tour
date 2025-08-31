@@ -3,8 +3,18 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>a Field Guide to Quinta Vale da Lama</title>
-  <base href="/garden_tour/">
+  
+  <!-- Dynamic base path: works on localhost and GitHub Pages -->
+  <script>
+    if (location.hostname === "127.0.0.1" || location.hostname === "localhost") {
+      document.write('<base href="/">');
+    } else {
+      document.write('<base href="/garden_tour/">');
+    }
+  </script>
+
+  <title>Garden Tour</title>
+  <link rel="stylesheet" href="style.css">
   <link rel="icon" href="icons/icon-192.png">
   <link rel="manifest" href="manifest.json" />
   <meta name="theme-color" content="#0ea5e9" />
