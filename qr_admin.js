@@ -1,4 +1,8 @@
-// qr_admin.js
+// detect environment
+const basePath = window.location.hostname.includes("github.io")
+  ? "/garden_tour/"
+  : "/";  
+
 document.addEventListener('DOMContentLoaded', function() {
   const observationSelect = document.getElementById('observationSelect');
   const qrCanvas = document.getElementById('qrCanvas');
@@ -43,7 +47,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (!obs) return;
 
     // Generate QR code pointing to POI detail page
-    const detailUrl = `${window.location.origin}${BASE_PATH}poi/detail.html?obs=${obsId}`;
+    const detailUrl = `${window.location.origin}${basePath}poi/detail.html?obs=${obsId}`; 
     
     if (typeof QRCode !== 'undefined') {
       QRCode.toCanvas(qrCanvas, detailUrl, {
