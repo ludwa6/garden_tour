@@ -47,7 +47,10 @@
 
 <script>
   // Inject shared footer.html into this page
-  fetch("footer.html")
+  const footerPath = window.location.hostname.includes("github.io") 
+    ? "/garden_tour/footer.html" 
+    : "/footer.html";
+  fetch(footerPath)
     .then(res => res.text())
     .then(html => {
       document.getElementById("site-footer").innerHTML = html;
