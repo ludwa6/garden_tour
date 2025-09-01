@@ -18,8 +18,10 @@ document.addEventListener('DOMContentLoaded', function() {
     const stored = localStorage.getItem('erc_observations');
     const observations = stored ? JSON.parse(stored) : [];
     
+    console.log('Loaded observations:', observations.length, 'items');
+    
     if (observations.length === 0) {
-      observationSelect.innerHTML = '<option value="">No observations available</option>';
+      observationSelect.innerHTML = '<option value="">No observations available - visit main page first</option>';
       return;
     }
 
@@ -47,7 +49,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (!obs) return;
 
     // Generate QR code pointing to POI detail page
-    const detailUrl = `${window.location.origin}${basePath}poi/detail.html?obs=${obsId}`; 
+    const detailUrl = `${window.location.origin}${BASE_PATH}poi/detail.html?obs=${obsId}`; 
     
     if (typeof QRCode !== 'undefined') {
       QRCode.toCanvas(qrCanvas, detailUrl, {
