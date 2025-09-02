@@ -4,24 +4,13 @@
   <meta charset="UTF-8">
   <title>QR Admin</title>
 
-  <script>
-    // Compute basePath for localhost vs GitHub Pages
-    const repoRoot = window.location.pathname.split("/")[1];
-    window.basePath = repoRoot && window.location.hostname.includes("github.io")
-      ? `/${repoRoot}/`
-      : "/";
-
-    // Dynamically inject stylesheet with correct path
-    const cssLink = document.createElement("link");
-    cssLink.rel = "stylesheet";
-    cssLink.href = new URL("style.css?v=2", window.location.origin + window.basePath).href;
-    document.head.appendChild(cssLink);
-  </script>
+  <!-- Use relative paths (no leading slash) so it works under / and /garden_tour/ -->
+  <link rel="stylesheet" href="style.css?v=2">
 </head>
 <body class="qr-admin-page">
   <div class="appbar">
     <h1>QR Admin</h1>
-    <a href="./index.html" class="back-btn">← Back to main</a>
+    <a href="index.html" class="back-btn">← Back to main</a>
   </div>
 
   <main id="qr-admin-content">
@@ -44,29 +33,36 @@
   </main>
 
   <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
-  <script>
-    // Load qr_admin.js relative to basePath
-    const script = document.createElement("script");
-    script.src = new URL("qr_admin.js", window.location.origin + window.basePath).href;
-    document.body.appendChild(script);
-  </script>
+  <!-- Again: relative path, no leading slash -->
+  <script src="qr_admin.js"></script>
 
   <footer id="site-footer"></footer>
 
   <script>
-    // Inject shared footer.html into this page
-    const footerPath = new URL("footer.html", window.location.origin + window.basePath).href;
-    fetch(footerPath)
-      .then(res => res.text())
-      .then(html => {
-        document.getElementById("site-footer").innerHTML = html;
+    // Compute repo base regardless of localhost vs GitHub Pages
+    // e.g. "/" for localhost, "/garden_tour/" on GH Pages
+    (function () {
+      const parts = window.location.pathname.split("/").filter(Boolean);
+      const repoBase = window.location.hostname.includes("github.io") && parts.length
+        ? `/${parts[0]}/`
+        : "/";
 
-        // Fix link paths based on environment
-        document.querySelectorAll("#site-footer .nav-link").forEach(link => {
-          link.href = window.basePath + link.dataset.target;
-        });
-      })
-      .catch(err => console.error("Failed to load footer:", err));
+      // Load shared footer
+      const footerPath = new URL("footer.html", window.location.origin + repoBase).href;
+      fetch(footerPath)
+        .then(res => res.text())
+        .then(html => {
+          document.getElementById("site-footer").innerHTML = html;
+          // Rewrite nav links so they work even from subfolders
+          document.querySelectorAll("#site-footer .nav-link").forEach(link => {
+            const target = link.getAttribute("data-target");
+            if (target) {
+              link.href = new URL(target, window.location.origin + repoBase).href;
+            }
+          });
+        })
+        .catch(err => console.error("Failed to load footer:", err));
+    })();
   </script>
 </body>
 </html>

@@ -6,14 +6,23 @@
 
   <title>Garden Tour</title>
 
-  <script>
-    // Compute basePath dynamically: works for localhost and GitHub Pages
-    const repoRoot = window.location.pathname.split("/")[1];
-    window.basePath = repoRoot && window.location.hostname.includes("github.io")
-      ? `/${repoRoot}/`
-      : "/";
+<script>
+  // Detect repo root robustly
+  (function() {
+    const pathParts = window.location.pathname.split("/").filter(Boolean);
 
-    // Dynamically inject CSS (handles / vs /garden_tour/)
+    // Case 1: GitHub Pages -> domain like user.github.io, path starts with repo name
+    if (window.location.hostname.endsWith("github.io") && pathParts.length > 0) {
+      window.basePath = "/" + pathParts[0] + "/";
+    } 
+    // Case 2: localhost or custom domain (Replit, Netlify, etc.)
+    else {
+      window.basePath = "/";
+    }
+
+    console.log("🌐 Using basePath:", window.basePath);
+
+    // Dynamically inject CSS
     const cssFiles = [
       "style.css",
       "style.css?v=2",
@@ -30,14 +39,16 @@
       document.head.appendChild(link);
     });
 
-    // Register service worker with correct basePath
+    // Register service worker with correct path
     if ("serviceWorker" in navigator) {
       const swUrl = new URL("service-worker.js", window.location.origin + window.basePath).href;
       navigator.serviceWorker.register(swUrl).then(() => {
         console.log("✅ Service Worker registered at", swUrl);
       });
     }
-  </script>
+  })();
+</script>
+
 
   <link rel="icon" href="icons/icon-192.png">
   <link rel="manifest" href="manifest.json" />

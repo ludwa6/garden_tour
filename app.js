@@ -1,6 +1,12 @@
 // app.js
 /* global L, omnivore */
 
+// --- Helpers for robust asset URLs ---
+// Works for localhost ("/") and GitHub Pages ("/repo/")
+function makeAssetUrl(relativePath) {
+  return new URL(relativePath, window.location.origin + window.basePath).href;
+}
+
 // --- Setup Map ---
 const map = L.map('map').setView([37.1, -8.6], 14);
 
@@ -9,7 +15,7 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
 }).addTo(map);
 
 // --- Load Vale da Lama perimeter from KML ---
-omnivore.kml('Q.VdL-Perimeter.kml')
+omnivore.kml(makeAssetUrl('Q.VdL-Perimeter.kml'))
   .on('ready', function (e) {
     map.fitBounds(e.target.getBounds());
     scheduleRefreshMapView();
@@ -36,7 +42,7 @@ function refreshMapView() {
   if (b && b.isValid && b.isValid()) {
     map.fitBounds(b, { padding: [50, 50] });
   } else {
-    // Fallback (Vale da Lama)
+    // Fallback (Vale da Lama center)
     map.setView([37.146, -8.642], 14);
   }
 }
