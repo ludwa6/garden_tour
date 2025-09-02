@@ -1,17 +1,14 @@
-// detect environment
-const basePath = window.location.hostname.includes("github.io")
-  ? "/garden_tour/"
-  : "/";  
-
 document.addEventListener('DOMContentLoaded', function() {
   const observationSelect = document.getElementById('observationSelect');
   const qrCanvas = document.getElementById('qrCanvas');
   const observationPreview = document.getElementById('observationPreview');
 
-  // Detect correct base path: use '/garden_tour/' on GitHub Pages, '/' locally
-  const BASE_PATH = window.location.hostname.includes('github.io') 
-    ? '/garden_tour/' 
-    : '/';
+  // Use basePath computed in qr_admin.html, or compute fallback
+  const basePath = window.basePath || (
+    window.location.hostname.includes("github.io")
+      ? `/${window.location.pathname.split("/")[1]}/`
+      : "/"
+  );
 
   // Load observations from localStorage (set by app.js)
   function loadObservations() {
@@ -22,7 +19,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     if (observations.length === 0) {
       observationSelect.innerHTML = '<option value="">No observations available - visit main page first</option>';
-      return;
+      return [];
     }
 
     // Populate dropdown
@@ -48,9 +45,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const obs = observations.find(o => o.id == obsId);
     if (!obs) return;
 
-    // Generate QR code pointing to POI detail page
-    const detailUrl = `${window.location.origin}${BASE_PATH}poi/detail.html?obs=${obsId}`; 
-    
+    // Generate detail URL safely
+    const detailUrl = new URL(`poi/detail.html?obs=${obsId}`, window.location.origin + basePath).href;
+
     if (typeof QRCode !== 'undefined') {
       QRCode.toCanvas(qrCanvas, detailUrl, {
         width: 200,

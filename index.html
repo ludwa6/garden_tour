@@ -3,32 +3,45 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  
-  <!-- Dynamic base path: works on localhost and GitHub Pages -->
-  <script>
-    if (location.hostname === "127.0.0.1" || location.hostname === "localhost") {
-      document.write('<base href="/">');
-    } else {
-      document.write('<base href="/garden_tour/">');
-    }
-  </script>
 
   <title>Garden Tour</title>
-  <link rel="stylesheet" href="style.css">
-  <link rel="icon" href="icons/icon-192.png">
-  <link rel="manifest" href="manifest.json" />
-  <meta name="theme-color" content="#0ea5e9" />
-  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.css" />
-  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.Default.css" />
-  <link rel="stylesheet" href="style.css?v=2">
+
   <script>
+    // Compute basePath dynamically: works for localhost and GitHub Pages
+    const repoRoot = window.location.pathname.split("/")[1];
+    window.basePath = repoRoot && window.location.hostname.includes("github.io")
+      ? `/${repoRoot}/`
+      : "/";
+
+    // Dynamically inject CSS (handles / vs /garden_tour/)
+    const cssFiles = [
+      "style.css",
+      "style.css?v=2",
+      "https://unpkg.com/leaflet/dist/leaflet.css",
+      "https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.css",
+      "https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.Default.css"
+    ];
+    cssFiles.forEach(href => {
+      const link = document.createElement("link");
+      link.rel = "stylesheet";
+      link.href = href.startsWith("http")
+        ? href
+        : new URL(href, window.location.origin + window.basePath).href;
+      document.head.appendChild(link);
+    });
+
+    // Register service worker with correct basePath
     if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.register("/service-worker.js").then(() => {
-        console.log("✅ Service Worker registered");
+      const swUrl = new URL("service-worker.js", window.location.origin + window.basePath).href;
+      navigator.serviceWorker.register(swUrl).then(() => {
+        console.log("✅ Service Worker registered at", swUrl);
       });
     }
   </script>
+
+  <link rel="icon" href="icons/icon-192.png">
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#0ea5e9" />
 </head>
 <body class="main-page">
   <header class="appbar">
@@ -55,29 +68,40 @@
     <button id="closeSettings">Close</button>
   </div>
 
-<footer class="footer">
-  <!-- Footer link with id -->
-  <a href="qr_admin.html" id="qr-admin-link">QR Admin</a>
-  <a href="admin.html">🔧 Admin Dashboard</a>
-  <span class="footer-sep"> :: </span>
-  <a href="https://www.inaturalist.org/projects/197410" target="_blank" rel="noopener noreferrer">
-    View Project at iNaturalist
-  </a>
-</footer>
+  <footer class="footer">
+    <a class="nav-link" data-target="qr_admin.html" id="qr-admin-link">📷 QR Admin</a>
+    <a class="nav-link" data-target="admin.html">🔧 Admin Dashboard</a>
+    <span class="footer-sep"> :: </span>
+    <a href="https://www.inaturalist.org/projects/197410" target="_blank" rel="noopener noreferrer">
+      View Project at iNaturalist
+    </a>
+  </footer>
 
-<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-<script src="https://unpkg.com/leaflet.markercluster/dist/leaflet.markercluster.js"></script>
-<script src="https://unpkg.com/leaflet-omnivore@0.3.4/leaflet-omnivore.min.js"></script>
-<script src="app.js?v=2"></script>
-<script>
-  // keep this near the bottom of index.html
-  document.getElementById('qr-admin-link').addEventListener('click', (e) => {
-    e.preventDefault();
-    const url = `qr_admin.html?range=${currentRange}`;
-    window.location.href = url;
-  });
-</script>
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/leaflet.markercluster/dist/leaflet.markercluster.js"></script>
+  <script src="https://unpkg.com/leaflet-omnivore@0.3.4/leaflet-omnivore.min.js"></script>
+  <script>
+    // Load app.js with correct basePath
+    const script = document.createElement("script");
+    script.src = new URL("app.js?v=2", window.location.origin + window.basePath).href;
+    document.body.appendChild(script);
+  </script>
 
+  <script>
+    // Footer nav links: rewrite using basePath
+    document.querySelectorAll(".footer .nav-link").forEach(link => {
+      const target = link.dataset.target;
+      if (target) {
+        link.href = new URL(target, window.location.origin + window.basePath).href;
+      }
+    });
 
+    // Hook QR Admin link with range persistence
+    document.getElementById('qr-admin-link').addEventListener('click', (e) => {
+      e.preventDefault();
+      const url = new URL(`qr_admin.html?range=${window.currentRange || 'all'}`, window.location.origin + window.basePath).href;
+      window.location.href = url;
+    });
+  </script>
 </body>
 </html>
