@@ -48,6 +48,7 @@ function refreshMapView() {
 }
 
 function scheduleRefreshMapView() {
+  // Debounce into the next layout frame(s)
   requestAnimationFrame(() => {
     requestAnimationFrame(refreshMapView);
   });
@@ -62,6 +63,7 @@ function scheduleRefreshMapView() {
   }
   window.addEventListener('resize', scheduleRefreshMapView);
 
+  // If the observation list changes (e.g., filter), refresh map after DOM updates
   const listDiv = document.getElementById('observations');
   if (listDiv) {
     const mo = new MutationObserver(() => scheduleRefreshMapView());
@@ -87,7 +89,6 @@ async function fetchObservations() {
   console.log("[iNat] Loaded results:", allObservations.length);
 
   renderObservations();
-  updateQRAdminLink(); // ✅ ensure first render persists + updates link
 }
 
 /// --- Render observations based on filter ---
@@ -105,11 +106,88 @@ function renderObservations() {
   } else if (currentRange === 'week') {
     cutoff = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     cutoff.setDate(cutoff.getDate() - 7);
+  } else {
+    cutoff = null; // 'all' shows everything
   }
 
   let count = 0;
   currentObservations = [];
   allObservations.forEach(obs => {
+    // --- Normalize observed date to midnight local time ---
     let obsDate = null;
     if (obs.observed_on) {
-      const parts = obs.observed_on._
+      const parts = obs.observed_on.split("-"); // "YYYY-MM-DD"
+      obsDate = new Date(parts[0], parts[1] - 1, parts[2]); // local midnight
+    } else if (obs.created_at) {
+      obsDate = new Date(obs.created_at);
+    }
+
+    if (cutoff && obsDate && obsDate < cutoff) return;
+
+    const lat = obs.geojson?.coordinates?.[1];
+    const lng = obs.geojson?.coordinates?.[0];
+    if (lat == null || lng == null) return; // allow 0, just not null/undefined
+
+    // --- Add map marker ---
+    const marker = L.marker([lat, lng]);
+    marker.bindPopup(`
+      <strong>${obs.species_guess || 'Unknown species'}</strong><br>
+      Observed: ${obs.observed_on || 'n/a'}<br>
+      <a href="https://www.inaturalist.org/observations/${obs.id}" target="_blank">
+        View on iNat
+      </a>
+    `);
+    markers.addLayer(marker);
+
+    // --- Add entry below map ---
+    const div = document.createElement('div');
+    div.className = "observation-item";
+    div.innerHTML = `
+      <img src="${obs.photos?.[0]?.url?.replace('square', 'small') || ''}" 
+           alt="${obs.species_guess || 'Unknown'}" />
+      <span>${obs.species_guess || 'Unknown species'} — ${obs.observed_on || 'n/a'}</span>
+    `;
+    listDiv.appendChild(div);
+
+    count++;
+    currentObservations.push(obs);
+  });
+
+  // --- Summary at top ---
+  const summary = document.createElement('div');
+  summary.textContent = `${count} observations shown (${currentRange})`;
+  listDiv.prepend(summary);
+
+  // --- Persist for QR Admin ---
+  localStorage.setItem("erc_observations", JSON.stringify(currentObservations));
+
+  // --- Reflow-safe map update (works for Today / Week / All) ---
+  scheduleRefreshMapView();
+}
+
+// --- Update QR Admin link with current filter ---
+function updateQRAdminLink() {
+  const link = document.getElementById('qr-admin-link');
+  if (link) {
+    link.href = `qr_admin.html?range=${currentRange}`;
+  }
+  localStorage.setItem("erc_observations", JSON.stringify(currentObservations));
+}
+
+// Call it whenever filter changes or page loads
+document.addEventListener("DOMContentLoaded", updateQRAdminLink);
+
+// --- Filter button handlers ---
+document.querySelectorAll('.controls button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.controls button').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentRange = btn.dataset.range;
+    renderObservations();
+    updateQRAdminLink();
+    scheduleRefreshMapView();
+  });
+});
+
+// --- Start ---
+fetchObservations();
