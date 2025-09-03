@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Garden Tour</title>
+
+<script>
+  // --- Compute dynamic basePath ---
+  const repoRoot = window.location.pathname.split("/")[1];
+  window.basePath = (repoRoot && window.location.hostname.includes("github.io")) 
+    ? `/${repoRoot}/` 
+    : "/";
+  console.log("Using basePath:", window.basePath);
+
+  // --- Inject CSS dynamically ---
+  const cssFiles = [
+    "style.css",
+    "https://unpkg.com/leaflet/dist/leaflet.css",
+    "https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.css",
+    "https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.Default.css"
+  ];
+  cssFiles.forEach(href => {
+    const link = document.createElement("link");
+    link.rel = "stylesheet";
+    link.href = href.startsWith("http") ? href : new URL(href, window.location.origin + window.basePath).href;
+    document.head.appendChild(link);
+  });
+
+  // --- Register service worker ---
+  if ("serviceWorker" in navigator) {
+    const swUrl = new URL("service-worker.js", window.location.origin + window.basePath).href;
+    navigator.serviceWorker.register(swUrl)
+      .then(() => console.log("✅ Service Worker registered at", swUrl))
+      .catch(err => console.error("Service Worker failed:", err));
+  }
+</script>
+
+</head>
+<body class="main-page">
+
+<header class="appbar">
+  <h1>a Field Guide to Quinta Vale da Lama</h1>
+  <div class="controls">
+    <button data-range="today" class="active">Today</button>
+    <button data-range="week">This Week</button>
+    <button data-range="all">All</button>
+  </div>
+  <div class="gamification">
+    <span id="points">0 pts</span>
+    <span id="badges"></span>
+    <button id="settingsBtn" aria-label="Open settings">⚙️</button>
+  </div>
+</header>
+
+<div id="map" role="region" aria-label="Observation map" style="height: 70vh;"></div>
+
+<section id="observations" aria-live="polite">Loading...</section>
+
+<footer class="footer">
+  <a href="qr_admin.html" id="qr-admin-link">QR Admin</a>
+  <span class="footer-sep"> :: </span>
+  <a href="https://www.inaturalist.org/projects/197410" target="_blank" rel="noopener noreferrer">
+    View Project at iNaturalist
+  </a>
+</footer>
+
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet.markercluster/dist/leaflet.markercluster.js"></script>
+<script src="https://unpkg.com/leaflet-omnivore@0.3.4/leaflet-omnivore.min.js"></script>
+<script src="app.js?v=2"></script>
+
+</body>
+</html>
