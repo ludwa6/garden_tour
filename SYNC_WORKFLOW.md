@@ -9,26 +9,53 @@ This document outlines the bidirectional sync workflow between GitHub and Replit
 - **Conflicts**: Resolved (removed problematic `replit.nix`)
 - **Sync**: Bidirectional workflow working
 
-## Daily Workflow
+## Feature Branch Workflow (Recommended)
 
-### Making Changes in Replit → GitHub
+### 1. Starting New Feature Work
 ```bash
-# 1. Make your changes in Replit
-# 2. Stage and commit changes
-git add .
-git commit -m "Your descriptive commit message"
+# Switch to main and update it
+git checkout main
+gpull main
 
-# 3. Push to GitHub
-git push https://github.com/ludwa6/garden_tour.git main
+# Create/switch to feature branch
+git checkout -b feature-name  # or git checkout existing-branch
+
+# Merge latest main into your branch
+git merge main
 ```
 
-### Making Changes in GitHub → Replit
+### 2. Working on Feature
 ```bash
-# 1. Make changes in GitHub web interface
-# 2. Pull changes to Replit
-git pull https://github.com/ludwa6/garden_tour.git main
+# Make your changes, then:
+git add -A
+git commit -m "Meaningful commit message"
+gpush feature-name
+```
 
-# 3. Verify changes applied
+### 3. Merge Back to Main (when feature complete)
+```bash
+git checkout main
+gpull main
+git merge feature-name
+gpush main
+
+# Optional: delete feature branch
+git branch -d feature-name
+```
+
+## Simple Workflow (for quick fixes)
+
+### Direct to Main
+```bash
+# Make changes directly on main
+git add .
+git commit -m "Quick fix: description"
+gpush main
+```
+
+### Pull Updates from GitHub
+```bash
+gpull main
 git status
 ```
 
