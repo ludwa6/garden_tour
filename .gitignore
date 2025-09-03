@@ -1,0 +1,21 @@
+# Replit cache and temporary files
+.cache/
+replit.nix
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.log
+
+# IDE files
+.vscode/
+.idea/
+
+# Node modules (if added later)
+node_modules/
+
+# Keep .replit file (it's clean and useful)
+# .replit
