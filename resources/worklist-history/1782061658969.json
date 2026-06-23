@@ -1,0 +1,27 @@
+{
+  "description": "",
+  "items": [
+    {
+      "after": "All of the above removed from version control via `git rm`; working tree reflects only files the app actually uses.\n\n**Options considered**\n\n- **[chosen]** Delete outright — git history preserves anything we ever need to recover.\n- Move to an `archive/` folder — rejected: just relocates clutter; git history already is the archive.\n- `.gitignore` only — rejected: they're already committed; ignoring doesn't remove them.\n\n**Files removed:** `script.js`, `observations.json`, `sw.js`, `garden-tour-app-20250830-1445.tar.gz`, `garden-tour-backup-20250830-1356.tar.gz`, `Backups/app.old.js`, and the entire `attached_assets/` folder (with `Backups/` left empty and thus gone too).\n\n**Verification after deletion:** serve the repo (`python3 -m http.server`), open localhost, confirm the app loads and the Leaflet map renders.",
+      "before": "The repo carries several files that no code references and that clutter the working tree (per issue #2):\n\n- `script.js` — 14 bytes, contains only the literal `404: Not Found` (a botched download artifact); referenced by no HTML.\n- `observations.json` — placeholder data (`Rose Garden`, `Herb Bed`, `Pond Area`) that no code reads; real observation data comes live from the iNaturalist API and is cached to `localStorage[\"erc_observations\"]`.\n- `sw.js` — a one-line shim (`importScripts('./service-worker.js')`); `index.html:32` registers `service-worker.js` directly, so this is unused. The only repo reference to `sw.js` is its own self-comment.\n- `garden-tour-app-20250830-1445.tar.gz`, `garden-tour-backup-20250830-1356.tar.gz` — committed binary backups.\n- `Backups/app.old.js` — superseded copy.\n- `attached_assets/` — Replit screenshot/log detritus (5 files: pasted logs + a PNG screenshot).\n\nGrep confirmation already run — no `*.html`/`*.js` app references to `script.js`, `observations.json`, or `sw.js`.",
+      "closesIssues": [
+        {
+          "number": 2,
+          "title": "Remove dead files and Replit cruft from the repo"
+        }
+      ],
+      "files": [
+        "script.js",
+        "observations.json",
+        "sw.js",
+        "garden-tour-app-20250830-1445.tar.gz",
+        "garden-tour-backup-20250830-1356.tar.gz",
+        "Backups/app.old.js",
+        "attached_assets/"
+      ],
+      "id": "issue-2-remove-dead-files",
+      "status": "proposed"
+    }
+  ],
+  "version": 1
+}

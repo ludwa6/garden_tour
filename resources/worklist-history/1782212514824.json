@@ -1,0 +1,21 @@
+{
+  "description": "",
+  "items": [
+    {
+      "after": "Per the agreed scope (**fix paths only**; full offline tracked separately in #7):\n\nDerive the base from the service worker's own location and build `APP_SHELL` relative to it — option (B) from #4, no coupling to the page and no hardcoded repo name:\n\n```js\nconst BASE = self.location.pathname.replace(/service-worker\\.js$/, \"\");\nconst APP_SHELL = [\n  BASE,\n  BASE + \"index.html\",\n  BASE + \"style.css\",\n  BASE + \"poi/detail.html\"\n];\n```\n\n- On Pages: `self.location.pathname` is `/garden_tour/service-worker.js` → `BASE` = `/garden_tour/` → entries resolve correctly.\n- Locally: `/service-worker.js` → `BASE` = `/` → same list as today.\n\nNo change needed to the registration line in `index.html` (it already registers `service-worker.js` under `window.basePath`). `cache.addAll` then succeeds and the four shell entries cache.\n\n**Scope boundary:** this fixes the precache *paths* only. The shell still omits `app.js`, the KML, and cross-origin Leaflet/tiles, so the map won't fully render offline — that's deliberately deferred to **#7**.\n\n**Options considered**\n\n- **[chosen]** Derive base from `self.location` inside the SW. Self-contained; survives repo rename and custom domains (unlike the page's hostname checks flagged in #6).\n- Pass `?base=` on the registration URL (#4 option A) — rejected: needs a coordinated change in `index.html` for no benefit over self-derivation.\n- Make paths relative with no leading slash (#4 option C) — rejected: fragile for nested entries like `poi/detail.html`.\n\n**Files changed:** `service-worker.js`.\n\n**Verification:**\n- Locally, the four entries still cache (DevTools → Application → Cache Storage shows `fieldguide-cache-v1` populated, no `addAll` rejection).\n- On Pages, the same — entries resolve under `/garden_tour/`. (User to confirm on the deployed URL.)",
+      "before": "`service-worker.js` precaches an absolute-path app shell:\n\n```js\nconst APP_SHELL = [\"/\", \"/index.html\", \"/style.css\", \"/poi/detail.html\"];\n```\n\nOn GitHub Pages the SW is registered under `/garden_tour/`, but these absolute paths resolve to the **domain root** (`ludwa6.github.io/index.html`, etc.). Every entry 404s, so `cache.addAll(APP_SHELL)` rejects, the whole `install` handler fails, and **nothing is cached** — offline silently doesn't work on the deployed site (the exact symptom #4 reports).",
+      "closesIssues": [
+        {
+          "number": 4,
+          "title": "Fix service worker precache — absolute paths break offline caching on GitHub Pages"
+        }
+      ],
+      "files": [
+        "service-worker.js"
+      ],
+      "id": "issue-4-sw-precache-base",
+      "status": "applied"
+    }
+  ],
+  "version": 14
+}

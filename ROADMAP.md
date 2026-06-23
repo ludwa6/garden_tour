@@ -6,7 +6,7 @@ The Garden Tour application is a **feature-complete MVP** with solid core functi
 
 ### ✅ Completed Core Features
 - Interactive map with real-time iNaturalist data integration
-- Progressive Web App with offline functionality  
+- Progressive Web App with offline functionality (requires at least one prior online visit to cache map tiles; app shell, KML overlay, and markers are always available offline after install)  
 - Personal trip planning and note-taking system
 - QR code generation and management system
 - Administrative dashboard for garden management

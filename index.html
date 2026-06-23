@@ -20,9 +20,9 @@
   // --- Inject CSS dynamically ---
   const cssFiles = [
     "style.css",
-    "https://unpkg.com/leaflet/dist/leaflet.css",
-    "https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.css",
-    "https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.Default.css"
+    "vendor/leaflet.css",
+    "vendor/MarkerCluster.css",
+    "vendor/MarkerCluster.Default.css"
   ];
   cssFiles.forEach(href => {
     const link = document.createElement("link");
@@ -69,9 +69,9 @@
   </a>
 </footer>
 
-<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-<script src="https://unpkg.com/leaflet.markercluster/dist/leaflet.markercluster.js"></script>
-<script src="https://unpkg.com/leaflet-omnivore@0.3.4/leaflet-omnivore.min.js"></script>
+<script src="vendor/leaflet.js"></script>
+<script src="vendor/leaflet.markercluster.js"></script>
+<script src="vendor/leaflet-omnivore.min.js"></script>
 <script src="app.js?v=2"></script>
 
 </body>

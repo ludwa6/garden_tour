@@ -1,0 +1,22 @@
+{
+  "description": "",
+  "items": [
+    {
+      "after": "Make every internal link relative by dropping the leading `/` (e.g. `href=\"/index.html\"` → `href=\"index.html\"`, `href=\"/poi/detail.html?...\"` → `href=\"poi/detail.html?...\"`). The existing `<base>` tag then routes them to the app root in both environments.\n\nThe two `<base href=\"/...\">` declarations (tripplan/userjournals lines 12 & 14) are **left unchanged** — those are the base itself, not navigation.\n\n**Options considered**\n\n- **[chosen]** Relative hrefs + existing `<base>`. One-character fix per link; the base tag already exists to make this work. Same fix family as #4 (service worker) and the manifest wiring.\n- Build hrefs from a JS basePath — rejected: the `<base>` tag already solves it; no JS needed.\n\n**Files changed:** `tripplan.html`, `userjournals.html`.\n\n**Verification:**\n- `grep -rn 'href=\"/' tripplan.html userjournals.html` returns only the two `<base href>` lines, no `<a href=\"/...\">`.\n- Serve locally and click through Back to Map / Home / Explore / footer nav / POI links; all stay within the app.\n- User to confirm on the deployed Pages URL.",
+      "before": "`tripplan.html` and `userjournals.html` set a dynamic `<base href>` (`/` on localhost, `/garden_tour/` on GitHub Pages — tripplan.html:10-16, same in userjournals.html). Relative links resolve correctly against that base in both environments; **absolute** links (leading `/`) bypass the base and resolve against the host root, so on Pages they land on `ludwa6.github.io/...` instead of `ludwa6.github.io/garden_tour/...` — off the app.\n\nIssue #5 reported the \"Back to Map\" buttons, but the grep shows the bug hits **every** absolute internal link in both files (12 total):\n\n**tripplan.html**\n- `:39` `🏡 Back to Map` → `/index.html`\n- `:60` `🗺️ Explore the Map` → `/index.html`\n- `:109` `🔍 View Details` → `/poi/detail.html?obs=...`\n\n**userjournals.html**\n- `:42` `🏡 Back to Map` → `/index.html`\n- `:72` `🗺️ Start Exploring` → `/index.html`\n- `:184` `🔍 View Full Details` → `/poi/detail.html?obs=...`\n- `:284` `🏡 Home` → `/index.html`\n- `:285` `🌿 My Trip` → `/tripplan.html`\n- `:286` `🔍 Sample POI` → `/poi/detail.html?obs=123456`\n- `:287` `⚙️ Admin` → `/admin.html`\n- `:288` `📒 Journals` → `/userjournals.html`\n- `:289` `🔗 QR Admin` → `/qr_admin.html`",
+      "closesIssues": [
+        {
+          "number": 5,
+          "title": "Back to Map / Home links navigate off-site (absolute /index.html breaks on GitHub Pages)"
+        }
+      ],
+      "files": [
+        "tripplan.html",
+        "userjournals.html"
+      ],
+      "id": "issue-5-relative-internal-links",
+      "status": "proposed"
+    }
+  ],
+  "version": 10
+}

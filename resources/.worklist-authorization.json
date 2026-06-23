@@ -1,0 +1,36 @@
+{
+  "kind": "approved",
+  "ids": [
+    "issue-7-offline-map"
+  ],
+  "items": [
+    {
+      "after": "Three-part fix:\n\n**1. Vendor Leaflet libraries locally.**\n\nDownload into `vendor/`:\n- `leaflet/dist/leaflet.js` + `leaflet.css`\n- `leaflet.markercluster/dist/leaflet.markercluster.js` + `MarkerCluster.css` + `MarkerCluster.Default.css`\n- `leaflet-omnivore@0.3.4/leaflet-omnivore.min.js`\n\nUpdate `index.html` to load from `vendor/` instead of `unpkg.com`. These 6 files become same-origin and join the precache.\n\n**2. Expand the precache list in `service-worker.js`.**\n\n```js\nconst APP_SHELL = [\n  BASE,\n  BASE + \"index.html\",\n  BASE + \"style.css\",\n  BASE + \"app.js\",\n  BASE + \"manifest.json\",\n  BASE + \"icons/icon-192.png\",\n  BASE + \"icons/icon-512.png\",\n  BASE + \"Q.VdL-Perimeter.kml\",\n  BASE + \"poi/detail.html\",\n  BASE + \"vendor/leaflet.js\",\n  BASE + \"vendor/leaflet.css\",\n  BASE + \"vendor/leaflet.markercluster.js\",\n  BASE + \"vendor/MarkerCluster.css\",\n  BASE + \"vendor/MarkerCluster.Default.css\",\n  BASE + \"vendor/leaflet-omnivore.min.js\",\n];\n```\n\nBump `CACHE_NAME` to `fieldguide-cache-v2` so existing installs pick up the new shell.\n\n**3. Add a runtime tile-caching strategy.**\n\nIn the fetch handler, detect requests to `tile.openstreetmap.org` and apply network-first with cache fallback (tiles fetched while online are stored; offline shows previously viewed tiles). The garden area is small, so a few online sessions will cache the relevant tiles.\n\nAlternatives considered:\n- **Bundle a tile set** — rejected: too large and brittle to maintain.\n- **Accept no basemap offline** — rejected: markers float on a gray background with no geographic context; perimeter overlay needs tile reference to be legible.\n- **Runtime-cache Leaflet from unpkg instead of vendoring** — rejected: opaque responses have unpredictable quota padding and no error visibility; vendoring is a one-time 400 KB addition with no ongoing cost.\n\nUpdate README/ROADMAP to clarify that offline mode requires at least one prior online visit to cache the map tiles for the garden area.",
+      "before": "`service-worker.js` precaches only 4 paths:\n\n```js\n[ BASE, BASE + \"index.html\", BASE + \"style.css\", BASE + \"poi/detail.html\" ]\n```\n\nMissing same-origin assets: `app.js`, `Q.VdL-Perimeter.kml`, `manifest.json`, `icons/icon-192.png`, `icons/icon-512.png`.\n\n`index.html` loads Leaflet JS + CSS, markercluster, and omnivore from `unpkg.com` (cross-origin), so those libraries are never cached and the map fails to render offline.\n\nThe fetch handler does cache-first but there is no tile caching strategy — tiles from `tile.openstreetmap.org` are never stored.\n\nResult: with the network off, the HTML shell loads but the map does not render.",
+      "closesIssues": [
+        {
+          "number": 7,
+          "title": "Make offline mode actually render the map (expand service-worker precache shell)"
+        }
+      ],
+      "feedback": "⏺ Done. Here's what landed:\n\n - vendor/ — 6 Leaflet files (leaflet 1.9.4, markercluster 1.5.3, omnivore 0.3.4) downloaded locally\n - index.html — CSS and script tags updated to point to vendor/ instead of unpkg.com\n - service-worker.js — cache bumped to v2, precache expanded to 16 paths (added app.js, manifest.json, 2 icons, KML, 6\n vendor files), tile-caching strategy added (network-first for tile.openstreetmap.org, stored in a separate\n fieldguide-tiles-v1 cache)\n - ROADMAP.md — offline feature clarified with the \"requires prior visit for tiles\" caveat\n\n The item is TO COMMIT when you're ready.\n\npush-before-close: true\nclose-issue: 7",
+      "files": [
+        "service-worker.js",
+        "index.html",
+        "vendor/leaflet.js",
+        "vendor/leaflet.css",
+        "vendor/leaflet.markercluster.js",
+        "vendor/MarkerCluster.css",
+        "vendor/MarkerCluster.Default.css",
+        "vendor/leaflet-omnivore.min.js",
+        "README.md",
+        "ROADMAP.md"
+      ],
+      "id": "issue-7-offline-map",
+      "status": "applied"
+    }
+  ],
+  "issuedAtMs": 1782213582308,
+  "source": "pty-write",
+  "consumedAtMs": 1782213589243
+}

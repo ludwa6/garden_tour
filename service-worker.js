@@ -1,6 +1,7 @@
 // service-worker.js
 
-const CACHE_NAME = "fieldguide-cache-v1";
+const CACHE_NAME = "fieldguide-cache-v2";
+const TILE_CACHE_NAME = "fieldguide-tiles-v1";
 
 // --- Core app shell (always cached) ---
 // Derive the base from the SW's own location so precache paths resolve
@@ -10,7 +11,18 @@ const APP_SHELL = [
   BASE,
   BASE + "index.html",
   BASE + "style.css",
-  BASE + "poi/detail.html"
+  BASE + "app.js",
+  BASE + "manifest.json",
+  BASE + "icons/icon-192.png",
+  BASE + "icons/icon-512.png",
+  BASE + "Q.VdL-Perimeter.kml",
+  BASE + "poi/detail.html",
+  BASE + "vendor/leaflet.js",
+  BASE + "vendor/leaflet.css",
+  BASE + "vendor/leaflet.markercluster.js",
+  BASE + "vendor/MarkerCluster.css",
+  BASE + "vendor/MarkerCluster.Default.css",
+  BASE + "vendor/leaflet-omnivore.min.js",
 ];
 
 // Install SW: pre-cache shell
@@ -25,7 +37,7 @@ self.addEventListener("activate", (event) => {
   event.waitUntil(
     caches.keys().then((keys) =>
       Promise.all(
-        keys.map((key) => key !== CACHE_NAME && caches.delete(key))
+        keys.map((key) => key !== CACHE_NAME && key !== TILE_CACHE_NAME && caches.delete(key))
       )
     )
   );
@@ -35,7 +47,22 @@ self.addEventListener("activate", (event) => {
 self.addEventListener("fetch", (event) => {
   const url = new URL(event.request.url);
 
-  // If request is in cache → serve cached first
+  // Map tiles: network-first, cache on success so offline shows visited tiles
+  if (url.hostname.endsWith("tile.openstreetmap.org")) {
+    event.respondWith(
+      caches.open(TILE_CACHE_NAME).then((cache) =>
+        fetch(event.request)
+          .then((response) => {
+            cache.put(event.request, response.clone());
+            return response;
+          })
+          .catch(() => cache.match(event.request))
+      )
+    );
+    return;
+  }
+
+  // Everything else: cache-first, fall back to network
   event.respondWith(
     caches.match(event.request).then((resp) => {
       return resp || fetch(event.request);

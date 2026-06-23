@@ -1,0 +1,28 @@
+{
+  "description": "",
+  "items": [
+    {
+      "closesIssues": [
+        {
+          "number": 7,
+          "title": "Make offline mode actually render the map (expand service-worker precache shell)"
+        }
+      ],
+      "files": [
+        "service-worker.js",
+        "index.html",
+        "vendor/leaflet.js",
+        "vendor/leaflet.css",
+        "vendor/leaflet.markercluster.js",
+        "vendor/MarkerCluster.css",
+        "vendor/MarkerCluster.Default.css",
+        "vendor/leaflet-omnivore.min.js",
+        "README.md",
+        "ROADMAP.md"
+      ],
+      "id": "issue-7-offline-map",
+      "status": "applied"
+    }
+  ],
+  "version": 17
+}
