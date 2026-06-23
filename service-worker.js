@@ -3,11 +3,14 @@
 const CACHE_NAME = "fieldguide-cache-v1";
 
 // --- Core app shell (always cached) ---
+// Derive the base from the SW's own location so precache paths resolve
+// correctly under any deploy root (/ locally, /garden_tour/ on Pages).
+const BASE = self.location.pathname.replace(/service-worker\.js$/, "");
 const APP_SHELL = [
-  "/",
-  "/index.html",
-  "/style.css",
-  "/poi/detail.html"
+  BASE,
+  BASE + "index.html",
+  BASE + "style.css",
+  BASE + "poi/detail.html"
 ];
 
 // Install SW: pre-cache shell
