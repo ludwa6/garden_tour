@@ -36,7 +36,7 @@
 </head>
 <body>
   <div class="topbar">
-    <a class="cta" href="/index.html">🏡 Back to Map</a>
+    <a class="cta" href="index.html">🏡 Back to Map</a>
     <div>
       <button class="export-btn" id="exportBtn">📄 Export Trip</button>
       <button class="delete-btn" id="clearBtn">🗑️ Clear All</button>
@@ -57,7 +57,7 @@
     <div style="font-size: 3rem;">🌱</div>
     <h3>No observations saved yet</h3>
     <p>Visit the map and save observations to build your trip plan!</p>
-    <a href="/index.html" class="cta">🗺️ Explore the Map</a>
+    <a href="index.html" class="cta">🗺️ Explore the Map</a>
   </div>
 
   <script>
@@ -106,7 +106,7 @@
             ${item.photo ? `<div style="margin-top:0.5rem;"><img src="${item.photo}" style="max-width:200px;border-radius:4px;" alt="My photo" /></div>` : ''}
             <div style="margin-top:0.5rem;">
               <button class="delete-btn" onclick="deleteItem(${index})">🗑️ Remove</button>
-              <a href="/poi/detail.html?obs=${encodeURIComponent(item.poi_id || '')}" class="cta" style="margin-left:0.5rem;">🔍 View Details</a>
+              <a href="poi/detail.html?obs=${encodeURIComponent(item.poi_id || '')}" class="cta" style="margin-left:0.5rem;">🔍 View Details</a>
             </div>
           </div>
         </div>

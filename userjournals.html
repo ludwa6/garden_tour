@@ -39,7 +39,7 @@
 </head>
 <body>
   <div class="topbar">
-    <a class="cta" href="/index.html">🏡 Back to Map</a>
+    <a class="cta" href="index.html">🏡 Back to Map</a>
     <div>
       <button class="export-btn" id="exportBtn">📄 Export Journal</button>
       <button class="delete-btn" id="clearBtn">🗑️ Clear All</button>
@@ -69,7 +69,7 @@
     <div style="font-size: 3rem;">📔</div>
     <h3>No journal entries yet</h3>
     <p>Save observations with notes from the POI detail pages to build your nature journal!</p>
-    <a href="/index.html" class="cta">🗺️ Start Exploring</a>
+    <a href="index.html" class="cta">🗺️ Start Exploring</a>
   </div>
 
   <script>
@@ -181,7 +181,7 @@
           ${entry.photo ? `<div><strong>My Photo:</strong><br><img src="${entry.photo}" alt="My photo" /></div>` : ''}
           
           <div style="margin-top:0.75rem;">
-            <a href="/poi/detail.html?obs=${encodeURIComponent(entry.poi_id || '')}" class="cta" style="font-size:0.9rem;">🔍 View Full Details</a>
+            <a href="poi/detail.html?obs=${encodeURIComponent(entry.poi_id || '')}" class="cta" style="font-size:0.9rem;">🔍 View Full Details</a>
             <button class="delete-btn" onclick="deleteEntry(${originalIndex})" style="font-size:0.9rem;">🗑️ Delete</button>
           </div>
         </div>
@@ -281,12 +281,12 @@
     padding:0.6em 0; font-size:0.9rem;
     box-shadow:0 -2px 4px rgba(0,0,0,0.2);
     z-index:999;">
-    <a href="/index.html" style="color:white; text-decoration:none;">🏡 Home</a>
-    <a href="/tripplan.html" style="color:white; text-decoration:none;">🌿 My Trip</a>
-    <a href="/poi/detail.html?obs=123456" style="color:white; text-decoration:none;">🔍 Sample POI</a>
-    <a href="/admin.html" style="color:white; text-decoration:none;">⚙️ Admin</a>
-    <a href="/userjournals.html" style="color:white; text-decoration:none;">📒 Journals</a>
-    <a href="/qr_admin.html" style="color:white; text-decoration:none;">🔗 QR Admin</a>
+    <a href="index.html" style="color:white; text-decoration:none;">🏡 Home</a>
+    <a href="tripplan.html" style="color:white; text-decoration:none;">🌿 My Trip</a>
+    <a href="poi/detail.html?obs=123456" style="color:white; text-decoration:none;">🔍 Sample POI</a>
+    <a href="admin.html" style="color:white; text-decoration:none;">⚙️ Admin</a>
+    <a href="userjournals.html" style="color:white; text-decoration:none;">📒 Journals</a>
+    <a href="qr_admin.html" style="color:white; text-decoration:none;">🔗 QR Admin</a>
   </nav>
 
   <!-- Padding so content isn't hidden behind nav -->
