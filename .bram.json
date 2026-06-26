@@ -1,0 +1,9 @@
+{
+  "ui": { "showTargetApp": true },
+  "server": {
+    "command": "python3 -m http.server 8080",
+    "cwd": "/Users/walt/dev/garden_tour",
+    "port": 8080,
+    "path": "/"
+  }
+}
