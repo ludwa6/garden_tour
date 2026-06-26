@@ -3,11 +3,6 @@ document.addEventListener('DOMContentLoaded', function() {
   const qrCanvas = document.getElementById('qrCanvas');
   const observationPreview = document.getElementById('observationPreview');
 
-  // Determine repo base once ("/" for localhost; "/garden_tour/" on GH Pages)
-  const pathParts = window.location.pathname.split("/").filter(Boolean);
-  const repoBase = window.location.hostname.includes("github.io") && pathParts.length
-    ? `/${pathParts[0]}/`
-    : "/";
 
   function safeParse(json, fallback) {
     try { return JSON.parse(json); } catch { return fallback; }
@@ -51,7 +46,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Build the detail URL relative to the repo base (works from any page)
     const detailUrl = new URL(`poi/detail.html?obs=${encodeURIComponent(obsId)}`,
-                              window.location.origin + repoBase).href;
+                              window.location.origin + window.appBase).href;
 
     if (typeof QRCode !== 'undefined') {
       QRCode.toCanvas(qrCanvas, detailUrl, {

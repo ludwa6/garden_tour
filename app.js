@@ -3,7 +3,7 @@
 
 // --- Helpers for robust asset URLs ---
 function makeAssetUrl(relativePath) {
-  return new URL(relativePath, window.location.origin + window.basePath).href;
+  return new URL(relativePath, window.location.origin + window.appBase).href;
 }
 
 // --- Setup Map ---
