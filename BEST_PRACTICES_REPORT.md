@@ -16,7 +16,7 @@ The Garden Tour application demonstrates **good foundational architecture** but 
 ```javascript
 // ✅ Good: Proper service worker registration
 if ("serviceWorker" in navigator) {
-  const swUrl = new URL("service-worker.js", window.location.origin + window.basePath).href;
+  const swUrl = new URL("service-worker.js", window.location.origin + window.appBase).href;
   navigator.serviceWorker.register(swUrl)
     .then(() => console.log("✅ Service Worker registered"))
     .catch(err => console.error("Service Worker failed:", err));
@@ -134,14 +134,14 @@ div.innerHTML = `<span>${escapeHtml(obs.species_guess || 'Unknown species')}</sp
 
 ### **✅ Security Strengths**
 
-#### **HTTPS Enforcement**
-```javascript
-// ✅ Good: External resources use HTTPS
-const cssFiles = [
-  "https://unpkg.com/leaflet/dist/leaflet.css",
-  "https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.css"
-];
+#### **Vendored Dependencies**
+```html
+<!-- ✅ Good: Third-party libraries served locally, not from CDN -->
+<link rel="stylesheet" href="vendor/leaflet.css">
+<link rel="stylesheet" href="vendor/MarkerCluster.css">
+<script src="vendor/leaflet.js"></script>
 ```
+Leaflet, Leaflet.markercluster, and leaflet-omnivore are all vendored in `vendor/` and included in the service worker precache, so the map works fully offline.
 
 ---
 
@@ -180,15 +180,17 @@ listDiv.appendChild(fragment);  // Single layout update
 
 #### **No Resource Bundling**
 ```html
-<!-- ❌ Bad: Multiple HTTP requests -->
-<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-<script src="https://unpkg.com/leaflet.markercluster/dist/leaflet.markercluster.js"></script>
-<script src="https://unpkg.com/leaflet-omnivore@0.3.4/leaflet-omnivore.min.js"></script>
+<!-- Dependencies are vendored locally (no CDN), but still loaded as separate files -->
+<script src="vendor/leaflet.js"></script>
+<script src="vendor/leaflet.markercluster.js"></script>
+<script src="vendor/leaflet-omnivore.min.js"></script>
+<script src="app.js"></script>
 
-<!-- ✅ Better: Bundle external dependencies -->
+<!-- ✅ Better: Bundle into fewer requests -->
 <script src="vendor.bundle.js"></script>
 <script src="app.bundle.js"></script>
 ```
+All vendor scripts are now local (no CDN latency or availability risk), but they are still loaded as separate HTTP requests. Bundling would reduce request count further.
 
 ### **✅ Performance Strengths**
 
@@ -272,11 +274,14 @@ try {
 
 #### **Missing ARIA Labels**
 ```html
-<!-- ❌ Bad: Interactive elements without labels -->
-<button id="settingsBtn">⚙️</button>
+<!-- ✅ settingsBtn already has aria-label in current code -->
+<button id="settingsBtn" aria-label="Open settings">⚙️</button>
 
-<!-- ✅ Good: Proper ARIA implementation -->
-<button id="settingsBtn" aria-label="Open settings" aria-expanded="false">⚙️</button>
+<!-- ❌ Still missing: aria-expanded and aria-controls wiring,
+     since the settings panel has no handler yet (see #10) -->
+
+<!-- ❌ Missing: filter buttons lack descriptive labels -->
+<button class="filter-btn" data-range="today">Today</button>
 ```
 
 #### **Non-semantic HTML**
