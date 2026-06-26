@@ -1,377 +1,389 @@
-# 🔧 Garden Tour App - Developer Guide
+# Developer Guide — Garden Tour
 
-## Project Architecture
+A botanical field guide PWA for Quinta Vale da Lama. Vanilla HTML/CSS/JS,
+no build step, GitHub Pages compatible.
 
-The Garden Tour application is a **static Progressive Web App (PWA)** built with vanilla JavaScript, designed for deployment on GitHub Pages. It integrates real-time botanical data from iNaturalist with local user interaction features.
+---
 
-## 🏗️ Technical Stack
-
-### Core Technologies
-- **Frontend**: Vanilla JavaScript ES6+, HTML5, CSS3
-- **Mapping**: Leaflet.js with clustering and KML support
-- **PWA Features**: Service Worker, Web App Manifest
-- **QR Generation**: QRious library
-- **Data Source**: iNaturalist API v1
-- **Deployment**: GitHub Pages (static hosting)
-
-### Key Dependencies
-```html
-<!-- Core mapping and visualization -->
-<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-<script src="https://unpkg.com/leaflet.markercluster/dist/leaflet.markercluster.js"></script>
-<script src="https://unpkg.com/leaflet-omnivore@0.3.4/leaflet-omnivore.min.js"></script>
-
-<!-- QR code generation -->
-<script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
-```
-
-## 📁 Project Structure
+## Project Structure
 
 ```
-├── index.html              # Main application entry point
-├── app.js                  # Core application logic
-├── style.css               # Global styles and responsive design
-├── manifest.json           # PWA manifest
-├── service-worker.js       # Offline functionality
+garden_tour/
+├── index.html          # Home: map + observation list + time filters
+├── app.js              # All map/observation logic for index.html
+├── style.css           # Shared styles
+├── manifest.json       # PWA manifest
+├── service-worker.js   # Offline caching
+├── footer.html         # Shared bottom nav (loaded dynamically by each page)
+├── setup.html          # First-run / onboarding
+├── tripplan.html       # Personal trip plan (reads tripPlan from localStorage)
+├── userjournals.html   # User journals: search + filter over tripPlan entries
+├── admin.html          # Admin dashboard
+├── qr_admin.html       # QR code generator
+├── qr_admin.js         # QR admin logic
+├── Q.VdL-Perimeter.kml # Garden perimeter overlay (loaded by app.js)
 ├── poi/
-│   └── detail.html         # Species detail pages
-├── qr_admin.html          # QR code generation interface
-├── qr_admin.js            # QR administration logic
-├── tripplan.html          # User trip planning interface
-├── userjournals.html      # Personal journaling interface
-├── admin.html             # Administrative dashboard
-├── footer.html            # Shared navigation component
-├── icons/                 # PWA icons
-└── docs/                  # Project documentation
+│   └── detail.html     # POI detail page (reached via QR scan or ?obs=<id>)
+├── vendor/
+│   ├── leaflet.js
+│   ├── leaflet.css
+│   ├── leaflet.markercluster.js
+│   ├── MarkerCluster.css
+│   ├── MarkerCluster.Default.css
+│   └── leaflet-omnivore.min.js
+└── icons/
+    ├── icon-192.png
+    └── icon-512.png
 ```
 
-## 🔄 Data Flow Architecture
+---
 
-### 1. Data Sources
-```javascript
-// Primary API endpoint
-const INAT_API = "https://api.inaturalist.org/v1/observations";
-const PROJECT_ID = 197410; // Quinta Vale da Lama project
+## Dependencies
 
-// Local storage keys
-const STORAGE_KEYS = {
-  observations: "erc_observations",
-  tripPlan: "tripPlan",
-  registry: "filteredRegistry"
-};
+All map libraries are **vendored locally** in `vendor/` and precached by the
+service worker — no CDN required, no network needed for map rendering once
+installed.
+
+| Library | File | Purpose |
+|---|---|---|
+| Leaflet | `vendor/leaflet.js` + `vendor/leaflet.css` | Interactive map |
+| Leaflet.markercluster | `vendor/leaflet.markercluster.js` + CSS | Observation clustering |
+| leaflet-omnivore | `vendor/leaflet-omnivore.min.js` | KML perimeter overlay |
+| QRCode.js | CDN (qr_admin.html only) | QR code generation |
+
+`index.html` loads vendor scripts at the bottom of `<body>` after the
+markup, then loads `app.js`:
+
+```html
+<script src="vendor/leaflet.js"></script>
+<script src="vendor/leaflet.markercluster.js"></script>
+<script src="vendor/leaflet-omnivore.min.js"></script>
+<script src="app.js?v=2"></script>
 ```
 
-### 2. State Management
-The application uses **localStorage** for client-side state persistence:
+---
 
-- **`erc_observations`**: Minimal observation data for QR admin
-- **`tripPlan`**: User's saved observations with notes and photos
-- **`filteredRegistry`**: Admin-curated POI registry
+## Base-path Detection
 
-### 3. API Integration
-```javascript
-// Fetch observations with error handling
-async function fetchObservations() {
-  const url = `${INAT_API}?project_id=${PROJECT_ID}&order=desc&order_by=observed_on&per_page=200&quality_grade=any`;
-  
-  try {
-    const res = await fetch(url);
-    const json = await res.json();
-    allObservations = json.results || [];
-    renderObservations();
-  } catch (error) {
-    // Graceful degradation for offline scenarios
-    handleOfflineMode();
-  }
-}
+Every page's `<head>` begins with the same inline IIFE that sets
+`window.appBase` and injects a `<base href>` element. This makes all
+relative URLs resolve correctly under any deploy root — localhost, LAN,
+`file://`, GitHub Pages (`/garden_tour/`), or a custom domain — without
+hostname checks or hardcoded strings.
+
+```js
+(function() {
+  var dir = location.pathname.replace(/[^/]*$/, '');
+  window.appBase = dir.endsWith('/poi/') ? dir.slice(0, -4) : dir;
+  var base = document.createElement('base');
+  base.href = window.appBase;
+  document.head.appendChild(base);
+})();
 ```
 
-## 🌍 Cross-Environment Compatibility
+`poi/detail.html` is one directory deeper, so the IIFE strips the trailing
+`/poi/` to arrive at the same app root as the sibling pages.
 
-### Dynamic Base Path Resolution
-The app automatically detects its hosting environment:
+**`makeAssetUrl(relativePath)`** in `app.js` builds absolute URLs for
+assets that must bypass `<base href>` (currently only the KML file):
 
-```javascript
-// Handles both localhost development and GitHub Pages deployment
-const repoRoot = window.location.pathname.split("/")[1];
-window.basePath = (repoRoot && window.location.hostname.includes("github.io")) 
-  ? `/${repoRoot}/` 
-  : "/";
-```
-
-### Asset URL Generation
-```javascript
+```js
 function makeAssetUrl(relativePath) {
-  return new URL(relativePath, window.location.origin + window.basePath).href;
+  return new URL(relativePath, window.location.origin + window.appBase).href;
 }
 ```
 
-## 🗺️ Mapping Implementation
+---
 
-### Leaflet Configuration
-```javascript
-// Initialize map with proper bounds
+## CSS Injection
+
+`index.html` injects its stylesheets dynamically in the `<head>` IIFE so
+they resolve relative to `window.appBase`:
+
+```js
+const cssFiles = [
+  "style.css",
+  "vendor/leaflet.css",
+  "vendor/MarkerCluster.css",
+  "vendor/MarkerCluster.Default.css"
+];
+cssFiles.forEach(href => {
+  const link = document.createElement("link");
+  link.rel = "stylesheet";
+  link.href = href.startsWith("http")
+    ? href
+    : new URL(href, window.location.origin + window.appBase).href;
+  document.head.appendChild(link);
+});
+```
+
+Other pages load `style.css` via a plain `<link rel="stylesheet" href="style.css">` — the `<base href>` injected by the IIFE resolves it correctly.
+
+---
+
+## Service Worker
+
+`service-worker.js` uses two named caches:
+
+- **`fieldguide-cache-v2`** — app shell (cache-first)
+- **`fieldguide-tiles-v1`** — OpenStreetMap tiles (network-first, cached on success)
+
+`BASE` is derived from the SW's own location so precache paths resolve under
+any deploy root:
+
+```js
+const BASE = self.location.pathname.replace(/service-worker\.js$/, "");
+const APP_SHELL = [
+  BASE,
+  BASE + "index.html",
+  BASE + "style.css",
+  BASE + "app.js",
+  BASE + "manifest.json",
+  BASE + "icons/icon-192.png",
+  BASE + "icons/icon-512.png",
+  BASE + "Q.VdL-Perimeter.kml",
+  BASE + "poi/detail.html",
+  BASE + "vendor/leaflet.js",
+  BASE + "vendor/leaflet.css",
+  BASE + "vendor/leaflet.markercluster.js",
+  BASE + "vendor/MarkerCluster.css",
+  BASE + "vendor/MarkerCluster.Default.css",
+  BASE + "vendor/leaflet-omnivore.min.js",
+];
+```
+
+**Tile caching** — network-first so fresh tiles are preferred; offline shows
+previously visited areas:
+
+```js
+if (url.hostname.endsWith("tile.openstreetmap.org")) {
+  event.respondWith(
+    caches.open(TILE_CACHE_NAME).then(cache =>
+      fetch(event.request)
+        .then(response => { cache.put(event.request, response.clone()); return response; })
+        .catch(() => cache.match(event.request))
+    )
+  );
+  return;
+}
+```
+
+**On-demand POI caching** via `message` event — `CACHE_POI` is sent from
+`poi/detail.html` when the user clicks "Save for Offline":
+
+```js
+self.addEventListener("message", async (event) => {
+  if (event.data?.type === "CACHE_POI") {
+    const { jsonUrl, photoUrl } = event.data;
+    const cache = await caches.open(CACHE_NAME);
+    if (jsonUrl) await cache.add(jsonUrl);
+    if (photoUrl) await cache.add(photoUrl);
+  }
+});
+```
+
+---
+
+## Map & Observations (`app.js`)
+
+### Initialisation
+
+```js
 const map = L.map('map').setView([37.1, -8.6], 14);
 
-// Add tile layer
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
   attribution: '&copy; OpenStreetMap contributors'
 }).addTo(map);
 
-// Load garden perimeter from KML
 omnivore.kml(makeAssetUrl('Q.VdL-Perimeter.kml'))
-  .on('ready', function (e) {
+  .on('ready', function(e) {
     map.fitBounds(e.target.getBounds());
+    scheduleRefreshMapView();
   })
   .addTo(map);
-```
 
-### Marker Clustering
-```javascript
-// Efficient marker management for large datasets
 const markers = L.markerClusterGroup();
-markers.addLayer(L.marker([lat, lng]).bindPopup(popupContent));
 map.addLayer(markers);
 ```
 
-## 📱 Progressive Web App Features
+### Global state
 
-### Service Worker Strategy
-```javascript
-// Cache-first strategy for app shell
-const APP_SHELL = ["/", "/index.html", "/style.css", "/poi/detail.html"];
-
-// Network-first with cache fallback for API calls
-self.addEventListener("fetch", (event) => {
-  event.respondWith(
-    caches.match(event.request).then((resp) => {
-      return resp || fetch(event.request);
-    })
-  );
-});
+```js
+let allObservations = [];     // full iNat result set
+let currentObservations = []; // filtered subset
+let currentRange = 'today';   // 'today' | 'week' | 'all'
 ```
 
-### Offline Data Persistence
-```javascript
-// Store base64 images for offline viewing
-async function saveOfflineData(observation) {
-  const cache = await caches.open("fieldguide-offline-v1");
-  const base64Image = await convertToBase64(observation.imageUrl);
-  
-  // Store in both cache and localStorage
-  await cache.add(observation.apiUrl);
-  localStorage.setItem(`inat:${observation.id}`, JSON.stringify({
-    ...observation,
-    imageData: base64Image
-  }));
+### Fetching observations
+
+`fetchObservations()` calls the iNaturalist API directly (no auth, project
+#197410). There is no error fallback beyond a console log — offline
+resilience comes from the service worker's cache-first strategy.
+
+```js
+async function fetchObservations() {
+  const url = "https://api.inaturalist.org/v1/observations"
+    + "?project_id=197410&order=desc&order_by=observed_on&per_page=200&quality_grade=any";
+  const res = await fetch(url);
+  const json = await res.json();
+  allObservations = json.results || [];
+  renderObservations();
 }
 ```
 
-## 🎮 Interactive Features
+### Filtering and rendering
 
-### Real-time Filtering
-```javascript
-// Time-based observation filtering
-function filterObservations(range) {
-  const now = new Date();
-  let cutoff = null;
-  
-  switch(range) {
-    case 'today':
-      cutoff = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-      break;
-    case 'week':
-      cutoff = new Date(now);
-      cutoff.setDate(cutoff.getDate() - 7);
-      break;
-  }
-  
-  return allObservations.filter(obs => {
-    const obsDate = new Date(obs.observed_on || obs.created_at);
-    return !cutoff || obsDate >= cutoff;
-  });
-}
+`renderObservations()` applies a date cutoff based on `currentRange`, then
+for each observation with valid coordinates:
+
+1. Adds a `L.marker` with a popup to the `markers` cluster group.
+2. Appends a `.observation-item` div to `#observations`.
+3. Saves a minimal `{id, species_guess, observed_on, coordinates}` array to
+   `localStorage` under `erc_observations` (read by QR Admin).
+
+### Map sizing
+
+`scheduleRefreshMapView()` double-`requestAnimationFrame`s a `map.invalidateSize()` + `fitBounds` call. A `ResizeObserver` on `#map` and a `MutationObserver` on `#observations` both trigger it, keeping the map correctly sized when layout shifts.
+
+---
+
+## Footer
+
+Each page loads `footer.html` after the closing `</body>` tag and wires the
+nav links:
+
+```js
+fetch(window.appBase + 'footer.html')
+  .then(res => res.text())
+  .then(html => {
+    document.getElementById('site-footer').innerHTML = html;
+    document.querySelectorAll('#site-footer .nav-link').forEach(link => {
+      link.href = window.appBase + link.dataset.target;
+    });
+  })
+  .catch(err => console.error('Failed to load footer:', err));
 ```
 
-### User Note Management
-```javascript
-// Save user observations with rich metadata
-function saveUserNote(obsId, noteText, photoFile, shareWithGarden) {
-  const entry = {
-    poi_id: String(obsId),
-    species_name: getCurrentSpeciesName(),
-    note: noteText,
-    photo: photoFile ? await fileToBase64(photoFile) : null,
-    date_saved: new Date().toISOString(),
-    shared: shareWithGarden
-  };
-  
-  const existing = JSON.parse(localStorage.getItem("tripPlan") || "[]");
-  existing.push(entry);
-  localStorage.setItem("tripPlan", JSON.stringify(existing));
-}
-```
+---
 
-## 🔐 Security Considerations
+## POI Detail Page (`poi/detail.html`)
 
-### Content Security Policy
-```html
-<!-- Recommended CSP headers for deployment -->
-<meta http-equiv="Content-Security-Policy" 
-      content="default-src 'self'; 
-               script-src 'self' 'unsafe-inline' https://unpkg.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com;
-               style-src 'self' 'unsafe-inline' https://unpkg.com;
-               img-src 'self' data: https: http:;
-               connect-src 'self' https://api.inaturalist.org https://script.google.com;">
-```
+Reached via QR scan or direct URL `poi/detail.html?obs=<iNat-id>`.
 
-### API Key Management
-```javascript
-// No sensitive API keys required - uses public iNaturalist API
-// Google Apps Script integration uses public endpoint
-const WEB_APP_URL = "https://script.google.com/macros/s/.../exec";
-```
+### Boot sequence
 
-## 🚀 Deployment Pipeline
+```js
+async function boot() {
+  const cacheKey = `inat:${current.id}`;
+  const cached = safeParse(localStorage.getItem(cacheKey));
+  if (cached) setUI(cached, { from: "cache" });  // show instantly if available
 
-### GitHub Pages Configuration
-1. **Repository Settings**: Enable GitHub Pages from main branch
-2. **Base URL**: Automatically handled by dynamic path resolution
-3. **Asset Paths**: Use relative paths throughout codebase
-4. **Service Worker**: Scope limited to repository path
-
-### Build Process
-No build step required - pure static deployment:
-```bash
-# Simple deployment process
-git add .
-git commit -m "Update garden tour app"
-git push origin main
-# GitHub Pages automatically deploys
-```
-
-### Environment Variables
-```javascript
-// Environment detection for development vs production
-const isDevelopment = location.hostname === "127.0.0.1" || location.hostname === "localhost";
-const apiEndpoint = isDevelopment ? 
-  "http://localhost:3000/api" : 
-  "https://api.inaturalist.org/v1";
-```
-
-## 🔧 Development Setup
-
-### Local Development
-```bash
-# Start simple HTTP server
-python -m http.server 5000
-# or
-npx serve -s . -p 5000
-
-# Access at http://localhost:5000
-```
-
-### Testing Checklist
-- [ ] **Map loads** with correct garden boundaries
-- [ ] **Observations render** from iNaturalist API
-- [ ] **Offline mode** works after initial load
-- [ ] **QR codes generate** correctly for all observations
-- [ ] **Notes save/load** from localStorage
-- [ ] **Export functions** produce valid files
-- [ ] **Responsive design** works on mobile devices
-
-## 📊 Performance Optimization
-
-### API Request Optimization
-```javascript
-// Limit API requests and cache responses
-const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
-const lastFetch = localStorage.getItem('lastApiUpdate');
-
-if (!lastFetch || Date.now() - parseInt(lastFetch) > CACHE_DURATION) {
-  await fetchObservations();
-  localStorage.setItem('lastApiUpdate', Date.now().toString());
-}
-```
-
-### Image Optimization
-```javascript
-// Progressive image loading with fallbacks
-function loadOptimizedImage(originalUrl) {
-  // Replace square/medium with large for better quality
-  return originalUrl
-    .replace('square.', 'large.')
-    .replace('medium.', 'large.');
-}
-```
-
-### Memory Management
-```javascript
-// Clean up event listeners and observers
-function cleanup() {
-  markers.clearLayers();
-  if (resizeObserver) resizeObserver.disconnect();
-  if (mutationObserver) mutationObserver.disconnect();
-}
-```
-
-## 🐛 Error Handling
-
-### Network Resilience
-```javascript
-// Graceful degradation for network issues
-async function robustApiCall(url, fallbackData) {
   try {
-    const response = await fetch(url);
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    return await response.json();
-  } catch (error) {
-    console.warn('API call failed, using fallback:', error);
-    return fallbackData || getFromCache(url);
+    const live = await fetchObsFromINat(current.id);
+    if (live) {
+      setUI(live, { from: "network" });
+      localStorage.setItem(cacheKey, JSON.stringify(live));
+    } else if (!cached) statusEl.textContent = "Observation not found.";
+  } catch (e) {
+    if (!cached) statusEl.textContent = "Offline or fetch failed — showing placeholders.";
   }
 }
 ```
 
-### User Feedback
-```javascript
-// Inform users about app state
-function updateStatus(message, type = 'info') {
-  const statusEl = document.getElementById('status');
-  statusEl.textContent = message;
-  statusEl.className = `status ${type}`;
-  
-  if (type === 'error') {
-    // Provide actionable guidance
-    statusEl.innerHTML += '<br><small>Check connection and try again</small>';
-  }
+Cache-then-network: shows stale data instantly, updates when the network responds.
+
+### Helpers (defined inline in `poi/detail.html`)
+
+```js
+function safeParse(s) { try { return s ? JSON.parse(s) : null; } catch { return null; } }
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c =>
+    ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
 ```
 
-## 🔮 Extension Points
+`safeParse` is also duplicated in `qr_admin.js`, `tripplan.html`, and
+`userjournals.html`. Consolidation into a shared `utils.js` is a known
+todo (see `CODE_REVIEW_REPORT.md`).
 
-### Adding New Features
-1. **New observation sources**: Extend API integration
-2. **Additional map layers**: Integrate with Leaflet plugins
-3. **Enhanced exports**: Add PDF/KML export options
-4. **User authentication**: Integrate with iNaturalist OAuth
-5. **Real-time updates**: Add WebSocket connections
+### Save for Offline
 
-### Plugin Architecture
-```javascript
-// Extensible plugin system
-const GardenTourPlugins = {
-  register(name, plugin) {
-    this[name] = plugin;
-    plugin.init && plugin.init();
-  },
-  
-  // Example: Weather integration plugin
-  weather: {
-    init() { /* Setup weather display */ },
-    update() { /* Fetch current conditions */ }
-  }
-};
+The "⭐ Save for Offline" button caches the current page URL, the iNat API
+JSON URL, and the observation photo URL in `fieldguide-offline-v1`. It also
+stores a base64 copy of the image in `localStorage` under `inat:<id>` as a
+fallback for environments where the SW cannot intercept.
+
+### Note-taking
+
+Notes are appended to `tripPlan` in `localStorage`:
+
+```js
+{
+  poi_id: String,        // iNat observation id
+  species_name: String,
+  image: String,         // src URL of the displayed image
+  note: String,
+  photo: String | null,  // base64 data URL of user-attached photo
+  date_saved: String     // ISO 8601 timestamp
+}
 ```
 
-This architecture supports both current functionality and future enhancements while maintaining simplicity and performance.
+If "Share this note with the Garden" is checked, the note is POSTed to a
+Google Apps Script web app (`shareNoteWithGarden()`). The URL is hardcoded
+in `poi/detail.html`; photo binary is not sent (text fields only).
+
+---
+
+## QR Admin (`qr_admin.html` + `qr_admin.js`)
+
+Reads `erc_observations` from `localStorage` (populated by `app.js`) and
+generates a QR code for the selected observation's detail URL:
+
+```js
+const detailUrl = new URL(
+  `poi/detail.html?obs=${encodeURIComponent(obsId)}`,
+  window.location.origin + window.appBase
+).href;
+```
+
+QR codes render to a `<canvas>` via `QRCode` (loaded from
+`cdn.jsdelivr.net/npm/qrcode` — the only remaining CDN dependency).
+
+---
+
+## localStorage Schema
+
+| Key | Written by | Read by | Shape |
+|---|---|---|---|
+| `erc_observations` | `app.js` | `qr_admin.js` | `Array<{id, species_guess, observed_on, coordinates}>` |
+| `tripPlan` | `poi/detail.html` | `tripplan.html`, `userjournals.html` | `Array<{poi_id, species_name, image, note, photo, date_saved}>` |
+| `inat:<id>` | `poi/detail.html` | `poi/detail.html` | `{id, titleHTML, imageUrl, imageData, inatUrl, inatApiUrl}` |
+
+All data is local to the user's browser. There is no account system or
+server-side persistence (except the optional Google Apps Script share path).
+
+---
+
+## Deployment
+
+No build step required — deploy the directory as static files.
+
+**GitHub Pages**: push to `main`; Pages serves from repo root. The
+`window.appBase` IIFE automatically derives the correct prefix
+(`/garden_tour/`) from `location.pathname`.
+
+**Local development**:
+
+```sh
+python3 -m http.server 8080
+# then open http://127.0.0.1:8080/
+```
+
+Service worker registration uses `window.appBase` so it registers at the
+correct scope under any deploy root:
+
+```js
+const swUrl = new URL("service-worker.js", window.location.origin + window.appBase).href;
+navigator.serviceWorker.register(swUrl);
+```
