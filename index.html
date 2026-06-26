@@ -10,12 +10,13 @@
 <meta name="theme-color" content="#0ea5e9">
 
 <script>
-  // --- Compute dynamic basePath ---
-  const repoRoot = window.location.pathname.split("/")[1];
-  window.basePath = (repoRoot && window.location.hostname.includes("github.io")) 
-    ? `/${repoRoot}/` 
-    : "/";
-  console.log("Using basePath:", window.basePath);
+  (function() {
+    var dir = location.pathname.replace(/[^/]*$/, '');
+    window.appBase = dir.endsWith('/poi/') ? dir.slice(0, -4) : dir;
+    var base = document.createElement('base');
+    base.href = window.appBase;
+    document.head.appendChild(base);
+  })();
 
   // --- Inject CSS dynamically ---
   const cssFiles = [
@@ -27,13 +28,13 @@
   cssFiles.forEach(href => {
     const link = document.createElement("link");
     link.rel = "stylesheet";
-    link.href = href.startsWith("http") ? href : new URL(href, window.location.origin + window.basePath).href;
+    link.href = href.startsWith("http") ? href : new URL(href, window.location.origin + window.appBase).href;
     document.head.appendChild(link);
   });
 
   // --- Register service worker ---
   if ("serviceWorker" in navigator) {
-    const swUrl = new URL("service-worker.js", window.location.origin + window.basePath).href;
+    const swUrl = new URL("service-worker.js", window.location.origin + window.appBase).href;
     navigator.serviceWorker.register(swUrl)
       .then(() => console.log("✅ Service Worker registered at", swUrl))
       .catch(err => console.error("Service Worker failed:", err));

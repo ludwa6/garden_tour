@@ -6,13 +6,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>My Trip Plan - Field Guide</title>
 
-    <!-- Dynamic base path: works on localhost and GitHub Pages -->
   <script>
-    if (location.hostname === "127.0.0.1" || location.hostname === "localhost") {
-      document.write('<base href="/">');
-    } else {
-      document.write('<base href="/garden_tour/">');
-    }
+    (function() {
+      var dir = location.pathname.replace(/[^/]*$/, '');
+      window.appBase = dir.endsWith('/poi/') ? dir.slice(0, -4) : dir;
+      var base = document.createElement('base');
+      base.href = window.appBase;
+      document.head.appendChild(base);
+    })();
   </script>
 
   <style>
@@ -175,24 +176,15 @@
 <footer id="site-footer"></footer>
 
 <script>
-  // Inject shared footer.html into this page
-  const footerPath = window.location.hostname.includes("github.io") 
-    ? "/garden_tour/footer.html" 
-    : "/footer.html";
-  fetch(footerPath)
+  fetch(window.appBase + 'footer.html')
     .then(res => res.text())
     .then(html => {
-      document.getElementById("site-footer").innerHTML = html;
-
-      // Fix link paths based on environment
-      const basePath = window.location.hostname.includes("github.io")
-        ? "/garden_tour/"
-        : "/";
-      document.querySelectorAll("#site-footer .nav-link").forEach(link => {
-        link.href = basePath + link.dataset.target;
+      document.getElementById('site-footer').innerHTML = html;
+      document.querySelectorAll('#site-footer .nav-link').forEach(link => {
+        link.href = window.appBase + link.dataset.target;
       });
     })
-    .catch(err => console.error("Failed to load footer:", err));
+    .catch(err => console.error('Failed to load footer:', err));
 </script>
 
 </body>

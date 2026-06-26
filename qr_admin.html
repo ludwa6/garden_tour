@@ -4,8 +4,16 @@
   <meta charset="UTF-8">
   <title>QR Admin</title>
 
-  <!-- Use relative paths (no leading slash) so it works under / and /garden_tour/ -->
   <link rel="stylesheet" href="style.css?v=2">
+  <script>
+    (function() {
+      var dir = location.pathname.replace(/[^/]*$/, '');
+      window.appBase = dir.endsWith('/poi/') ? dir.slice(0, -4) : dir;
+      var base = document.createElement('base');
+      base.href = window.appBase;
+      document.head.appendChild(base);
+    })();
+  </script>
 </head>
 <body class="qr-admin-page">
   <div class="appbar">
@@ -39,30 +47,15 @@
   <footer id="site-footer"></footer>
 
   <script>
-    // Compute repo base regardless of localhost vs GitHub Pages
-    // e.g. "/" for localhost, "/garden_tour/" on GH Pages
-    (function () {
-      const parts = window.location.pathname.split("/").filter(Boolean);
-      const repoBase = window.location.hostname.includes("github.io") && parts.length
-        ? `/${parts[0]}/`
-        : "/";
-
-      // Load shared footer
-      const footerPath = new URL("footer.html", window.location.origin + repoBase).href;
-      fetch(footerPath)
-        .then(res => res.text())
-        .then(html => {
-          document.getElementById("site-footer").innerHTML = html;
-          // Rewrite nav links so they work even from subfolders
-          document.querySelectorAll("#site-footer .nav-link").forEach(link => {
-            const target = link.getAttribute("data-target");
-            if (target) {
-              link.href = new URL(target, window.location.origin + repoBase).href;
-            }
-          });
-        })
-        .catch(err => console.error("Failed to load footer:", err));
-    })();
+    fetch(window.appBase + 'footer.html')
+      .then(res => res.text())
+      .then(html => {
+        document.getElementById('site-footer').innerHTML = html;
+        document.querySelectorAll('#site-footer .nav-link').forEach(link => {
+          link.href = window.appBase + link.dataset.target;
+        });
+      })
+      .catch(err => console.error('Failed to load footer:', err));
   </script>
 </body>
 </html>
