@@ -10,7 +10,7 @@ This interactive web application helps you explore and document the botanical di
 - **Real-time observations** from iNaturalist project #197410
 - **Smart clustering** shows observation density across the garden
 - **Time filters** to view observations from today, this week, or all time
-- **Geographic boundaries** with precise garden perimeter mapping
+- **Garden perimeter** outlined on the map from a KML boundary file
 
 ### **Offline-Ready Experience**
 - **Service Worker** caches content for offline viewing
@@ -19,101 +19,119 @@ This interactive web application helps you explore and document the botanical di
 
 ### **Personal Documentation Tools**
 - **Trip Planner**: Save interesting observations to your personal collection
-- **Nature Journaling**: Add detailed notes and photos to your discoveries
-- **Export Options**: Download your experiences as text files
+- **Nature Journaling**: Browse, search, and filter your saved notes by date or photo
+- **Export Options**: Download your journal as a formatted text file
 - **Photo Integration**: Attach your own photos to observation notes
 
 ### **QR Code System**
 - **Physical Integration**: QR codes can be placed throughout the garden
-- **Instant Access**: Scan codes to jump directly to species information
+- **Instant Access**: Scan a code to jump directly to that species' detail page
 - **Admin Tools**: Generate and manage QR codes for garden staff
 
 ## 📱 How to Use the App
 
 ### Getting Started
 1. **Open the app** in any modern web browser
-2. **Grant location permissions** for the best map experience (optional)
-3. **Install as PWA** for app-like experience on mobile devices
+2. **Install as PWA** for an app-like experience on mobile devices (use your browser's "Add to Home Screen" option)
+
+### Navigating the App
+A fixed navigation bar at the bottom of most pages gives you quick access to all sections:
+
+| Tab | What it does |
+|---|---|
+| 🏠 Home | Main map and observation list |
+| 📷 QR Admin | Generate QR codes for garden signage |
+| 🗺 Trip Plan | Your saved observations |
+| 📓 User Journals | Your notes, with search and filters |
+| 🔧 Admin | POI registry management |
 
 ### Exploring the Garden
-1. **Browse the map** to see where observations have been made
-2. **Use time filters** (Today/This Week/All) to focus on recent activity
-3. **Click map markers** to see species information and photos
-4. **Tap observation cards** below the map for quick species overview
+1. **Browse the map** to see where observations have been recorded
+2. **Use time filters** (Today / This Week / All) to focus on recent activity
+3. **Click a map marker** to see the species name, observed date, and a link to iNaturalist
+4. **Scan a QR code** on a garden sign to open that species' full detail page — or open a detail page directly via URL (`poi/detail.html?obs=<id>`)
 
-### Saving Your Discoveries
-1. **Click any observation** to open its detail page
-2. **Add personal notes** about what you noticed or felt
-3. **Attach photos** you took at that location
-4. **Save to Trip Plan** to build your personal collection
-5. **Export your journey** as a text file to keep forever
+> Clicking a map marker or observation card in the list does not yet navigate to the in-app detail page — that navigation is planned for a future update (see #8).
+
+### On a Species Detail Page
+1. **Read species information** pulled live from iNaturalist
+2. **Tap ⭐ Save for Offline** to cache the page and its image for use without internet
+3. **Tap 📝 Add Note** to record what you noticed or felt at that spot
+4. **Attach a photo** you took at the location (optional)
+5. **Check "Share this note with the Garden"** to send your note to the garden team (optional)
+6. **Tap 💾 Save Note** — your note is added to My Trip Plan and My Journals
+
+### Your Trip Plan
+- View all observations you have saved, with photos and notes
+- Remove individual items or clear the whole plan
+- Export your plan as a text file to keep after your visit
+
+### My Journals
+- Shows only your saved entries that include notes (not bare saves)
+- **Search** by species name or note text
+- **Filter** by All, With Photos, or Recent (last 7 days)
+- **Export** your full journal as a formatted text file
+- Delete individual entries
 
 ### Administrative Features
-- **QR Admin**: Generate QR codes for physical placement in garden
-- **Admin Dashboard**: Manage the registry of garden points of interest
-- **User Journals**: View aggregated visitor experiences (for garden staff)
+- **QR Admin**: Select an observation from the current map view and generate a QR code linking to its detail page. Requires visiting the Home page first to load observation data.
+- **Admin Dashboard**: View and manage the POI registry stored in your browser. Delete entries and download an updated `index.json`.
 
 ## 🔧 Accessibility Features
 
-- **Mobile-first design** works great on phones and tablets
+- **Mobile-first design** works on phones and tablets
 - **Offline capability** ensures access even without internet
-- **Keyboard navigation** supports screen readers and accessibility tools
-- **High contrast** color scheme for outdoor visibility
+- **ARIA labels** on map and live regions support screen readers
 - **Touch-friendly** interface designed for field use
 
 ## 🌐 Technical Details for Users
 
 ### Browser Support
 - **Modern browsers** (Chrome, Firefox, Safari, Edge)
-- **Mobile browsers** optimized for iOS and Android
-- **Progressive enhancement** gracefully handles older browsers
+- **Mobile browsers** optimised for iOS and Android
 
 ### Data Privacy
-- **Local storage only** - your personal notes stay on your device
-- **Optional sharing** - you control when to share notes with garden
+- **Local storage only** — your personal notes stay on your device
+- **Optional sharing** — you control when to share notes with the garden via the checkbox on each detail page
 - **iNaturalist integration** uses public observation data only
 
 ### Network Requirements
-- **Initial load** requires internet connection
-- **Offline browsing** available after first visit
-- **Background sync** updates observations when connected
+- **Initial load** requires an internet connection
+- **Offline browsing** available after first visit (Service Worker caches key assets)
+- **Observation data** refreshes automatically when connected
 
 ## 🚀 Getting the Most from Your Visit
 
 ### Before Your Visit
-- **Install the app** on your phone for easy access
-- **Review recent observations** to see what others have found
-- **Plan your route** using the map to visit high-diversity areas
+- **Install the app** on your phone for easy access offline
+- **Review recent observations** to see what others have found this week
 
 ### During Your Visit
+- **Scan QR codes** on garden signs to jump straight to species detail pages
 - **Take notes immediately** while observations are fresh
-- **Photo everything interesting** - the app helps you organize them
-- **Use offline mode** if cell coverage is poor in the garden
+- **Save for Offline** on detail pages if cell coverage is poor in the garden
 
 ### After Your Visit
-- **Export your journal** to preserve your experience
-- **Share notable discoveries** with the garden community (optional)
-- **Plan return visits** based on seasonal patterns you've noticed
+- **Export your journal** to preserve your experience as a text file
+- **Share notable discoveries** with the garden community via the sharing checkbox
 
 ## 🔍 Advanced Features
 
 ### For Researchers
-- **Full iNaturalist integration** provides scientific data
-- **Export capabilities** for further analysis
+- **Full iNaturalist integration** provides scientific names and observation data
 - **Date filtering** for seasonal studies
-- **Geographic precision** using GPS coordinates
+- **Export capabilities** for further analysis
 
 ### For Garden Staff
-- **Admin dashboard** for managing visitor experience
 - **QR code generation** for physical garden integration
-- **Visitor journal aggregation** for understanding garden usage
-- **Registry management** for maintaining point-of-interest database
+- **Admin dashboard** for POI registry management
+- **Visitor note sharing** — guests can opt in to share notes; a dedicated staff aggregation view is planned (see #12)
 
 ### For Educators
-- **Gamification elements** encourage exploration
-- **Visual learning** through photos and maps
+- **Visual learning** through species photos and maps
 - **Digital journaling** develops observation skills
-- **Scientific vocabulary** integrated throughout interface
+- **Scientific vocabulary** integrated throughout the interface
+- **Gamification** (points and badges for exploration milestones) is planned (see #9)
 
 ## 📞 Support and Feedback
 
