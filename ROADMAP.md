@@ -1,24 +1,25 @@
 # 🗺️ Garden Tour Development Roadmap
 
-## Current Status (September 2025)
+## Current Status (June 2026)
 
 The Garden Tour application is a **feature-complete MVP** with solid core functionality. The app successfully integrates real-time botanical data, provides offline capabilities, and offers comprehensive user interaction features.
 
 ### ✅ Completed Core Features
 - Interactive map with real-time iNaturalist data integration
-- Progressive Web App with offline functionality (requires at least one prior online visit to cache map tiles; app shell, KML overlay, and markers are always available offline after install)  
+- Progressive Web App with offline functionality (requires at least one prior online visit to cache map tiles; app shell, KML overlay, and markers are always available offline after install)
 - Personal trip planning and note-taking system
 - QR code generation and management system
 - Administrative dashboard for garden management
-- Cross-platform deployment (localhost + GitHub Pages)
+- Cross-platform deployment (localhost, LAN, file://, GitHub Pages, custom domains) — unified `window.appBase` IIFE, no hostname hardcoding
 - Responsive mobile-first design
 - Data export capabilities
+- All third-party libraries (Leaflet, MarkerCluster, omnivore) vendored locally and precached for full offline map
 
 ---
 
 ## 🎯 Development Priorities
 
-### **Phase 1: Code Quality & Stability** (Q4 2025)
+### **Phase 1: Code Quality & Stability** (Near-term)
 *Focus: Technical debt reduction and code standardization*
 
 #### High Priority
@@ -35,10 +36,17 @@ The Garden Tour application is a **feature-complete MVP** with solid core functi
   - Enhance accessibility (ARIA labels, keyboard navigation)
 
 - **🐛 Bug Fixes & Polish**
-  - Fix favicon.ico 404 errors
-  - Resolve duplicate HTML content in userjournals.html
+  - Fix favicon.ico 404 errors *(still open)*
+  - ~~Resolve duplicate HTML content in userjournals.html~~ ✅ Done
   - Improve error messages and user feedback
   - Standardize CSS variable usage
+
+- **🔗 Known UX Gaps** *(filed as open issues)*
+  - #8: Observation list cards and map popups don't navigate to POI detail page
+  - #9: Gamification UI (`0 pts` / badges) is a placeholder with no logic
+  - #10: Settings button (⚙️) has no handler
+  - #11: Geolocation not implemented (no location permission request)
+  - #12: User Journals shows only local personal notes — no shared staff aggregation view
 
 #### Medium Priority
 - **📱 PWA Enhancements**
@@ -52,7 +60,7 @@ The Garden Tour application is a **feature-complete MVP** with solid core functi
   - Better visual hierarchy and typography
   - Enhanced mobile touch interactions
 
-### **Phase 2: Feature Expansion** (Q1 2026)
+### **Phase 2: Feature Expansion** (Mid-term)
 *Focus: Enhanced user experience and functionality*
 
 #### High Priority
@@ -87,7 +95,7 @@ The Garden Tour application is a **feature-complete MVP** with solid core functi
   - Garden conservation stories
   - Guided tour routes with audio narration
 
-### **Phase 3: Platform Integration** (Q2 2026)
+### **Phase 3: Platform Integration** (Long-term)
 *Focus: External integrations and advanced features*
 
 #### High Priority
@@ -122,19 +130,19 @@ The Garden Tour application is a **feature-complete MVP** with solid core functi
 
 ### **Architecture Roadmap**
 
-#### **Current: Static PWA** (2025)
+#### **Current: Static PWA** (2026)
 - Vanilla JavaScript + Leaflet
 - GitHub Pages deployment
 - localStorage for persistence
 - iNaturalist API integration
 
-#### **Near-term: Enhanced Static** (Q1 2026)
+#### **Near-term: Enhanced Static**
 - TypeScript migration for better maintainability
 - Build system for optimization (Vite/Parcel)
 - Component-based architecture
 - Enhanced service worker capabilities
 
-#### **Medium-term: Hybrid Platform** (Q2-Q3 2026)
+#### **Medium-term: Hybrid Platform**
 - Backend API for advanced features
 - Database for user management and analytics
 - Real-time features with WebSockets
