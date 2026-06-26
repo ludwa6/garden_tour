@@ -1,5 +1,16 @@
 # 🔍 Code Review Report - Garden Tour Application
 
+## Resolved Since Original Review
+
+The following issues identified in the original review have been addressed:
+
+- **Duplicate base-path logic** — All six pages now use a single path-derived IIFE setting `window.appBase`; `window.basePath`, hostname checks, and `document.write` are gone (commit `6b3341b`, closes #6).
+- **Duplicate HTML in `userjournals.html`** — Second `<!DOCTYPE html>` block (the older draft) removed; file is a single clean document (commit `f2c73f6`).
+- **Service worker cache** — `APP_SHELL` now precaches 12 assets (app.js, manifest.json, icons, KML perimeter, all vendor files); tile caching added with offline fallback (commit `a38e94a`).
+- **CDN dependencies** — Leaflet, Leaflet.markercluster, and omnivore are vendored in `vendor/` and precached; no CDN references remain.
+
+---
+
 ## Executive Summary
 
 This comprehensive code review identifies opportunities for improving code quality, maintainability, and adherence to modern web development best practices. The application demonstrates solid functionality but would benefit from systematic refactoring to eliminate technical debt and improve long-term maintainability.
@@ -14,30 +25,19 @@ This comprehensive code review identifies opportunities for improving code quali
 
 #### **Critical Issues**
 
-**Duplicate Base Path Logic**
+**Duplicate Base Path Logic** ✅ *Resolved — see "Resolved Since Original Review" above*
+
+All six pages now share a single path-derived IIFE that sets `window.appBase` and injects `<base href>` without any hostname checks:
+
 ```javascript
-// Found in: index.html, poi/detail.html, tripplan.html, userjournals.html, qr_admin.html
-// Inconsistent implementations across files
-
-// Version 1 (index.html):
-const repoRoot = window.location.pathname.split("/")[1];
-window.basePath = (repoRoot && window.location.hostname.includes("github.io")) 
-  ? `/${repoRoot}/` : "/";
-
-// Version 2 (poi/detail.html):
-if (location.hostname === "127.0.0.1" || location.hostname === "localhost") {
-  document.write('<base href="/">');
-} else {
-  document.write('<base href="/garden_tour/">');
-}
-
-// Version 3 (qr_admin.js):
-const pathParts = window.location.pathname.split("/").filter(Boolean);
-const repoBase = window.location.hostname.includes("github.io") && pathParts.length
-  ? `/${pathParts[0]}/` : "/";
+(function() {
+  const dir = location.pathname.replace(/[^/]*$/, '');
+  window.appBase = dir.endsWith('/poi/') ? dir.slice(0, -4) : dir;
+  const base = document.createElement('base');
+  base.href = window.appBase;
+  document.head.appendChild(base);
+})();
 ```
-
-**Recommendation**: Create a shared utility module for environment detection.
 
 **Duplicate Utility Functions**
 ```javascript
@@ -82,14 +82,9 @@ const repoBase = window.location.hostname.includes("github.io") && pathParts.len
 <button id="settingsBtn" aria-label="Open settings">⚙️</button>  <!-- Good example -->
 ```
 
-#### **2. Duplicate Content**
-```html
-<!-- userjournals.html contains two complete HTML documents -->
-<!-- Lines 1-296: Primary content -->
-<!-- Lines 297-401: Duplicate simplified version -->
-```
+#### **2. Duplicate Content** ✅ *Resolved*
 
-**Critical**: Remove duplicate HTML structure in `userjournals.html`.
+The second `<!DOCTYPE html>` block (an older simplified draft) has been removed from `userjournals.html`. The file now contains a single complete document.
 
 #### **3. Inline Styles**
 ```html
@@ -289,7 +284,7 @@ if (lat == null || lng == null) return;    // Loose equality check
 
 ### **Immediate (Week 1)**
 
-1. **Remove duplicate HTML** in `userjournals.html`
+1. ~~**Remove duplicate HTML** in `userjournals.html`~~ ✅ Done
 2. **Fix favicon.ico 404** by adding proper icon
 3. **Consolidate utility functions** into shared module
 4. **Standardize error handling** patterns
