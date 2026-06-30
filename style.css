@@ -132,6 +132,11 @@ button.danger {
 }
 
 /* --- Settings Modal --- */
+.modal-overlay.hidden {
+  /* Win the specificity tie against the bare .modal-overlay rule below,
+     which would otherwise keep display:flex and pin the modal open. */
+  display: none;
+}
 .modal-overlay {
   position: fixed;
   inset: 0;
