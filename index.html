@@ -70,6 +70,38 @@
   </a>
 </footer>
 
+<div id="settingsOverlay" class="modal-overlay hidden">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+    <div class="modal-header">
+      <h2 id="settingsTitle">Settings</h2>
+      <button id="settingsClose" class="modal-close" aria-label="Close settings">&times;</button>
+    </div>
+
+    <div class="settings-row">
+      <label for="settingDefaultRange">Default time range</label>
+      <select id="settingDefaultRange">
+        <option value="today">Today</option>
+        <option value="week">This Week</option>
+        <option value="all">All</option>
+      </select>
+    </div>
+
+    <div class="settings-row">
+      <button id="settingsInstall" class="hidden">Install app</button>
+    </div>
+
+    <p id="settingsInstallIOS" class="settings-hint hidden">
+      To install: tap the Share icon
+      <span aria-hidden="true">&#x2191;</span>
+      in Safari, then <strong>Add to Home Screen</strong>.
+    </p>
+
+    <div class="settings-row">
+      <button id="settingsClearData" class="danger">Clear local data (notes &amp; trip plan)</button>
+    </div>
+  </div>
+</div>
+
 <script src="vendor/leaflet.js"></script>
 <script src="vendor/leaflet.markercluster.js"></script>
 <script src="vendor/leaflet-omnivore.min.js"></script>

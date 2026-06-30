@@ -193,8 +193,106 @@ document.querySelectorAll('.controls button').forEach(btn => {
   });
 });
 
+// --- Settings ---
+const SETTINGS_KEY = 'gt_settings';
+
+function loadSettings() {
+  try {
+    return JSON.parse(localStorage.getItem(SETTINGS_KEY)) || {};
+  } catch {
+    return {};
+  }
+}
+
+function saveSettings(settings) {
+  localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+}
+
+// Apply the saved default range before the first render, syncing the
+// active filter button so the map opens on the preferred range.
+function applyDefaultRange() {
+  const { defaultRange } = loadSettings();
+  if (!defaultRange) return;
+  const btn = document.querySelector(`.controls button[data-range="${defaultRange}"]`);
+  if (!btn) return;
+  document.querySelectorAll('.controls button').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  currentRange = defaultRange;
+}
+
+let deferredInstallPrompt = null;
+
+function setupSettings() {
+  const overlay = document.getElementById('settingsOverlay');
+  const openBtn = document.getElementById('settingsBtn');
+  const closeBtn = document.getElementById('settingsClose');
+  const rangeSelect = document.getElementById('settingDefaultRange');
+  const installBtn = document.getElementById('settingsInstall');
+  const clearBtn = document.getElementById('settingsClearData');
+  if (!overlay || !openBtn) return;
+
+  function openPanel() {
+    rangeSelect.value = loadSettings().defaultRange || currentRange;
+    overlay.classList.remove('hidden');
+  }
+
+  function closePanel() {
+    overlay.classList.add('hidden');
+    // The overlay never touched the Leaflet instance, but invalidate size
+    // as a belt-and-suspenders against any layout shift while it was open.
+    scheduleRefreshMapView();
+  }
+
+  openBtn.addEventListener('click', openPanel);
+  closeBtn.addEventListener('click', closePanel);
+  overlay.addEventListener('click', e => {
+    if (e.target === overlay) closePanel();
+  });
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && !overlay.classList.contains('hidden')) closePanel();
+  });
+
+  rangeSelect.addEventListener('change', () => {
+    const settings = loadSettings();
+    settings.defaultRange = rangeSelect.value;
+    saveSettings(settings);
+  });
+
+  clearBtn.addEventListener('click', () => {
+    if (!confirm('Clear your saved notes, trip plan, and cached observations? This cannot be undone.')) return;
+    localStorage.removeItem('tripPlan');
+    localStorage.removeItem('erc_observations');
+    location.reload();
+  });
+
+  // PWA install affordance. Chrome/Edge/Android fire beforeinstallprompt,
+  // which reveals a one-tap Install button. iOS Safari never fires it and
+  // exposes no install API, so show manual Add-to-Home-Screen steps instead.
+  const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  const isStandalone = window.navigator.standalone === true ||
+    window.matchMedia('(display-mode: standalone)').matches;
+  if (isIOS && !isStandalone) {
+    document.getElementById('settingsInstallIOS')?.classList.remove('hidden');
+  }
+
+  window.addEventListener('beforeinstallprompt', e => {
+    e.preventDefault();
+    deferredInstallPrompt = e;
+    installBtn.classList.remove('hidden');
+  });
+  installBtn.addEventListener('click', async () => {
+    if (!deferredInstallPrompt) return;
+    deferredInstallPrompt.prompt();
+    await deferredInstallPrompt.userChoice;
+    deferredInstallPrompt = null;
+    installBtn.classList.add('hidden');
+  });
+}
+
 // --- Start ---
 document.addEventListener("DOMContentLoaded", () => {
+  setupSettings();
+  applyDefaultRange();
   fetchObservations();
   updateQRAdminLink();
 });
