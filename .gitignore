@@ -19,3 +19,17 @@ node_modules/
 
 # Keep .replit file (it's clean and useful)
 # .replit
+# ── Bram workspace state ──────────────────────────────────────────────────
+# Added 2026-09-02, bringing this repo in line with the other Bram-governed
+# repos, which already ignore these and track none of them. resources/ is
+# Bram's runtime workspace — port files that churn on every launch, worklist
+# drafts and history — not part of the project. Setup rewrites
+# .claude/bram-conventions.md and AGENTS.md on every upgrade, so tracking them
+# guarantees a dirty tree forever.
+#
+# CLAUDE.md is the deliberate exception: it carries the project-authored
+# Planner/Coder convention below Bram's marker block, and that should survive
+# a fresh clone.
+resources/
+.claude/
+AGENTS.md
