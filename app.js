@@ -6,6 +6,13 @@ function makeAssetUrl(relativePath) {
   return new URL(relativePath, window.location.origin + window.appBase).href;
 }
 
+// In-app POI detail page for an observation. Same construction as qr_admin.js,
+// so a scanned QR code and a tapped card land on the identical URL under any
+// deploy root (/ locally, /garden_tour/ on GitHub Pages).
+function detailUrl(obsId) {
+  return makeAssetUrl('poi/detail.html?obs=' + encodeURIComponent(obsId));
+}
+
 // --- Setup Map ---
 const map = L.map('map').setView([37.1, -8.6], 14);
 
@@ -128,21 +135,24 @@ function renderObservations() {
     marker.bindPopup(`
       <strong>${obs.species_guess || 'Unknown species'}</strong><br>
       Observed: ${obs.observed_on || 'n/a'}<br>
-      <a href="https://www.inaturalist.org/observations/${obs.id}" target="_blank">
+      <a href="${detailUrl(obs.id)}">View Details</a><br>
+      <a href="https://www.inaturalist.org/observations/${obs.id}" target="_blank" rel="noopener noreferrer">
         View on iNat
       </a>
     `);
     markers.addLayer(marker);
 
-    // Observation list
-    const div = document.createElement('div');
-    div.className = "observation-item";
-    div.innerHTML = `
-      <img src="${obs.photos?.[0]?.url?.replace('square', 'small') || ''}" 
+    // Observation list. The card element *is* the link, so keyboard focus,
+    // open-in-new-tab and the hover URL preview all come for free.
+    const card = document.createElement('a');
+    card.className = "observation-item";
+    card.href = detailUrl(obs.id);
+    card.innerHTML = `
+      <img src="${obs.photos?.[0]?.url?.replace('square', 'small') || ''}"
            alt="${obs.species_guess || 'Unknown'}" />
       <span>${obs.species_guess || 'Unknown species'} — ${obs.observed_on || 'n/a'}</span>
     `;
-    listDiv.appendChild(div);
+    listDiv.appendChild(card);
 
     count++;
     currentObservations.push(obs);

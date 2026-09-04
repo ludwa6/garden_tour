@@ -1,6 +1,6 @@
 // service-worker.js
 
-const CACHE_NAME = "fieldguide-cache-v2";
+const CACHE_NAME = "fieldguide-cache-v3";
 const TILE_CACHE_NAME = "fieldguide-tiles-v1";
 
 // --- Core app shell (always cached) ---
