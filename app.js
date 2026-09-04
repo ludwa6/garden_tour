@@ -13,6 +13,18 @@ function detailUrl(obsId) {
   return makeAssetUrl('poi/detail.html?obs=' + encodeURIComponent(obsId));
 }
 
+// Escape API-derived strings before they reach innerHTML. Project 197410 is an
+// iNaturalist *collection* project — it auto-includes any observation matching a
+// place_id rule, with no membership or curation — so species_guess is free text
+// from an untrusted observer. Quotes are escaped as well as angle brackets: the
+// textContent round-trip helper used elsewhere in this repo does not escape them
+// and so is unsafe for attribute values. See #15.
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  }[c]));
+}
+
 // --- Setup Map ---
 const map = L.map('map').setView([37.1, -8.6], 14);
 
@@ -133,8 +145,8 @@ function renderObservations() {
     // Map marker
     const marker = L.marker([lat, lng]);
     marker.bindPopup(`
-      <strong>${obs.species_guess || 'Unknown species'}</strong><br>
-      Observed: ${obs.observed_on || 'n/a'}<br>
+      <strong>${escapeHtml(obs.species_guess || 'Unknown species')}</strong><br>
+      Observed: ${escapeHtml(obs.observed_on || 'n/a')}<br>
       <a href="${detailUrl(obs.id)}">View Details</a><br>
       <a href="https://www.inaturalist.org/observations/${obs.id}" target="_blank" rel="noopener noreferrer">
         View on iNat
@@ -147,11 +159,15 @@ function renderObservations() {
     const card = document.createElement('a');
     card.className = "observation-item";
     card.href = detailUrl(obs.id);
-    card.innerHTML = `
-      <img src="${obs.photos?.[0]?.url?.replace('square', 'small') || ''}"
-           alt="${obs.species_guess || 'Unknown'}" />
-      <span>${obs.species_guess || 'Unknown species'} — ${obs.observed_on || 'n/a'}</span>
-    `;
+    // Built as DOM rather than an innerHTML template: alt= is an attribute
+    // context, and a species_guess of `" onerror="...` would otherwise add an
+    // event handler to an <img> that already fires onerror on a bad photo URL.
+    const img = document.createElement('img');
+    img.src = obs.photos?.[0]?.url?.replace('square', 'small') || '';
+    img.alt = obs.species_guess || 'Unknown';
+    const label = document.createElement('span');
+    label.textContent = `${obs.species_guess || 'Unknown species'} — ${obs.observed_on || 'n/a'}`;
+    card.append(img, label);
     listDiv.appendChild(card);
 
     count++;

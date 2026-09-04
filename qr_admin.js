@@ -8,6 +8,16 @@ document.addEventListener('DOMContentLoaded', function() {
     try { return JSON.parse(json); } catch { return fallback; }
   }
 
+  // Observation data arrives via localStorage.erc_observations, written by
+  // app.js from the iNaturalist API, so species_guess is untrusted observer
+  // free text that has survived a page load. Escapes quotes as well as angle
+  // brackets so attribute values are safe too. See #15.
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, c => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[c]));
+  }
+
   // Load observations from localStorage (set by index/app.js)
   function loadObservations() {
     const stored = localStorage.getItem('erc_observations');
@@ -63,10 +73,10 @@ document.addEventListener('DOMContentLoaded', function() {
     const photoUrl = (obs.photos && obs.photos[0] && obs.photos[0].url) ? obs.photos[0].url : null;
     observationPreview.innerHTML = `
       <h4>Preview:</h4>
-      <p><strong>Species:</strong> ${obs.species_guess || 'Unknown'}</p>
-      <p><strong>Observed:</strong> ${obs.observed_on || 'n/a'}</p>
-      <p><strong>Detail URL:</strong> <a href="${detailUrl}" target="_blank" rel="noopener">${detailUrl}</a></p>
-      ${photoUrl ? `<img src="${photoUrl}" style="max-width: 220px; border-radius: 4px;">` : ''}
+      <p><strong>Species:</strong> ${escapeHtml(obs.species_guess || 'Unknown')}</p>
+      <p><strong>Observed:</strong> ${escapeHtml(obs.observed_on || 'n/a')}</p>
+      <p><strong>Detail URL:</strong> <a href="${escapeHtml(detailUrl)}" target="_blank" rel="noopener">${escapeHtml(detailUrl)}</a></p>
+      ${photoUrl ? `<img src="${escapeHtml(photoUrl)}" style="max-width: 220px; border-radius: 4px;">` : ''}
     `;
   }
 
