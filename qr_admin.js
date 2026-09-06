@@ -8,16 +8,6 @@ document.addEventListener('DOMContentLoaded', function() {
     try { return JSON.parse(json); } catch { return fallback; }
   }
 
-  // Observation data arrives via localStorage.erc_observations, written by
-  // app.js from the iNaturalist API, so species_guess is untrusted observer
-  // free text that has survived a page load. Escapes quotes as well as angle
-  // brackets so attribute values are safe too. See #15.
-  function escapeHtml(s) {
-    return String(s).replace(/[&<>"']/g, c => ({
-      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
-    }[c]));
-  }
-
   // Load observations from localStorage (set by index/app.js)
   function loadObservations() {
     const stored = localStorage.getItem('erc_observations');

@@ -16,6 +16,8 @@
     })();
   </script>
 
+  <script src="escape.js"></script>
+
   <style>
     body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; padding: 1rem; margin: 0; }
     .topbar { display: flex; justify-content: space-between; align-items: center; gap: 1rem; margin-bottom: 1rem; }
@@ -68,12 +70,6 @@
       } catch {
         return null;
       }
-    }
-
-    function escapeHtml(s) {
-      return String(s).replace(/[&<>"']/g, c => ({
-        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
-      }[c]));
     }
 
     function renderTripPlan() {

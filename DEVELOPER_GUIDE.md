@@ -292,20 +292,32 @@ async function boot() {
 
 Cache-then-network: shows stale data instantly, updates when the network responds.
 
-### Helpers (defined inline in `poi/detail.html`)
+### Helpers
+
+`escapeHtml` lives in `escape.js` at the repo root and is the single
+definition in the codebase:
 
 ```js
-function safeParse(s) { try { return s ? JSON.parse(s) : null; } catch { return null; } }
-
 function escapeHtml(s) {
   return String(s).replace(/[&<>"']/g, c =>
     ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
 ```
 
-`safeParse` is also duplicated in `qr_admin.js`, `tripplan.html`, and
-`userjournals.html`. Consolidation into a shared `utils.js` is a known
-todo (see `CODE_REVIEW_REPORT.md`).
+It escapes `"` and `'` as well as `& < >`, because several call sites
+interpolate into an attribute value (`alt="${escapeHtml(...)}"`) where a
+helper that escapes only angle brackets lets `" onerror="...` inject a
+handler. See #15 and #16.
+
+Every page that needs it loads `<script src="escape.js"></script>` after the
+`<base href>` IIFE in its `<head>` and before its consumers — including
+`poi/detail.html`, where the injected base points at the app root so a bare
+`escape.js` resolves correctly from the `poi/` subdirectory. It is listed in
+`APP_SHELL` in `service-worker.js`, so precached pages can load it offline.
+
+`safeParse` is still defined inline in `poi/detail.html`, `qr_admin.js`,
+`tripplan.html`, and `userjournals.html`. Consolidation into a shared
+`utils.js` is a known todo (see `CODE_REVIEW_REPORT.md`).
 
 ### Save for Offline
 

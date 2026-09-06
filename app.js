@@ -15,16 +15,6 @@ function detailUrl(obsId) {
 
 // Escape API-derived strings before they reach innerHTML. Project 197410 is an
 // iNaturalist *collection* project — it auto-includes any observation matching a
-// place_id rule, with no membership or curation — so species_guess is free text
-// from an untrusted observer. Quotes are escaped as well as angle brackets: the
-// textContent round-trip helper used elsewhere in this repo does not escape them
-// and so is unsafe for attribute values. See #15.
-function escapeHtml(s) {
-  return String(s).replace(/[&<>"']/g, c => ({
-    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
-  }[c]));
-}
-
 // --- Setup Map ---
 const map = L.map('map').setView([37.1, -8.6], 14);
 
