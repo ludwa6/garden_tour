@@ -7,5 +7,6 @@
     "cwd": "/Users/walt/dev/garden_tour",
     "port": 8080,
     "path": "/"
-  }
+  },
+  "mirrorWorklistLifecycleToIssue": true
 }
