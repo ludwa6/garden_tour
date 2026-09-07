@@ -18,7 +18,6 @@ garden_tour/
 ├── setup.html          # First-run / onboarding
 ├── tripplan.html       # Personal trip plan (reads tripPlan from localStorage)
 ├── userjournals.html   # User journals: search + filter over tripPlan entries
-├── admin.html          # Admin dashboard
 ├── qr_admin.html       # QR code generator
 ├── qr_admin.js         # QR admin logic
 ├── Q.VdL-Perimeter.kml # Garden perimeter overlay (loaded by app.js)
