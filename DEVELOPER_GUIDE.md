@@ -51,14 +51,17 @@ installed.
 | QRCode.js | CDN (qr_admin.html only) | QR code generation |
 
 `index.html` loads vendor scripts at the bottom of `<body>` after the
-markup, then loads `app.js`:
+markup, then loads `escape.js` and `app.js`:
 
 ```html
 <script src="vendor/leaflet.js"></script>
 <script src="vendor/leaflet.markercluster.js"></script>
 <script src="vendor/leaflet-omnivore.min.js"></script>
+<script src="escape.js"></script>
 <script src="app.js?v=2"></script>
 ```
+
+`escape.js` must come before any script that calls `escapeHtml`.
 
 ---
 
@@ -122,10 +125,26 @@ Other pages load `style.css` via a plain `<link rel="stylesheet" href="style.css
 
 ## Service Worker
 
-`service-worker.js` uses two named caches:
+Three caches are in play, and **the worker owns only two of them**:
 
-- **`fieldguide-cache-v2`** — app shell (cache-first)
-- **`fieldguide-tiles-v1`** — OpenStreetMap tiles (network-first, cached on success)
+- **`fieldguide-cache-v5`** — app shell, cache-first. Owned by the worker;
+  versioned, and discarded wholesale on each bump.
+- **`fieldguide-tiles-v1`** — OpenStreetMap tiles, network-first, cached on
+  success. Owned by the worker.
+- **`fieldguide-offline-v1`** — POIs the user chose to keep. Owned by
+  `poi/detail.html` (`:97`, `:142`), *not* by the worker. See
+  *Save for Offline* below.
+
+Two standing rules follow, both learned expensively:
+
+- **Any commit that modifies a file listed in `APP_SHELL` must bump
+  `CACHE_NAME`.** The fetch handler is cache-first with no runtime caching of
+  misses, so an installed client keeps serving the copy it already has until the
+  name changes and `install` re-runs `addAll`. Two commits shipped without the
+  bump before this was written down.
+- **User content never goes in the versioned cache.** Anything stored under
+  `CACHE_NAME` is app shell, and is deleted by design on the next bump. User
+  content belongs in `fieldguide-offline-v1`.
 
 `BASE` is derived from the SW's own location so precache paths resolve under
 any deploy root:
@@ -136,6 +155,7 @@ const APP_SHELL = [
   BASE,
   BASE + "index.html",
   BASE + "style.css",
+  BASE + "escape.js",
   BASE + "app.js",
   BASE + "manifest.json",
   BASE + "icons/icon-192.png",
@@ -150,6 +170,10 @@ const APP_SHELL = [
   BASE + "vendor/leaflet-omnivore.min.js",
 ];
 ```
+
+Known gap: `footer.html` is fetched at runtime by `tripplan.html`,
+`poi/detail.html` and `qr_admin.html` but is not in this list, so those three
+pages render without their nav offline. Tracked in #19.
 
 **Tile caching** — network-first so fresh tiles are preferred; offline shows
 previously visited areas:
@@ -167,19 +191,27 @@ if (url.hostname.endsWith("tile.openstreetmap.org")) {
 }
 ```
 
-**On-demand POI caching** via `message` event — `CACHE_POI` is sent from
-`poi/detail.html` when the user clicks "Save for Offline":
+**Cache eviction** — `activate` deletes superseded app shells and nothing else.
+Scoping is by prefix rather than by exclusion, so caches the worker does not own
+survive a bump:
 
 ```js
-self.addEventListener("message", async (event) => {
-  if (event.data?.type === "CACHE_POI") {
-    const { jsonUrl, photoUrl } = event.data;
-    const cache = await caches.open(CACHE_NAME);
-    if (jsonUrl) await cache.add(jsonUrl);
-    if (photoUrl) await cache.add(photoUrl);
-  }
-});
+const SHELL_CACHE_PREFIX = "fieldguide-cache-";
+
+keys
+  .filter((key) => key.startsWith(SHELL_CACHE_PREFIX) && key !== CACHE_NAME)
+  .map((key) => caches.delete(key))
 ```
+
+An earlier version deleted every key that was not `CACHE_NAME` or
+`TILE_CACHE_NAME`. That made the worker the owner of caches it knows nothing
+about, and destroyed `fieldguide-offline-v1` — every POI the user had saved — on
+each bump. Fixed in `845b4e8`.
+
+The same commit deleted a `CACHE_POI` message handler that this section used to
+document as the mechanism behind "Save for Offline". It never was: nothing in the
+app posted that message, and the button has always written to
+`fieldguide-offline-v1` directly (see *Save for Offline*).
 
 ---
 
