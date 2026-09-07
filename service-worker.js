@@ -1,7 +1,11 @@
 // service-worker.js
 
-const CACHE_NAME = "fieldguide-cache-v4";
+const CACHE_NAME = "fieldguide-cache-v5";
 const TILE_CACHE_NAME = "fieldguide-tiles-v1";
+
+// Versioned app-shell caches all share this prefix. Eviction on activate keys
+// on it, so bumping CACHE_NAME drops superseded shells and nothing else.
+const SHELL_CACHE_PREFIX = "fieldguide-cache-";
 
 // --- Core app shell (always cached) ---
 // Derive the base from the SW's own location so precache paths resolve
@@ -33,12 +37,24 @@ self.addEventListener("install", (event) => {
   );
 });
 
-// Activate SW: cleanup old caches
+// Activate SW: drop superseded app-shell caches, and only those.
+//
+// Eviction is by prefix, not by exclusion. The previous form deleted every key
+// that was not CACHE_NAME or TILE_CACHE_NAME, which made this worker the owner
+// of caches it knows nothing about -- notably "fieldguide-offline-v1", which
+// poi/detail.html fills from the Save Offline button (:97, :142). That is
+// user-chosen content and must survive a CACHE_NAME bump.
+//
+// The corollary, which cost a deleted CACHE_POI handler to learn: never write
+// user content under CACHE_NAME. Everything in the versioned cache is app
+// shell, and is discarded by design on the next bump.
 self.addEventListener("activate", (event) => {
   event.waitUntil(
     caches.keys().then((keys) =>
       Promise.all(
-        keys.map((key) => key !== CACHE_NAME && key !== TILE_CACHE_NAME && caches.delete(key))
+        keys
+          .filter((key) => key.startsWith(SHELL_CACHE_PREFIX) && key !== CACHE_NAME)
+          .map((key) => caches.delete(key))
       )
     )
   );
@@ -69,20 +85,4 @@ self.addEventListener("fetch", (event) => {
       return resp || fetch(event.request);
     })
   );
-});
-
-// --- Custom message handler: save a POI offline ---
-self.addEventListener("message", async (event) => {
-  if (event.data && event.data.type === "CACHE_POI") {
-    const { obsId, jsonUrl, photoUrl } = event.data;
-
-    const cache = await caches.open(CACHE_NAME);
-    try {
-      if (jsonUrl) await cache.add(jsonUrl);
-      if (photoUrl) await cache.add(photoUrl);
-      console.log(`✅ Cached POI ${obsId}`);
-    } catch (err) {
-      console.error("Failed to cache POI", err);
-    }
-  }
 });
