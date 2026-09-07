@@ -17,6 +17,7 @@
   </script>
 
   <script src="escape.js"></script>
+  <script src="safe-parse.js"></script>
 
   <style>
     body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; padding: 1rem; margin: 0; }
@@ -64,14 +65,6 @@
   </div>
 
   <script>
-    function safeParse(str) {
-      try {
-        return str ? JSON.parse(str) : null;
-      } catch {
-        return null;
-      }
-    }
-
     function renderTripPlan() {
       const tripPlan = safeParse(localStorage.getItem('tripPlan')) || [];
       const listEl = document.getElementById('tripList');

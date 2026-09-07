@@ -16,6 +16,7 @@
   </script>
 
   <script src="escape.js"></script>
+  <script src="safe-parse.js"></script>
 
   <style>
     body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; padding: 1rem; }
@@ -101,8 +102,6 @@
         } else if (!cached) statusEl.textContent = "Observation not found.";
       } catch (e) { if (!cached) statusEl.textContent = "Offline or fetch failed — showing placeholders."; }
     }
-
-    function safeParse(s) { try { return s ? JSON.parse(s) : null; } catch { return null; } }
 
     async function fetchObsFromINat(id) {
       const apiUrl = `https://api.inaturalist.org/v1/observations/${id}`;

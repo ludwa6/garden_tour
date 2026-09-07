@@ -17,6 +17,7 @@ const APP_SHELL = [
   BASE + "footer.html",
   BASE + "style.css",
   BASE + "escape.js",
+  BASE + "safe-parse.js",
   BASE + "app.js",
   BASE + "manifest.json",
   BASE + "icons/icon-192.png",

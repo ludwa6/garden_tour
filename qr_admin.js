@@ -4,10 +4,6 @@ document.addEventListener('DOMContentLoaded', function() {
   const observationPreview = document.getElementById('observationPreview');
 
 
-  function safeParse(json, fallback) {
-    try { return JSON.parse(json); } catch { return fallback; }
-  }
-
   // Load observations from localStorage (set by index/app.js)
   function loadObservations() {
     const stored = localStorage.getItem('erc_observations');
