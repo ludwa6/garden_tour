@@ -138,7 +138,7 @@ function renderObservations() {
       <strong>${escapeHtml(obs.species_guess || 'Unknown species')}</strong><br>
       Observed: ${escapeHtml(obs.observed_on || 'n/a')}<br>
       <a href="${detailUrl(obs.id)}">View Details</a><br>
-      <a href="https://www.inaturalist.org/observations/${obs.id}" target="_blank" rel="noopener noreferrer">
+      <a href="https://www.inaturalist.org/observations/${encodeURIComponent(obs.id)}" target="_blank" rel="noopener noreferrer">
         View on iNat
       </a>
     `);

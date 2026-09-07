@@ -173,9 +173,9 @@
 
           ${entry.note ? `<div class="note">${escapeHtml(entry.note)}</div>` : ''}
 
-          ${entry.image ? `<div><img src="${entry.image}" alt="${escapeHtml(entry.species_name || 'Species')}" style="max-width:150px;border-radius:4px;" /></div>` : ''}
+          ${entry.image ? `<div><img src="${escapeHtml(entry.image)}" alt="${escapeHtml(entry.species_name || 'Species')}" style="max-width:150px;border-radius:4px;" /></div>` : ''}
 
-          ${entry.photo ? `<div><strong>My Photo:</strong><br><img src="${entry.photo}" alt="My photo" /></div>` : ''}
+          ${entry.photo ? `<div><strong>My Photo:</strong><br><img src="${escapeHtml(entry.photo)}" alt="My photo" /></div>` : ''}
 
           <div style="margin-top:0.75rem;">
             <a href="poi/detail.html?obs=${encodeURIComponent(entry.poi_id || '')}" class="cta" style="font-size:0.9rem;">🔍 View Full Details</a>

@@ -94,13 +94,13 @@
 
       listEl.innerHTML = tripPlan.map((item, index) => `
         <div class="trip-item">
-          ${item.image ? `<img src="${item.image}" alt="${escapeHtml(item.species_name || 'Unknown')}" />` : '<div style="width:120px;height:120px;background:#f0f0f0;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#999;">📷</div>'}
+          ${item.image ? `<img src="${escapeHtml(item.image)}" alt="${escapeHtml(item.species_name || 'Unknown')}" />` : '<div style="width:120px;height:120px;background:#f0f0f0;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#999;">📷</div>'}
           <div class="trip-content">
             <h3>${escapeHtml(item.species_name || 'Unknown Species')}</h3>
             <p><strong>POI ID:</strong> ${escapeHtml(item.poi_id || 'n/a')}</p>
             <p><strong>Saved:</strong> ${new Date(item.date_saved).toLocaleString()}</p>
             ${item.note ? `<div class="note"><strong>My Note:</strong> ${escapeHtml(item.note)}</div>` : ''}
-            ${item.photo ? `<div style="margin-top:0.5rem;"><img src="${item.photo}" style="max-width:200px;border-radius:4px;" alt="My photo" /></div>` : ''}
+            ${item.photo ? `<div style="margin-top:0.5rem;"><img src="${escapeHtml(item.photo)}" style="max-width:200px;border-radius:4px;" alt="My photo" /></div>` : ''}
             <div style="margin-top:0.5rem;">
               <button class="delete-btn" onclick="deleteItem(${index})">🗑️ Remove</button>
               <a href="poi/detail.html?obs=${encodeURIComponent(item.poi_id || '')}" class="cta" style="margin-left:0.5rem;">🔍 View Details</a>

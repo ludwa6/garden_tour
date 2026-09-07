@@ -291,7 +291,7 @@
         const li = document.createElement("li");
         li.className = "note-card";
         li.innerHTML = `
-          ${poi.photo ? `<img src="${poi.photo}" alt="My photo">` : ""}
+          ${poi.photo ? `<img src="${escapeHtml(poi.photo)}" alt="My photo">` : ""}
           <p><small>${new Date(poi.date_saved).toLocaleString()}</small></p>
           ${poi.note ? `<p>${escapeHtml(poi.note)}</p>` : "<p><em>(no text)</em></p>"}
           <button data-ts="${poi.date_saved}" class="deleteNoteBtn" style="background:#d33;color:#fff;">❌ Delete</button>
