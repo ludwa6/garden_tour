@@ -14,6 +14,7 @@ const BASE = self.location.pathname.replace(/service-worker\.js$/, "");
 const APP_SHELL = [
   BASE,
   BASE + "index.html",
+  BASE + "footer.html",
   BASE + "style.css",
   BASE + "escape.js",
   BASE + "app.js",
