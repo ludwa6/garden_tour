@@ -135,16 +135,56 @@ Three caches are in play, and **the worker owns only two of them**:
   `poi/detail.html` (`:97`, `:142`), *not* by the worker. See
   *Save for Offline* below.
 
-Two standing rules follow, both learned expensively:
+One standing rule, learned expensively: **user content never goes in the
+versioned cache.** Anything stored under `CACHE_NAME` is app shell, and is
+deleted by design on the next bump. User content belongs in
+`fieldguide-offline-v1`.
 
-- **Any commit that modifies a file listed in `APP_SHELL` must bump
-  `CACHE_NAME`.** The fetch handler is cache-first with no runtime caching of
-  misses, so an installed client keeps serving the copy it already has until the
-  name changes and `install` re-runs `addAll`. Two commits shipped without the
-  bump before this was written down.
-- **User content never goes in the versioned cache.** Anything stored under
-  `CACHE_NAME` is app shell, and is deleted by design on the next bump. User
-  content belongs in `fieldguide-offline-v1`.
+### Delivering a shell change
+
+An earlier revision of this section said any commit touching an `APP_SHELL` file
+"must bump `CACHE_NAME`", because a client "keeps serving the copy it already has
+until the name changes". Both halves of that mechanism are wrong, and the
+measurements below replaced them.
+
+**What makes `install` re-run: any byte change to `service-worker.js`** — not the
+cache name. This is the requirement that actually binds. `8e179b4` changed two
+precached files and did not touch `service-worker.js` at all, so no update was
+detected, `install` never ran, and nothing was delivered.
+
+**Same `CACHE_NAME` — delivery is immediate.** `addAll` replaces entries in
+place, in the very cache the running worker reads, so the change is live before
+the new worker activates. Measured in `a98d267`, which modified the precached
+`poi/detail.html` with no bump: the cached copy lost its marker while the new
+worker was still `waiting`, with no new cache created.
+
+**Changed `CACHE_NAME` — delivery waits for `activate`.** The fetch handler calls
+`caches.match`, which is `CacheStorage.match` and searches *every* cache in
+creation order. After a bump the superseded cache still exists and is searched
+first, so it answers with stale content until `activate` deletes it — and
+`activate` waits for every tab on the old worker to close. *This branch is
+reasoned from the handler and `CacheStorage` semantics; unlike the branch above
+it has not been measured here.*
+
+The consequence is worth stating plainly because it inverts the intuition: **a
+non-bump shell edit delivers sooner than a bump.**
+
+**So what is a bump for?** Removal and clean rebuilds. `addAll` only adds and
+replaces — it never removes — and `activate` evicts whole superseded caches
+rather than individual entries. An entry dropped from `APP_SHELL` therefore
+persists indefinitely under an unchanged name, and a bump is the way to clear it.
+
+**A third axis, independent of both branches: `install` re-running guarantees
+repopulation, not freshness.** `addAll` performs ordinary fetches, which may be
+answered from the browser's own HTTP cache, so a re-run can faithfully re-store a
+stale response. Versioned query strings such as `app.js?v=2` are what address
+this axis. *Unmeasured here — noted so it is not confused with the cache-name
+question, which it is independent of.*
+
+That spelling has a measured consequence of its own, in the opposite direction:
+`caches.match` keys on the full URL including the query string, so a request for
+`app.js?v=2` does **not** match an `APP_SHELL` entry stored as `app.js`. The two
+mechanisms are currently in conflict in this app.
 
 `BASE` is derived from the SW's own location so precache paths resolve under
 any deploy root:
@@ -154,8 +194,10 @@ const BASE = self.location.pathname.replace(/service-worker\.js$/, "");
 const APP_SHELL = [
   BASE,
   BASE + "index.html",
+  BASE + "footer.html",
   BASE + "style.css",
   BASE + "escape.js",
+  BASE + "safe-parse.js",
   BASE + "app.js",
   BASE + "manifest.json",
   BASE + "icons/icon-192.png",
@@ -170,10 +212,6 @@ const APP_SHELL = [
   BASE + "vendor/leaflet-omnivore.min.js",
 ];
 ```
-
-Known gap: `footer.html` is fetched at runtime by `tripplan.html`,
-`poi/detail.html` and `qr_admin.html` but is not in this list, so those three
-pages render without their nav offline. Tracked in #19.
 
 **Tile caching** — network-first so fresh tiles are preferred; offline shows
 previously visited areas:
@@ -325,8 +363,11 @@ Cache-then-network: shows stale data instantly, updates when the network respond
 
 ### Helpers
 
-`escapeHtml` lives in `escape.js` at the repo root and is the single
-definition in the codebase:
+Shared helpers live one-per-file at the repo root — `escape.js` and
+`safe-parse.js` — rather than in a single `utils.js`. Each is the only definition
+of its function in the codebase.
+
+`escapeHtml`:
 
 ```js
 function escapeHtml(s) {
@@ -346,9 +387,28 @@ Every page that needs it loads `<script src="escape.js"></script>` after the
 `escape.js` resolves correctly from the `poi/` subdirectory. It is listed in
 `APP_SHELL` in `service-worker.js`, so precached pages can load it offline.
 
-`safeParse` is still defined inline in `poi/detail.html`, `qr_admin.js`,
-`tripplan.html`, and `userjournals.html`. Consolidation into a shared
-`utils.js` is a known todo (see `CODE_REVIEW_REPORT.md`).
+`safeParse` lives in `safe-parse.js` and follows the same loading rule. It is
+loaded by the four pages that consume it — `tripplan.html`, `userjournals.html`,
+`poi/detail.html`, and `qr_admin.html` (for `qr_admin.js`) — but not
+`index.html`, since `app.js` has no `safeParse` call:
+
+```js
+function safeParse(s, fallback = null) {
+  try { return s ? JSON.parse(s) : fallback; } catch { return fallback; }
+}
+```
+
+The `fallback` parameter is load-bearing, not decoration. Before `a98d267` this
+existed in two shapes, and `qr_admin.js` calls `safeParse(stored, [])` then reads
+`.length` on the result — so a one-argument version would return `null` there and
+throw a `TypeError` on malformed `localStorage` instead of degrading to an empty
+list. The `s ?` guard preserves the other three pages' behaviour for empty input,
+which would otherwise reach `JSON.parse("")` and throw. See #20.
+
+Note that `CODE_REVIEW_REPORT.md` recommends a `utils.js` module consumed by
+`import`. It is a point-in-time report rather than a tracker: the app uses classic
+scripts with no `type="module"` anywhere, and both consolidations it called for
+were done in the one-file-per-helper shape above instead.
 
 ### Save for Offline
 
