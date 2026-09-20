@@ -1,6 +1,6 @@
 // service-worker.js
 
-const CACHE_NAME = "fieldguide-cache-v5";
+const CACHE_NAME = "fieldguide-cache-v6";
 const TILE_CACHE_NAME = "fieldguide-tiles-v1";
 
 // Versioned app-shell caches all share this prefix. Eviction on activate keys

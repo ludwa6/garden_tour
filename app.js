@@ -23,9 +23,14 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
 }).addTo(map);
 
 // --- Load Vale da Lama perimeter from KML ---
+// The bounds are kept, not just applied: the locate control below uses them to
+// decide whether the visitor is actually at the garden.
+let perimeterBounds = null;
+
 omnivore.kml(makeAssetUrl('Q.VdL-Perimeter.kml'))
   .on('ready', function (e) {
-    map.fitBounds(e.target.getBounds());
+    perimeterBounds = e.target.getBounds();
+    map.fitBounds(perimeterBounds);
     scheduleRefreshMapView();
   })
   .addTo(map);
@@ -39,12 +44,23 @@ let allObservations = [];
 let currentObservations = [];
 let currentRange = 'today';
 
+// Set by a successful in-garden locate, cleared by a range-filter click:
+// whichever the user asked for most recently owns the map view.
+let userViewLocked = false;
+
 // --- Helpers to keep map visible & correct ---
 function refreshMapView() {
   const mapEl = document.getElementById('map');
   if (!mapEl) return;
 
   map.invalidateSize();
+
+  // invalidateSize() always runs -- it is what keeps the map from rendering
+  // grey after a layout change. The auto-fit below does not, once the visitor
+  // has located themselves: this function is reachable from seven places,
+  // including the MutationObserver on #observations, so the async observation
+  // render would otherwise snap the map off the visitor within a frame.
+  if (userViewLocked) return;
 
   const b = markers.getBounds && markers.getBounds();
   if (b && b.isValid && b.isValid()) {
@@ -75,6 +91,128 @@ function scheduleRefreshMapView() {
     mo.observe(listDiv, { childList: true });
   }
 })();
+
+// --- "Locate me" (issue #11) ---
+//
+// Opt-in by construction: nothing touches the geolocation API until the button
+// is clicked, so the browser's permission prompt is always the direct result of
+// a user gesture and a visitor who never asks is never prompted. That satisfies
+// "no repeated permission hammering" with no stored dismissal state.
+//
+// The control lives on the map rather than in `.controls`, because that
+// container is the range filter's selector: its click handler reads
+// `btn.dataset.range` off every button it matches, so a sibling button there
+// would set currentRange to undefined on click.
+
+// How far outside the perimeter still counts as "at the garden", as a fraction
+// of the perimeter's own size -- roughly a couple of hundred metres here.
+const GARDEN_PROXIMITY_PAD = 0.25;
+
+let userMarker = null;
+let userAccuracyRing = null;
+
+function locateErrorMessage(error) {
+  if (!error) return 'Your position could not be determined.';
+  if (error.code === error.PERMISSION_DENIED) {
+    return 'Location permission was denied. The map is showing the whole garden.';
+  }
+  if (error.code === error.POSITION_UNAVAILABLE) {
+    return 'Your position is not available right now.';
+  }
+  if (error.code === error.TIMEOUT) {
+    return 'Finding your position took too long. Try again in the open.';
+  }
+  return 'Your position could not be determined.';
+}
+
+// Reported on the map, never to the console: #11 asks for denial to be handled
+// with no console errors, and a refusal is a normal outcome, not a fault.
+function reportLocateStatus(message) {
+  L.popup().setLatLng(map.getCenter()).setContent(message).openOn(map);
+}
+
+function showUserPosition(position) {
+  const { latitude, longitude, accuracy } = position.coords;
+  const latlng = L.latLng(latitude, longitude);
+
+  if (userMarker) map.removeLayer(userMarker);
+  if (userAccuracyRing) map.removeLayer(userAccuracyRing);
+
+  // Added straight to the map, never to `markers`. That is the cluster group,
+  // and refreshMapView() fits to markers.getBounds() -- a user marker inside it
+  // would be clustered with observations and would drag every later auto-fit.
+  userAccuracyRing = L.circle(latlng, {
+    radius: Math.max(accuracy || 0, 5),
+    color: '#0284c7', weight: 1, fillColor: '#0284c7', fillOpacity: 0.15
+  }).addTo(map);
+
+  userMarker = L.circleMarker(latlng, {
+    radius: 7, color: '#ffffff', weight: 2,
+    fillColor: '#0284c7', fillOpacity: 1
+  }).addTo(map);
+
+  const atTheGarden = !!perimeterBounds &&
+    perimeterBounds.pad(GARDEN_PROXIMITY_PAD).contains(latlng);
+
+  if (atTheGarden) {
+    userViewLocked = true;
+    map.setView(latlng, Math.max(map.getZoom(), 17));
+    userMarker.bindPopup('You are here.').openPopup();
+    return;
+  }
+
+  // Remote visitor: recentring would replace the garden and its observations
+  // with an empty map wherever they happen to be, which is worse than what they
+  // already had. Keep the garden view; the marker is still on the map for
+  // anyone who zooms out.
+  userMarker.bindPopup('You are here.');
+  reportLocateStatus(
+    'Found you, but you are outside the garden \u2014 the map is still showing Vale da Lama.'
+  );
+}
+
+function locateUser(link) {
+  if (!navigator.geolocation) {
+    reportLocateStatus('This browser does not offer location.');
+    return;
+  }
+
+  const idle = link.textContent;
+  link.textContent = '\u22EF';
+
+  navigator.geolocation.getCurrentPosition(
+    position => {
+      link.textContent = idle;
+      showUserPosition(position);
+    },
+    error => {
+      link.textContent = idle;
+      reportLocateStatus(locateErrorMessage(error));
+    },
+    { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
+  );
+}
+
+const LocateControl = L.Control.extend({
+  options: { position: 'topleft' },
+  onAdd() {
+    const container = L.DomUtil.create('div', 'leaflet-bar leaflet-control');
+    const link = L.DomUtil.create('a', '', container);
+    link.href = '#';
+    link.title = 'Show my location on the map';
+    link.setAttribute('role', 'button');
+    link.setAttribute('aria-label', 'Show my location on the map');
+    link.textContent = '\u25CE';
+
+    L.DomEvent.disableClickPropagation(container);
+    L.DomEvent.on(link, 'click', L.DomEvent.preventDefault);
+    L.DomEvent.on(link, 'click', () => locateUser(link));
+
+    return container;
+  }
+});
+
+map.addControl(new LocateControl());
 
 // --- Fetch iNaturalist observations ---
 async function fetchObservations() {
@@ -203,6 +341,7 @@ document.querySelectorAll('.controls button').forEach(btn => {
     document.querySelectorAll('.controls button').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     currentRange = btn.dataset.range;
+    userViewLocked = false;
     renderObservations();
     updateQRAdminLink();
     scheduleRefreshMapView();
