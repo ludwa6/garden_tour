@@ -32,6 +32,24 @@ const APP_SHELL = [
   BASE + "vendor/leaflet-omnivore.min.js",
 ];
 
+// Paths whose cached entry may answer a request carrying a query string.
+//
+// CacheStorage.match keys on the FULL url, query included, so a precached
+// "poi/detail.html" never matched a request for "poi/detail.html?obs=123" --
+// which is every POI navigation in the app, including the url burned into each
+// QR code. Same for index.html asking for "app.js?v=2". See #21.
+//
+// Scoped to APP_SHELL on purpose, rather than passing ignoreSearch for every
+// request. For these paths the query provably does not select content: each is
+// a static file the server returns identically whatever follows the "?", and
+// poi/detail.html is one document that reads its own ?obs at runtime. That
+// guarantee does not extend past this list -- app.js asks
+// api.inaturalist.org/v1/observations with the project, ordering and page size
+// all in the query string, and poi/detail.html writes cross-origin responses
+// into fieldguide-offline-v1, which caches.match also searches. Ignoring the
+// query there would let one request answer with another's response.
+const SHELL_PATHS = new Set(APP_SHELL);
+
 // Install SW: pre-cache shell
 self.addEventListener("install", (event) => {
   event.waitUntil(
@@ -81,10 +99,17 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Everything else: cache-first, fall back to network
+  // Everything else: cache-first, fall back to network. App-shell paths match
+  // regardless of query string (see SHELL_PATHS); everything else matches
+  // exactly, because outside that list the query can select the content.
+  const isShellPath =
+    url.origin === self.location.origin && SHELL_PATHS.has(url.pathname);
+
   event.respondWith(
-    caches.match(event.request).then((resp) => {
-      return resp || fetch(event.request);
-    })
+    caches
+      .match(event.request, isShellPath ? { ignoreSearch: true } : undefined)
+      .then((resp) => {
+        return resp || fetch(event.request);
+      })
   );
 });
